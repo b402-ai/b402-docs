@@ -1,0 +1,190 @@
+---
+title: 'Liquid Staking Tokens (LST)'
+description: 'LSTs are tokenized representations of the Ether ‘locked’ on the blockchain'
+icon: chess
+---
+
+## Introduction
+
+Liquid Staking Tokens (LST) represent funds staked on Ethereum — they are a tokenized representation of the Ether ‘locked’ on the blockchain.
+
+LSTs were developed as a means to access liquidity and increase capital efficiency. When staking Ether, Ethereum users can generate LSTs via a range of services which they can then deploy in the wider DeFi economy. Because they allow users to take part in the DeFi space while still earning yield on the original staked Ether, LSTs have become massively popular.
+
+EigenLayer community approves a set of Liquid Staking Tokens (LST) and native restaking (ETH) strategies to be used as staking tokens for the prospective AVS.
+
+### Data Source Overview
+
+We provide real-time total value locked (TVL) for each staking strategy. The data is directly sourced from the token address. For native restaking (beacon chain ETH), we collect the data from the [Eigen Pod Manager](https://github.com/Layr-Labs/eigenlayer-contracts/blob/dev/src/contracts/pods/EigenPodManager.sol) contract. You can find the deployed Eigen Pod contract here:
+
+-   [Ethereum Mainnet](https://etherscan.io/address/0x91E677b07F7AF907ec9a428aafA9fc14a0d3A338)
+-   [Holesky Testnet](https://holesky.etherscan.io/address/0x30770d7E3e71112d7A6b7259542D1f680a70e315)
+
+### LST Strategies Data Source
+
+You can find both Ethereum Mainnet and Holesky Testnet LST strategies data source here. For each strategy, the EigenLayer strategy contract maintains the staking business logic, while the exact TVL can be found in the LST token contract.
+
+<Tabs>
+<Tab title="Ethereum Mainnet">
+<AccordionGroup>
+<Accordion title='cbETH'>
+    <div>
+        <a href="https://etherscan.io/address/0x54945180dB7943c0ed0FEE7EdaB2Bd24620256bc">Strategy Contract</a>
+    </div>
+    <div>
+        <a href="https://etherscan.io/address/0xBe9895146f7AF43049ca1c1AE358B0541Ea49704">Token Contract</a>
+    </div>
+</Accordion>
+<Accordion title='stETH'>
+    <div>
+        <a href="https://etherscan.io/address/0x93c4b944D05dfe6df7645A86cd2206016c51564D">Strategy Contract</a>
+    </div>
+    <div>
+        <a href="https://etherscan.io/address/0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84">Token Contract</a>
+    </div>
+</Accordion>
+<Accordion title='rETH'>
+    <div>
+        <a href="https://etherscan.io/address/0x1BeE69b7dFFfA4E2d53C2a2Df135C388AD25dCD2">Strategy Contract</a>
+    </div>
+    <div>
+        <a href="https://etherscan.io/address/0xae78736Cd615f374D3085123A210448E74Fc6393">Token Contract</a>
+    </div>
+</Accordion>
+<Accordion title='ETHx'>
+    <div>
+        <a href="https://etherscan.io/address/0x9d7eD45EE2E8FC5482fa2428f15C971e6369011d">Strategy Contract</a>
+    </div>
+    <div>
+        <a href="https://etherscan.io/address/0xA35b1B31Ce002FBF2058D22F30f95D405200A15b">Token Contract</a>
+    </div>
+</Accordion>
+<Accordion title='ankrETH'>
+    <div>
+        <a href="https://etherscan.io/address/0x13760F50a9d7377e4F20CB8CF9e4c26586c658ff">Strategy Contract</a>
+    </div>
+    <div>
+        <a href="https://etherscan.io/address/0xE95A203B1a91a908F9B9CE46459d101078c2c3cb">Token Contract</a>
+    </div>
+</Accordion>
+<Accordion title='oETH'>
+    <div>
+        <a href="https://etherscan.io/address/0xa4C637e0F704745D182e4D38cAb7E7485321d059">Strategy Contract</a>
+    </div>
+    <div>
+        <a href="https://etherscan.io/address/0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3">Token Contract</a>
+    </div>
+</Accordion>
+<Accordion title='osETH'>
+    <div>
+        <a href="https://etherscan.io/address/0x57ba429517c3473B6d34CA9aCd56c0e735b94c02">Strategy Contract</a>
+    </div>
+    <div>
+        <a href="https://etherscan.io/address/0xf1C9acDc66974dFB6dEcB12aA385b9cD01190E38">Token Contract</a>
+    </div>
+</Accordion>
+<Accordion title='swETH'>
+    <div>
+        <a href="https://etherscan.io/address/0x0Fe4F44beE93503346A3Ac9EE5A26b130a5796d6">Strategy Contract</a>
+    </div>
+    <div>
+        <a href="https://etherscan.io/address/0xf951E335afb289353dc249e82926178EaC7DEd78">Token Contract</a>
+    </div>
+</Accordion>
+<Accordion title='wBETH'>
+    <div>
+        <a href="https://etherscan.io/address/0x7CA911E83dabf90C90dD3De5411a10F1A6112184">Strategy Contract</a>
+    </div>
+    <div>
+        <a href="https://etherscan.io/address/0xa2E3356610840701BDf5611a53974510Ae27E2e1">Token Contract</a>
+    </div>
+</Accordion>
+<Accordion title='sfrxETH'>
+    <div>
+        <a href="https://etherscan.io/address/0x8CA7A5d6f3acd3A7A8bC468a8CD0FB14B6BD28b6">Strategy Contract</a>
+    </div>
+    <div>
+        <a href="https://etherscan.io/address/0xac3E018457B222d93114458476f3E3416Abbe38F">Token Contract</a>
+    </div>
+</Accordion>
+<Accordion title='lsETH'>
+    <div>
+        <a href="https://etherscan.io/address/0xAe60d8180437b5C34bB956822ac2710972584473">Strategy Contract</a>
+    </div>
+    <div>
+        <a href="https://etherscan.io/address/0x8c1BEd5b9a0928467c9B1341Da1D7BD5e10b6549">Token Contract</a>
+    </div>
+</Accordion>
+<Accordion title='mETH'>
+    <div>
+        <a href="https://etherscan.io/address/0x298aFB19A105D59E74658C4C334Ff360BadE6dd2">Strategy Contract</a>
+    </div>
+    <div>
+        <a href="https://etherscan.io/address/0xd5F7838F5C461fefF7FE49ea5ebaF7728bB0ADfa">Token Contract</a>
+    </div>
+</Accordion>
+
+</AccordionGroup>
+</Tab>
+
+<Tab title="Holesky Testnet">
+<AccordionGroup>
+    <Accordion title='WETH'>
+    <div>
+        <a href="https://holesky.etherscan.io/address/0x80528D6e9A2BAbFc766965E0E26d5aB08D9CFaF9">Strategy Contract</a>
+    </div>
+    <div>
+        <a href="https://holesky.etherscan.io/address/0x94373a4919B3240D86eA41593D5eBa789FEF3848">Token Contract</a>
+    </div>
+</Accordion>
+<Accordion title='stETH'>
+    <div>
+        <a href="https://holesky.etherscan.io/address/0x7d704507b76571a51d9cae8addabbfd0ba0e63d3">Strategy Contract</a>
+    </div>
+    <div>
+        <a href="https://holesky.etherscan.io/address/0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84">Token Contract</a>
+    </div>
+</Accordion>
+<Accordion title='ETHx'>
+    <div>
+        <a href="https://holesky.etherscan.io/address/0x31b6f59e1627cefc9fa174ad03859fc337666af7">Strategy Contract</a>
+    </div>
+    <div>
+        <a href="https://holesky.etherscan.io/address/0xA35b1B31Ce002FBF2058D22F30f95D405200A15b">Token Contract</a>
+    </div>
+</Accordion>
+<Accordion title='ankrETH'>
+    <div>
+        <a href="https://holesky.etherscan.io/address/0x7673a47463f80c6a3553db9e54c8cdcd5313d0ac">Strategy Contract</a>
+    </div>
+    <div>
+        <a href="https://holesky.etherscan.io/address/0xE95A203B1a91a908F9B9CE46459d101078c2c3cb">Token Contract</a>
+    </div>
+</Accordion>
+<Accordion title='osETH'>
+    <div>
+        <a href="https://holesky.etherscan.io/address/0x46281e3b7fdcacdba44cadf069a94a588fd4c6ef">Strategy Contract</a>
+    </div>
+    <div>
+        <a href="https://holesky.etherscan.io/address/0xf1C9acDc66974dFB6dEcB12aA385b9cD01190E38">Token Contract</a>
+    </div>
+</Accordion>
+<Accordion title='sfrxETH'>
+    <div>
+        <a href="https://holesky.etherscan.io/address/0x9281ff96637710cd9a5cacce9c6fad8c9f54631c">Strategy Contract</a>
+    </div>
+    <div>
+        <a href="https://holesky.etherscan.io/address/0xac3E018457B222d93114458476f3E3416Abbe38F">Token Contract</a>
+    </div>
+</Accordion>
+<Accordion title='mETH'>
+    <div>
+        <a href="https://holesky.etherscan.io/address/0xaccc5a86732be85b5012e8614af237801636f8e5">Strategy Contract</a>
+    </div>
+    <div>
+        <a href="https://holesky.etherscan.io/address/0xd5F7838F5C461fefF7FE49ea5ebaF7728bB0ADfa">Token Contract</a>
+    </div>
+</Accordion>
+
+</AccordionGroup>
+</Tab>
+</Tabs>

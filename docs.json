@@ -1,102 +1,269 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "EigenExplorer Docs",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+      "primary": "#71717a",
+      "light": "#ffffff",
+      "dark": "#27272a"
   },
-  "favicon": "/favicon.svg",
+  "favicon": "/public/logo.svg",
   "navigation": {
-    "tabs": [
-      {
-        "tab": "Guides",
-        "groups": [
+      "tabs": [
           {
-            "group": "Get Started",
-            "pages": [
-              "introduction",
-              "quickstart",
-              "development"
-            ]
+              "tab": "Documentation",
+              "groups": [
+                  {
+                      "group": "Introduction",
+                      "pages": [
+                          "introduction",
+                          "support",
+                          "community",
+                          "changelog"
+                      ]
+                  },
+                  {
+                      "group": "Direct Liquid Restaking",
+                      "pages": [
+                          "lat/introduction",
+                          "lat/lat",
+                          "lat/quick-start",
+                          "lat/why-lat",
+                          "lat/cost",
+                          "lat/comparison",
+                          "lat/faq"
+                      ]
+                  },
+                  {
+                      "group": "Knowledge Base",
+                      "pages": [
+                          "knowledge-base/staking-restaking",
+                          "knowledge-base/eigen-layer"
+                      ]
+                  },
+                  {
+                      "group": "Glossaries",
+                      "pages": [
+                          "glossaries/avs",
+                          "glossaries/operators",
+                          "glossaries/stakers",
+                          "glossaries/lst",
+                          "glossaries/avs-token"
+                      ]
+                  }
+              ]
           },
           {
-            "group": "Essentials",
-            "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/settings",
-              "essentials/navigation",
-              "essentials/reusable-snippets"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "API Reference",
-        "groups": [
-          {
-            "group": "API Documentation",
-            "pages": [
-              "api-reference/introduction"
-            ]
+              "tab": "Data Reference",
+              "groups": [
+                  {
+                      "group": "Getting Started",
+                      "pages": ["data-reference/introduction"]
+                  },
+                  {
+                      "group": "Metrics",
+                      "pages": ["data-reference/metrics"]
+                  },
+                  {
+                      "group": "Entities",
+                      "pages": [
+                          "data-reference/avs",
+                          "data-reference/operators",
+                          "data-reference/stakers"
+                      ]
+                  },
+                  {
+                      "group": "Mechanisms",
+                      "pages": ["data-reference/rewards"]
+                  }
+              ]
           },
           {
-            "group": "Endpoint Examples",
-            "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
-            ]
+              "tab": "API Reference",
+              "groups": [
+                  {
+                      "group": "Introduction",
+                      "pages": [
+                          "api-reference/introduction",
+                          "api-reference/support",
+                          "api-reference/pricing",
+                          "api-reference/rate-limit",
+                          "api-reference/errors",
+                          "api-reference/changelog",
+                          "api-reference/api-status"
+                      ]
+                  },
+                  {
+                      "group": "Quick Start",
+                      "pages": [
+                          "api-reference/quickstart/get-started",
+                          "api-reference/quickstart/api-key",
+                          "api-reference/quickstart/mainnet-and-holesky-api"
+                      ]
+                  },
+                  {
+                      "group": "API Endpoints",
+                      "pages": [
+                          {
+                              "group": "System Status",
+                              "icon": "solar-system",
+                              "pages": [
+                                  "api-reference/endpoint/system/retrieve-api-server-version",
+                                  "api-reference/endpoint/system/retrieve-api-server-status"
+                              ]
+                          },
+                          {
+                              "group": "Ecosystem Metrics",
+                              "icon": "arrow-up-right-dots",
+                              "pages": [
+                                  "api-reference/endpoint/metrics/retrieve-summary-metrics",
+                                  "api-reference/endpoint/metrics/retrieve-total-tvl",
+                                  "api-reference/endpoint/metrics/retrieve-beacon-chain-restaking-tvl",
+                                  "api-reference/endpoint/metrics/retrieve-restaking-strategies-tvl",
+                                  "api-reference/endpoint/metrics/retrieve-a-strategy-tvl-by-address",
+                                  "api-reference/endpoint/metrics/retrieve-total-number-of-avs",
+                                  "api-reference/endpoint/metrics/retrieve-total-number-of-avs-operators",
+                                  "api-reference/endpoint/metrics/retrieve-total-number-of-avs-stakers",
+                                  "api-reference/endpoint/metrics/retrieve-total-number-of-withdrawals",
+                                  "api-reference/endpoint/metrics/retrieve-total-number-of-deposits",
+                                  "api-reference/endpoint/metrics/retrieve-deployment-ratio",
+                                  "api-reference/endpoint/metrics/retrieve-restaking-ratio"
+                              ]
+                          },
+                          {
+                              "group": "Historical Metrics",
+                              "icon": "rectangle-history",
+                              "pages": [
+                                  "api-reference/endpoint/historical/retrieve-historical-tvl",
+                                  "api-reference/endpoint/historical/retrieve-historical-tvl-beacon-chain",
+                                  "api-reference/endpoint/historical/retrieve-historical-tvl-restaking-by-strategy-address",
+                                  "api-reference/endpoint/historical/retrieve-historical-avs-count",
+                                  "api-reference/endpoint/historical/retrieve-historical-operators-count",
+                                  "api-reference/endpoint/historical/retrieve-historical-stakers-count",
+                                  "api-reference/endpoint/historical/retrieve-historical-withdrawals-count",
+                                  "api-reference/endpoint/historical/retrieve-historical-deposits-count",
+                                  "api-reference/endpoint/historical/retrieve-historical-avs-aggregate",
+                                  "api-reference/endpoint/historical/retrieve-historical-operators-aggregate",
+                                  "api-reference/endpoint/historical/retrieve-historical-withdrawal-aggregate",
+                                  "api-reference/endpoint/historical/retrieve-historical-deposit-aggregate"
+                              ]
+                          },
+                          {
+                              "group": "AVS",
+                              "icon": "cubes",
+                              "pages": [
+                                  "api-reference/endpoint/avs/retrieve-all-avs",
+                                  "api-reference/endpoint/avs/retrieve-all-avs-addresses",
+                                  "api-reference/endpoint/avs/retrieve-an-avs-by-address",
+                                  "api-reference/endpoint/avs/retrieve-all-stakers-for-a-given-avs-address",
+                                  "api-reference/endpoint/avs/retrieve-all-operators-for-a-given-avs-address",
+                                  "api-reference/endpoint/avs/retrieve-all-rewards-for-a-given-avs-address",
+                                  "api-reference/endpoint/avs/retrieve-all-reward-events-for-a-given-avs-address",
+                                  "api-reference/endpoint/avs/retrieve-all-registration-events-for-a-given-avs-address"
+                              ]
+                          },
+                          {
+                              "group": "Operators",
+                              "icon": "circle-nodes",
+                              "pages": [
+                                  "api-reference/endpoint/operators/retrieve-all-operators",
+                                  "api-reference/endpoint/operators/retrieve-all-operator-addresses",
+                                  "api-reference/endpoint/operators/retrieve-an-operator-by-address",
+                                  "api-reference/endpoint/operators/retrieve-all-reward-strategies-and-tokens-for-a-given-operator-address",
+                                  "api-reference/endpoint/operators/retrieve-all-delegation-events-for-a-given-operator-address",
+                                  "api-reference/endpoint/operators/retrieve-all-registration-events-for-a-given-operator-address"
+                              ]
+                          },
+                          {
+                              "group": "Stakers",
+                              "icon": "badge-dollar",
+                              "pages": [
+                                  "api-reference/endpoint/stakers/retrieve-all-stakers",
+                                  "api-reference/endpoint/stakers/retrieve-a-staker-by-address",
+                                  "api-reference/endpoint/stakers/retrieve-all-withdrawals-by-staker-address",
+                                  "api-reference/endpoint/stakers/retrieve-queued-withdrawals-by-staker-address",
+                                  "api-reference/endpoint/stakers/retrieve-queued-and-withdrawable-withdrawals-by-staker-address",
+                                  "api-reference/endpoint/stakers/retrieve-completed-withdrawals-by-staker-address",
+                                  "api-reference/endpoint/stakers/retrieve-all-deposits-by-staker-address",
+                                  "api-reference/endpoint/stakers/retrieve-all-delegation-events-for-a-given-staker-address",
+                                  "api-reference/endpoint/stakers/retrieve-all-deposit-events-for-a-given-staker-address",
+                                  "api-reference/endpoint/stakers/retrieve-all-withdrawal-events-for-a-given-staker-address"
+                              ]
+                          },
+                          {
+                              "group": "Withdrawals",
+                              "icon": "money-bill-transfer",
+                              "pages": [
+                                  "api-reference/endpoint/withdrawals/retrieve-all-withdrawals",
+                                  "api-reference/endpoint/withdrawals/retrieve-withdrawal-by-withdrawal-root"
+                              ]
+                          },
+                          {
+                              "group": "Deposits",
+                              "icon": "money-from-bracket",
+                              "pages": [
+                                  "api-reference/endpoint/deposits/retrieve-all-deposits"
+                              ]
+                          },
+                          {
+                              "group": "Rewards",
+                              "icon": "treasure-chest",
+                              "pages": [
+                                  "api-reference/endpoint/rewards/retrieve-strategies-with-rewards"
+                              ]
+                          },
+                          {
+                              "group": "Events",
+                              "icon": "calendar",
+                              "pages": [
+                                  "api-reference/endpoint/events/retrieve-all-delegation-events",
+                                  "api-reference/endpoint/events/retrieve-all-deposit-events",
+                                  "api-reference/endpoint/events/retrieve-all-withdrawal-events",
+                                  "api-reference/endpoint/events/retrieve-all-reward-events",
+                                  "api-reference/endpoint/events/retrieve-all-registration-events"
+                              ]
+                          }
+                      ]
+                  }
+              ]
           }
-        ]
-      }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Community",
-          "href": "https://mintlify.com/community",
-          "icon": "slack"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
       ]
-    }
   },
   "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+      "light": "/public/logo/logo-light.svg",
+      "dark": "/public/logo/logo-dark.svg"
+  },
+  "api": {
+      "mdx": {
+          "server": "https://api.eigenexplorer.com"
+      }
+  },
+  "background": {
+      "decoration": "grid",
+      "color": {
+          "light": "#ffffff",
+          "dark": "#131419"
+      }
   },
   "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
+      "links": [
+          {
+              "label": "Developer Dashboard",
+              "href": "https://developer.eigenexplorer.com"
+          }
+      ],
+      "primary": {
+          "type": "button",
+          "label": "Dashboard",
+          "href": "https://dashboard.eigenexplorer.com"
       }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
-    }
   },
   "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
-    }
+      "socials": {
+          "twitter": "https://twitter.com/eigenexplorer",
+          "telegram": "https://t.me/eigenexplorer",
+          "discord": "https://discord.gg/3aTdnXgGNg",
+          "github": "https://github.com/eigenexplorer"
+      }
   }
 }

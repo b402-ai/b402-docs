@@ -1,0 +1,25 @@
+---
+title: 'AVS'
+description: 'Understanding EigenExplorer AVS data'
+icon: grid-round-2-plus
+---
+
+## Introduction
+
+**Actively Validated Services** (AVS) are the cornerstone of the EigenLayer ecosystem. Each AVS is operated by a select group of operators who are staked by the stakers, thereby providing the economic security for the AVS.
+
+On the EigenExplorer, AVS data is aggregated from the EigenLayer on-chain AVS Directory and undergoes manual cleaning and verification. Additionally, some AVS projects are also collected from publicly submitted forms.
+
+### Data Source
+
+Our data is aggregated from the [AVS Directory](https://github.com/Layr-Labs/eigenlayer-contracts/blob/dev/src/contracts/core/AVSDirectory.sol) contract, which maintains an event log of registered AVS. The deployed AVS Directory contract address can be found below:
+
+-   [Ethereum Mainnet](https://etherscan.io/address/0x135dda560e946695d6f155dacafc6f1f25c1f5af)
+-   [Holesky Testnet](https://holesky.etherscan.io/address/0x055733000064333CaDDbC92763c58BF0192fFeBf)
+
+### AVS Stakers and Operators
+
+For each AVS, we aggregate data on the respective stakers and operators. This information is sourced from the [Delegation Manager](https://github.com/Layr-Labs/eigenlayer-contracts/blob/dev/src/contracts/core/DelegationManager.sol) contract. You can find the contracts here:
+
+-   [Ethereum Mainnet](https://etherscan.io/address/0x39053D51B77DC0d36036Fc1fCc8Cb819df8Ef37A)
+-   [Holesky Testnet](https://holesky.etherscan.io/address/0xA44151489861Fe9e3055d95adC98FbD462B948e7)

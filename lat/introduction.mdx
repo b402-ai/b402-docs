@@ -1,0 +1,37 @@
+---
+title: Introduction
+description: 'What is direct liquid restaking?'
+icon: stars
+---
+
+Most current restaking protocols employ a complex design where users **must delegate stakes to operators** before they can be assigned to Actively Validated Services (AVS).
+
+While this approach offers flexibility for service integration, it presents significant usability challenges:
+
+1. **Indirect restaking**: Users cannot restake directly into a service; they must first choose an operator.
+2. **Diversification complexity**: Operators diversify their AVS operations and actively select which AVS to support, making users' staked assets inherently diversified and actively managed.
+3. **Risk assessment difficulties**: The complexity of this system makes it challenging for users to accurately measure risk and reward when evaluating restaking decisions.
+
+To enhance the user experience and improve restaking efficiency, we have designed a direct and liquid restaking framework that allows users to choose an AVS directly and restake their assets to secure it, simplifying the process and providing clearer risk/reward assessments.
+
+## Direct Liquid Restaking
+
+Direct Liquid Restaking is implemented through an **Automated Operator Selection** process built on top of the native restaking interface.
+
+This system offers several key features:
+
+1. **Automated Operator Selection**: Instead of users manually choosing an operator, a smart contract automatically calculates each operator's contribution to the chosen AVS's security. A security contribution threshold is introduced to identify high-concentration operators for a given AVS.
+
+    <Info>
+        We offer both Automated Operator Selection, which diversifies stakes
+        across multiple operators, and a protocol-operated option for single-AVS
+        restaking with higher yields through operator fee rebates.
+    </Info>
+
+1. **Pooled Stake Management**: User stakes are pooled and programmatically allocated to selected operators. The pool dynamically rebalances operator selection as operators move above or below the security contribution threshold.
+
+1. **Automatic Compounding**: Rewards are automatically compounded to maximize yield generation.
+
+1. **Liquid Token Generation**: Users receive a [liquid token](./lat) representing their restaking position in a specific AVS. This token can be freely traded or utilized in various DeFi activities, such as loans or actively managed strategies.
+
+This approach streamlines the restaking process, optimizes security distribution, and provides users with flexible options for managing their staked assets.

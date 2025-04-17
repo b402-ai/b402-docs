@@ -1,0 +1,64 @@
+---
+title: Quick Start
+description: 'Generating Liquid AVS Tokens'
+icon: arrow-right
+---
+
+## Steps for Acquiring LAT & Inner Workflows
+
+<Tip>
+    The Liquid AVS Token (LAT) smart contracts utilize EigenLayer's native smart
+    contracts deployed on the Ethereum blockchain, minimizing implementation
+    risks for users.
+</Tip>
+
+Acquiring Liquid AVS Token (LAT) is as simple as clicking a button, with all processes seamlessly handled by EigenExplorer's smart contracts.
+
+<Steps>
+    <Step title='Choose Your Desired AVS'>
+        Select the AVS you wish to support from the list available on
+        EigenExplorer and click the "Stake" button. This action initiates your
+        participation in the chosen AVS.
+    </Step>
+    <Step title='Automatic Operator Delegation'>
+        <Info>
+            This step is managed internally by the EigenExplorer smart
+            contracts.
+        </Info>
+        The selection of operators is managed automatically (You don't actually need
+        to do anything here! Woohoo!). The restaked token is channeled to your chosen
+        AVS through a selection process that prioritizes operators with a high percentage
+        of that AVS's operator share or those that exclusively operate that specific
+        AVS.
+    </Step>
+    <Step title='Generate Liquid AVS Token'>
+        The corresponding amount of LAT is generated as an on-chain
+        representation of the your staked position, along with any rewards that
+        position will accrue.
+    </Step>
+    <Step title='Getting Back Your Staked Token'>
+        To retrieve your staked token and rewards, simply trade your LAT on any
+        supported exchange or unbond your LAT on EigenExplorer.
+    </Step>
+</Steps>
+
+## Supported Assets
+
+Depending the asset of your choice, there are currently two ways for acquiring a LAT.
+
+<Steps>
+    <Step title='With AVS Native Token'>
+        Users are able to stake their AVS token(s) into the corresponding AVS,
+        receiving the liquid staked equivalent in return. For example, users
+        could deposit the EigenDA token (EIGEN) into EigenDA on EigenExplorer,
+        receiving xEIGEN in return.
+    </Step>
+    <Step title='With LST or Native ETH'>
+        Users are also able to deposit LST or native ETH into a specific AVS,
+        with the ETH deposited exclusively amongst operators for that specific
+        AVS. For example, users could stake ETH into EigenExplorer and allocate
+        it to EigenDA, which would be delegated exclusively to EigenDA
+        operators. The user’s stake is siloed to the AVS they wish to support,
+        and they receive xEIGEN in return.
+    </Step>
+</Steps>
