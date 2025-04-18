@@ -23,12 +23,13 @@
                       ]
                   },
                   {
-                      "group": "Direct Liquid Restaking",
+                      "group": "Concepts",
                       "pages": [
-                          "lat/introduction",
+                          "concepts/direct-liquid-restaking",
+                          "concepts/lat",
                           "lat/yield",
                           "lat/fee",
-                          "lat/lat",
+                          
                           "lat/quick-start",
                           "lat/why-lat",
                           "lat/comparison",
@@ -36,20 +37,9 @@
                       ]
                   },
                   {
-                      "group": "Knowledge Base",
+                      "group": "Resources",
                       "pages": [
-                          "knowledge-base/staking-restaking",
-                          "knowledge-base/eigen-layer"
-                      ]
-                  },
-                  {
-                      "group": "Glossaries",
-                      "pages": [
-                          "glossaries/avs",
-                          "glossaries/operators",
-                          "glossaries/stakers",
-                          "glossaries/lst",
-                          "glossaries/avs-token"
+                          "resources/glossaries"
                       ]
                   }
               ]

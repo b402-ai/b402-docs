@@ -1,0 +1,69 @@
+---
+title: 'Glossaries'
+description: 'Definitions and explanations of key concepts and terms.'
+icon: cards-blank
+---
+
+## Staking
+
+The practice of staking is a fundamental component of the Ethereum blockchain.
+
+The day-to-day running of Ethereum requires the processing of activity conducted on the blockchain. Multiple validator nodes check and confirm the correctness or incorrectness of proposed blocks of transactions; when enough validators give their assent – when consensus is reached – a block is added to the chain and becomes immutable. To become a validator, Ethereum users must “stake” 32 ETH. Staked Ether is locked and inaccessible, and is only released once the user stops running their validator node or “withdraws”. Staking encourages validators to behave honestly and to fulfill their obligations consistently. If malicious behavior is detected, validators receive a penalty known as “slashing” – a quantity of their staked Ether is removed.
+
+To compensate users for performing the work of validation, staking accrues rewards over time, similar to the way that bank deposits accrue interest. The staking return on 32 ETH is currently around 2.5% per year, according to Coinbase.
+
+Together, staking and validating constitute an elegant security system. Users are rewarded for faithfully maintaining the blockchain, while slashing penalties ensure that malicious activity is kept to a minimum.
+
+---
+
+## Restaking
+
+As the liquid staking industry boomed in 2023, user demand for flexibility and further routes to liquidity remained intense. Protocols like EigenLayer were developed to address this demand and support a new generation of decentralized applications. Today the EigenLayer network hosts a wide range of AVSs, which it supports through “restaked” assets.
+
+There are two forms of restaking on EigenLayer. In the first, users can stake supported LSTs (which, as explored above, are a claim on staked Ether). In the second, which is known as native restaking and only available to users with full Ethereum validator credentials, existing staked Ether is redeployed via EigenLayer’s proprietary smart contracts.
+
+Restakers then become validators all over again — this time for the AVSs built on EigenLayer. While validators are renamed “operators” on EigenLayer, their experience is otherwise identical: through the same consensus mechanism, they attest that transactions are correct or incorrect on the AVSs they choose to validate, allowing each blockchain application to function and develop, and receive rewards in return.
+
+The process of restaking effectively exports Ethereum’s established security system to a wide array of new protocols. And because restaked assets are used to support an increased number of services and earn additional yield, new slashing conditions are imposed by each AVS to discourage bad behavior. Operator-validators thus increase their slashing risk with every restake.
+
+Some AVSs generate “liquid restaking tokens”, or LRTs — secondary derivatives which users receive upon restaking. Just as LSTs are a tokenized representation of staked Ether, LRTs are a tokenized representation of restaked Ether or staked LSTs. The market for actively traded LRTs is growing rapidly.
+
+---
+
+## Liquid Staking
+
+The traditional staking approach described above is not without shortcomings. For users interested in becoming a validator, the 32 ETH staking requirement can be a barrier to entry. Hardware requirements must also be considered: validation nodes need a certain amount of hard drive space, processing power and internet speed to ensure they run as required with minimal downtime. Finally, staked Ether is totally illiquid: by design, users are not able to take part in any trades or transfers with staked assets. Liquid staking emerged to widen access to traditional staking and its rewards. Providers like Lido collect Ether from multiple users to create “staking pools” – once a pool reaches 32, it is sent to an institutional validator which distributes the staking rewards back to investors in proportion to their pool contributions.
+
+Besides lowering staking barriers and allowing more users to participate, liquid staking addresses the locking of staked assets. Users who contribute to a pool receive a tokenized representation of their staked assets – like a receipt – in the form of liquid staking tokens (LSTs), derivatives which can in turn be freely traded. As rewards are generated from the underlying stake, additional LSTs are generated in corresponding quantities. If a user decides to exit the staking pool and collect their rewards, they can withdraw the initial Ether itself or simply sell their LSTs to a buyer who wants to take up the staking position.
+
+---
+
+## AVS
+Autonomous Verifiable Services (AVS) are the cornerstone of the EigenLayer ecosystem. Each AVS is operated by a select group of operators who are staked by the stakers, thereby providing the economic security for the AVS.
+
+On the EigenExplorer, AVS data is aggregated from the EigenLayer on-chain AVS Directory and undergoes manual cleaning and verification. Additionally, some AVS projects are also collected from publicly submitted forms.
+
+---
+
+## Operators
+
+Operators are the entities that run and operate the individual autonomous verifiable services.
+
+---
+
+## Stakers
+Stakers are the ETH or liquid staking token holders who delegate their tokens to operators and contribute to an AVS's economic security. Stakers receive rewards for their contributions to the network.
+
+---
+
+## Liquid Staking Tokens (LSTs)
+Liquid Staking Tokens (LST) represent funds staked on Ethereum — they are a tokenized representation of the Ether ‘locked’ on the blockchain.
+
+LSTs were developed as a means to access liquidity and increase capital efficiency. When staking Ether, Ethereum users can generate LSTs via a range of services which they can then deploy in the wider DeFi economy. Because they allow users to take part in the DeFi space while still earning yield on the original staked Ether, LSTs have become massively popular.
+
+EigenLayer community approves a set of Liquid Staking Tokens (LST) and native restaking (ETH) strategies to be used as staking tokens for the prospective AVS.
+
+---
+
+## AVS Native Tokens
+AVS native tokens are tokens issued by AVS protocols built on EigenLayer. Many EigenLayer AVS services have issued tokens of their own. They can be used for EigenLayer native dual staking, EigenExplorer direct Liquid AVS Token staking, and other protocol-specific use cases.
