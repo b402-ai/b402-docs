@@ -1,0 +1,28 @@
+---
+title: 'Introduction'
+description: 'Explore how our data is being processed and calcuated'
+icon: 'play'
+---
+
+## Welcome
+
+This section outlines how our data is being processed and calculated in both our [dashboard](https://dashboard.eigenexplorer.com) and our [data api](../api-reference/introduction).
+
+### Data Sources
+
+Our data infrastructure is built upon the EigenLayer smart contracts deployed on the Ethereum blockchain. These contracts serve as the primary source of our data, delivering critical information through event logs, state data, and transaction details.
+
+### Data Calculations
+
+In addition to the raw on-chain data obtained from the source smart contracts, we perform various calculations to enhance our insights within the restaking ecosystem. This includes metrics such as rewards and other key performance indicators.
+
+### Data Collection & Synchronization
+
+We maintain different synchronization frequencies based on the nature of the data and its update requirements:
+
+| Data Type              | Update Frequency | Description                                         |
+| ---------------------- | ---------------- | --------------------------------------------------- |
+| **Core Protocol Data** | Every 2 minutes  | TVL, operator statistics, and staker activities     |
+| **Beacon Chain Data**  | Every 10 minutes | Beacon chain ETH TVL calculations                   |
+| **LST Strategy Data**  | Real-time        | Direct contract queries for current strategy states |
+| **Position Data**      | Database-backed  | Regular updates through event processing            |

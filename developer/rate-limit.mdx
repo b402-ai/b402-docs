@@ -1,0 +1,29 @@
+---
+title: 'Rate Limits'
+description: 'Learn about EigenExplorer’s API rate limits'
+icon: 'monitor-waveform'
+---
+
+Rate limits are enforced for both Ethereum Mainnet and Holesky Testnet API endpoints.
+
+### Network-Specific Limits
+
+Currently, the rate limits for both Ethereum Mainnet and Holesky Testnet are the same. Requests per minute (req/min) are counted separately for each network, while the monthly request allowance (req/month) is shared across both networks.
+
+#### Ethereum Mainnet
+
+-   10,000 Requests per Month
+-   100 Requests per Minute
+
+#### Holesky Testnet
+
+-   10,000 Requests per Month
+-   100 Requests per Minute
+
+### Rate Limit Exceeded
+
+If you exceed the rate limit, the API will return a `429 Too Many Requests` response.
+
+### Increasing Your Rate Limit
+
+Need higher limits? Contact our support team through [Telegram](https://t.me/+siHEtj56TNdmZmU1) to discuss your requirements.
