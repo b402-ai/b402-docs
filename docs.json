@@ -26,10 +26,11 @@
                       "group": "Direct Liquid Restaking",
                       "pages": [
                           "lat/introduction",
+                          "lat/yield",
+                          "lat/fee",
                           "lat/lat",
                           "lat/quick-start",
                           "lat/why-lat",
-                          "lat/cost",
                           "lat/comparison",
                           "lat/faq"
                       ]
@@ -55,26 +56,26 @@
           },
 
           {
-              "tab": "Developer",
+              "tab": "Developers",
               "groups": [
                   {
                       "group": "Introduction",
                       "pages": [
-                          "developer/introduction",
-                          "developer/support",
-                          "developer/pricing",
-                          "developer/rate-limit",
-                          "developer/errors",
-                          "developer/changelog",
-                          "developer/api-status"
+                          "developers/introduction",
+                          "developers/support",
+                          "developers/pricing",
+                          "developers/rate-limit",
+                          "developers/errors",
+                          "developers/changelog",
+                          "developers/api-status"
                       ]
                   },
                   {
                       "group": "Quick Start",
                       "pages": [
-                          "developer/quickstart/get-started",
-                          "developer/quickstart/api-key",
-                          "developer/quickstart/mainnet-and-holesky-api"
+                          "developers/quickstart/get-started",
+                          "developers/quickstart/api-key",
+                          "developers/quickstart/mainnet-and-holesky-api"
                       ]
                   }
               ]
@@ -131,8 +132,8 @@
       ],
       "primary": {
           "type": "button",
-          "label": "Dashboard",
-          "href": "https://dashboard.eigenexplorer.com"
+          "label": "Open App",
+          "href": "https://area.club"
       }
   },
   "footer": {
