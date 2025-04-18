@@ -29,17 +29,16 @@
                           "concepts/lat",
                           "lat/yield",
                           "lat/fee",
-                          
                           "lat/quick-start",
                           "lat/why-lat",
-                          "lat/comparison",
-                          "lat/faq"
+                          "lat/comparison"
                       ]
                   },
                   {
                       "group": "Resources",
                       "pages": [
-                          "resources/glossaries"
+                          "resources/glossaries",
+                          "resources/faq"
                       ]
                   }
               ]
