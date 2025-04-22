@@ -18,8 +18,7 @@
                       "pages": [
                           "introduction",
                           "support",
-                          "community",
-                          "changelog"
+                          "community"
                       ]
                   },
                   {
@@ -44,6 +43,7 @@
                       "pages": [
                           "resources/glossaries",
                           "resources/faq",
+                          "resources/changelog",
                           "resources/audits"
                       ]
                   }
