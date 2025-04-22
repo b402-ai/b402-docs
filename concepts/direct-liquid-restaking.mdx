@@ -4,21 +4,20 @@ description: 'What is direct liquid restaking?'
 icon: stars
 ---
 
-Most current restaking protocols employ a complex design where users **must delegate stakes to operators** before they can be assigned to Actively Validated Services (AVS).
+**Direct Liquid Restaking** is a new framework that enables users to directly restake their assets into a specific Autonomous Verifiable Service (AVS), bypassing the need to manually select an operator. Built on top of EigenLayer’s native restaking interface, this design simplifies user experience and improves clarity around risk and reward.
 
-While this approach offers flexibility for service integration, it presents significant usability challenges:
+The Problem with Traditional Restaking
+EigenLayer and most existing restaking protocols require users to delegate their stake to operators, who then choose which AVSs to support. This indirect model introduces several challenges:
 
-1. **Indirect restaking**: Users cannot restake directly into a service; they must first choose an operator.
-2. **Diversification complexity**: Operators diversify their AVS operations and actively select which AVS to support, making users' staked assets inherently diversified and actively managed.
-3. **Risk assessment difficulties**: The complexity of this system makes it challenging for users to accurately measure risk and reward when evaluating restaking decisions.
+No Direct AVS Selection: Users can’t stake directly into a service—they must go through an operator.
 
-To enhance the user experience and improve restaking efficiency, we have designed a direct and liquid restaking framework that allows users to choose an AVS directly and restake their assets to secure it, simplifying the process and providing clearer risk/reward assessments.
+Opaque Diversification: Operators often support multiple AVSs, creating passive diversification that users don’t control.
 
-## Direct Liquid Restaking
+Unclear Risk/Reward: Users struggle to evaluate their exposure and the return profile of their stake due to the system’s complexity.
 
-Direct Liquid Restaking is implemented through an **Automated Operator Selection** process built on top of the native restaking interface.
 
-This system offers several key features:
+
+The direct liquid restaking system offers several key features and improvements over the original design:
 
 1. **Automated Operator Selection**: Instead of users manually choosing an operator, a smart contract automatically calculates each operator's contribution to the chosen AVS's security. A security contribution threshold is introduced to identify high-concentration operators for a given AVS.
 
