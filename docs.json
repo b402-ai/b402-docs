@@ -1,142 +1,149 @@
 {
-  "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "Area Docs",
-  "colors": {
-      "primary": "#71717a",
-      "light": "#ffffff",
-      "dark": "#27272a"
-  },
-  "favicon": "/public/fav-icon.svg",
-  "navigation": {
-      "tabs": [
-          {
-              "tab": "Documentation",
-              "groups": [
-                  {
-                      "group": "Introduction",
-                      "pages": [
-                          "introduction",
-                          "support",
-                          "community"
-                      ]
-                  },
-                  {
-                      "group": "Concepts",
-                      "pages": [
-                          "concepts/direct-liquid-restaking",
-                          "concepts/lat",
-                          "concepts/yield",
-                          "concepts/fee"
-                      ]
-                  },
-                  {
-                    "group": "Guides",
-                    "pages": [
-                        "guides/quick-start",
-                        "guides/why-lat",
-                        "guides/comparison"
-                    ]
-                },
-                  {
-                      "group": "Resources",
-                      "pages": [
-                          "resources/glossaries",
-                          "resources/faq",
-                          "resources/changelog",
-                          "resources/audits"
-                      ]
-                  }
-              ]
-          },
-
-          {
-              "tab": "Developers",
-              "groups": [
-                  {
-                      "group": "Introduction",
-                      "pages": [
-                          "developers/introduction",
-                          "developers/support",
-                          "developers/pricing",
-                          "developers/rate-limit",
-                          "developers/errors",
-                          "developers/changelog",
-                          "developers/api-status"
-                      ]
-                  },
-                  {
-                      "group": "Quick Start",
-                      "pages": [
-                          "developers/quickstart/get-started",
-                          "developers/quickstart/api-key",
-                          "developers/quickstart/mainnet-and-holesky-api"
-                      ]
-                  }
-              ]
-          },
-          {
-            "tab": "Data Reference",
-            "groups": [
-                {
-                    "group": "Getting Started",
-                    "pages": ["data-reference/introduction"]
-                },
-                {
-                    "group": "Metrics",
-                    "pages": ["data-reference/metrics"]
-                },
-                {
-                    "group": "Entities",
-                    "pages": [
-                        "data-reference/avs",
-                        "data-reference/operators",
-                        "data-reference/stakers"
-                    ]
-                },
-                {
-                    "group": "Mechanisms",
-                    "pages": ["data-reference/rewards"]
-                }
-            ]
+    "$schema": "https://mintlify.com/docs.json",
+    "theme": "mint",
+    "name": "Area Docs",
+    "colors": {
+        "primary": "#71717a",
+        "light": "#ffffff",
+        "dark": "#27272a"
+    },
+    "favicon": "/public/fav-icon.svg",
+    "navigation": {
+        "tabs": [
+            {
+                "tab": "Documentation",
+                "groups": [
+                    {
+                        "group": "Introduction",
+                        "pages": [
+                            "introduction",
+                            "support",
+                            "community"
+                        ]
+                    },
+                    {
+                        "group": "Concepts",
+                        "pages": [
+                            "concepts/direct-liquid-restaking",
+                            "concepts/lat",
+                            "concepts/yield",
+                            "concepts/fee",
+                            "concepts/base-asset",
+                            "concepts/operator-delegation"
+                        ]
+                    },
+                    {
+                        "group": "Guides",
+                        "pages": [
+                            "guides/using-area",
+                            "guides/why-lat",
+                            "guides/comparison"
+                        ]
+                    },
+                    {
+                        "group": "Resources",
+                        "pages": [
+                            "resources/glossaries",
+                            "resources/faq",
+                            "resources/changelog",
+                            "resources/audits"
+                        ]
+                    }
+                ]
+            },
+            {
+                "tab": "Developers",
+                "groups": [
+                    {
+                        "group": "Introduction",
+                        "pages": [
+                            "developers/introduction",
+                            "developers/support",
+                            "developers/pricing",
+                            "developers/rate-limit",
+                            "developers/errors",
+                            "developers/changelog",
+                            "developers/api-status"
+                        ]
+                    },
+                    {
+                        "group": "Quick Start",
+                        "pages": [
+                            "developers/quickstart/get-started",
+                            "developers/quickstart/api-key",
+                            "developers/quickstart/mainnet-and-holesky-api"
+                        ]
+                    }
+                ]
+            },
+            {
+                "tab": "Data Reference",
+                "groups": [
+                    {
+                        "group": "Getting Started",
+                        "pages": [
+                            "data-reference/introduction"
+                        ]
+                    },
+                    {
+                        "group": "Metrics",
+                        "pages": [
+                            "data-reference/metrics"
+                        ]
+                    },
+                    {
+                        "group": "Entities",
+                        "pages": [
+                            "data-reference/avs",
+                            "data-reference/operators",
+                            "data-reference/stakers"
+                        ]
+                    },
+                    {
+                        "group": "Mechanisms",
+                        "pages": [
+                            "data-reference/rewards"
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    "logo": {
+        "light": "/public/logo/logo-light.svg",
+        "dark": "/public/logo/logo-dark.svg"
+    },
+    "api": {
+        "mdx": {
+            "server": "https://api.eigenexplorer.com"
         }
-      ]
-  },
-  "logo": {
-      "light": "/public/logo/logo-light.svg",
-      "dark": "/public/logo/logo-dark.svg"
-  },
-  "api": {
-      "mdx": {
-          "server": "https://api.eigenexplorer.com"
-      }
-  },
-  "background": {
-      "decoration": "grid",
-      "color": {
-          "light": "#ffffff",
-          "dark": "#131419"
-      }
-  },
-  "navbar": {
-      "links": [
-          {
-              "label": "Developer Dashboard",
-              "href": "https://developer.eigenexplorer.com"
-          }
-      ],
-      "primary": {
-          "type": "button",
-          "label": "Open App",
-          "href": "https://area.club"
-      }
-  },
-  "footer": {
-      "socials": {
-          "twitter": "https://twitter.com/eigenexplorer",
-          "telegram": "https://t.me/eigenexplorer",
-          "discord": "https://discord.gg/3aTdnXgGNg",
-          "github": "https://github.com/eigenexplorer"
-      }
-  }
+    },
+    "background": {
+        "decoration": "grid",
+        "color": {
+            "light": "#ffffff",
+            "dark": "#131419"
+        }
+    },
+    "navbar": {
+        "links": [
+            {
+                "label": "Developer Dashboard",
+                "href": "https://developer.eigenexplorer.com"
+            }
+        ],
+        "primary": {
+            "type": "button",
+            "label": "Open App",
+            "href": "https://area.club"
+        }
+    },
+    "footer": {
+        "socials": {
+            "twitter": "https://twitter.com/eigenexplorer",
+            "telegram": "https://t.me/eigenexplorer",
+            "discord": "https://discord.gg/3aTdnXgGNg",
+            "github": "https://github.com/eigenexplorer"
+        }
+    }
 }
