@@ -67,12 +67,18 @@
                         ]
                     },
                     {
-                        "group": "Quick Start",
+                        "group": "Area Smart Contracts",
                         "pages": [
-                            "developers/quickstart/get-started",
-                            "developers/quickstart/api-key",
-                            "developers/quickstart/mainnet-and-holesky-api"
+                            "developers/lat-contracts/core-contracts",
+                            "developers/lat-contracts/utility-contracts"
                         ]
+                    },
+                    {
+                        "group": "API Reference",
+                        "openapi": {
+                            "source": "/developers/api-reference/openapi.json",
+                            "directory": "/developers/api-reference"
+                        }
                     }
                 ]
             },

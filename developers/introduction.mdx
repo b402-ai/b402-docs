@@ -1,42 +1,25 @@
 ---
 title: 'Introduction'
-description: 'Get started with EigenExplorer API'
+description: 'Get started with the Liquid AVS Token protocol'
 icon: 'right'
 ---
 
 ## Welcome
 
-<Note>
-    For Direct Liquid Restaking documentation, please refer to [**this
-    section**](/lat/introduction).
-</Note>
+This section provides an in-depth guide to the LAT protocol for developers integrating, building on, or maintaining the LAT system. It covers core contract responsibilities, key APIs, architectural design, and usage patterns. This is the foundational reference for engineers working on protocol-level interactions.
 
-EigenExplorer provides an array of API endpoints organized around REST for community users and developers to quickly access data and information about the EigenLayer ecosystem.
+### Overview
 
-Our API features predictable resource-oriented URLs, accepts form-encoded request bodies, returns JSON-encoded responses, and adheres to standard HTTP response codes, authentication methods, and verbs.
+LAT (Liquid AVS Token) is a tokenized representation of staked assets restaked into EigenLayer via a modular delegation system. The LAT system introduces a transparent, composable, and user-aligned model for liquid restaking.
 
-## Get Started
+Composable: LATs are ERC-20 tokens that represent positions restaked into specific AVSs.
 
-Get started with the EigenExplorer API and make your first API request:
+Deterministic: Every LAT traces directly to its originating deposit and associated AVS.
 
-<Card
-    title='Get Started for Free'
-    horizontal
-    icon='right'
-    href='./quickstart/get-started'
->
-    Get started with the EigenExplorer API, no credit card required
-</Card>
+Modular: StakerNodes delegate assets across strategies and can be dynamically created or upgraded.
 
-## Supported Networks
+### System Flow
 
-We support both the **Ethereum Mainnet** and **Holesky Testnet** APIs. Learn how to switch between networks here:
+[User] → [LiquidToken] → [LiquidTokenManager] → [StakerNode] → [EigenLayer Strategy]
 
-<Card
-    title='Ethereum Mainnet and Holesky Testnet API'
-    horizontal
-    icon='arrows-repeat'
-    href='./quickstart/mainnet-and-holesky-api'
->
-    Switch between Ethereum Mainnet and Holesky Testnet API
-</Card>
+Users deposit supported assets, receive LAT tokens, and those assets are delegated through a node infrastructure to the EigenLayer network.

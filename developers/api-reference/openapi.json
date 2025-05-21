@@ -1,0 +1,2972 @@
+{
+	"openapi": "3.0.3",
+	"info": {
+		"title": "Area API",
+		"description": "Area is a decentralized, non-custodial liquid restaking protocol that allows users to directly restake into networks and services.",
+		"version": "1.0.0",
+		"license": {
+			"name": "MIT",
+			"url": "https://spdx.org/licenses/MIT.html"
+		}
+	},
+	"servers": [
+		{
+			"url": "https://api.area.club",
+			"description": "Area Production API"
+		}
+	],
+	"paths": {
+		"/": {
+			"get": {
+				"operationId": "getAllLats",
+				"summary": "Retrieve all Liquid AVS Tokens (LATs)",
+				"description": "Returns all Liquid AVS Tokens (LATs). Optionally groups them by token type.",
+				"tags": ["LAT"],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "withGrouping",
+						"description": "Toggle whether the route should group LATs by their token groupings",
+						"schema": {
+							"type": "string",
+							"enum": ["true", "false"],
+							"default": "false",
+							"description": "Toggle whether the route should group LATs by their token groupings",
+							"example": "false"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "List of Liquid AVS Tokens (LATs)",
+						"content": {
+							"application/json": {
+								"schema": {
+									"anyOf": [
+										{
+											"type": "object",
+											"properties": {
+												"data": {
+													"type": "array",
+													"items": {
+														"type": "object",
+														"properties": {
+															"proxyAddress": {
+																"type": "string",
+																"pattern": "^0x[a-fA-F0-9]{40}$",
+																"description": "Proxy contract address of the LAT",
+																"example": "0x35f4f28a8d3ff20eed10e087e8f96ea2641e6aa1"
+															},
+															"implementationAddress": {
+																"type": "string",
+																"pattern": "^0x[a-fA-F0-9]{40}$",
+																"description": "Implementation contract address of the LAT",
+																"example": "0x93c4b944d05dfe6df7645a86cd2206016c51564d"
+															},
+															"name": {
+																"type": "string",
+																"description": "The name of the LAT",
+																"example": "EigenDA-ETH Liquid AVS Token"
+															},
+															"symbol": {
+																"type": "string",
+																"description": "The symbol of the LAT",
+																"example": "xEigenDA-ETH"
+															},
+															"avsAddress": {
+																"type": "string",
+																"pattern": "^0x[a-fA-F0-9]{40}$",
+																"description": "Underlying AVS contract address",
+																"example": "0x2344c0fe02ccd2b32155ca0ffcb1978a6d96a552"
+															},
+															"chainId": {
+																"type": "number",
+																"description": "The chain ID where the token is deployed",
+																"example": 1
+															},
+															"maxNodes": {
+																"type": "number",
+																"description": "Maximum number of Staker Nodes allowed",
+																"example": 12
+															},
+															"contractDeployments": {
+																"type": "object",
+																"properties": {
+																	"implementation": {
+																		"type": "object",
+																		"additionalProperties": {
+																			"type": "string",
+																			"pattern": "^0x[a-fA-F0-9]{40}$"
+																		},
+																		"description": "Implementation contracts",
+																		"example": {
+																			"liquidTokenManager": "0x35f4f28a8d3ff20eed10e087e8f96ea2641e6aa1"
+																		}
+																	},
+																	"proxy": {
+																		"type": "object",
+																		"additionalProperties": {
+																			"type": "string",
+																			"pattern": "^0x[a-fA-F0-9]{40}$"
+																		},
+																		"description": "Proxy contracts",
+																		"example": {
+																			"liquidTokenManager": "0x93c4b944d05dfe6df7645a86cd2206016c51564d"
+																		}
+																	}
+																},
+																"required": ["implementation", "proxy"]
+															},
+															"tokens": {
+																"type": "array",
+																"items": {
+																	"type": "object",
+																	"properties": {
+																		"address": {
+																			"type": "string",
+																			"pattern": "^0x[a-fA-F0-9]{40}$",
+																			"description": "Token contract address",
+																			"example": "0x35f4f28a8d3ff20eed10e087e8f96ea2641e6aa1"
+																		},
+																		"strategyAddress": {
+																			"type": "string",
+																			"pattern": "^0x[a-fA-F0-9]{40}$",
+																			"description": "Strategy contract address",
+																			"example": "0x93c4b944d05dfe6df7645a86cd2206016c51564d"
+																		},
+																		"volatilityThreshold": {
+																			"type": "string",
+																			"description": "Volatility threshold for the token",
+																			"example": "700000000000000000"
+																		},
+																		"pricePerUnit": {
+																			"type": "string",
+																			"description": "Price per unit for the token",
+																			"example": "1020000000000000000"
+																		},
+																		"decimals": {
+																			"type": "number",
+																			"description": "Number of decimals for the token",
+																			"example": 18
+																		}
+																	},
+																	"required": [
+																		"address",
+																		"strategyAddress",
+																		"volatilityThreshold",
+																		"pricePerUnit",
+																		"decimals"
+																	]
+																},
+																"description": "Tokens supported by the LAT"
+															}
+														},
+														"required": [
+															"proxyAddress",
+															"implementationAddress",
+															"name",
+															"symbol",
+															"avsAddress",
+															"chainId",
+															"maxNodes",
+															"contractDeployments",
+															"tokens"
+														]
+													},
+													"description": "Array of LATs"
+												}
+											},
+											"required": ["data"]
+										},
+										{
+											"type": "object",
+											"properties": {
+												"data": {
+													"type": "object",
+													"properties": {
+														"ETH": {
+															"type": "array",
+															"items": {
+																"type": "object",
+																"properties": {
+																	"proxyAddress": {
+																		"type": "string",
+																		"pattern": "^0x[a-fA-F0-9]{40}$",
+																		"description": "Proxy contract address of the LAT",
+																		"example": "0x35f4f28a8d3ff20eed10e087e8f96ea2641e6aa1"
+																	},
+																	"implementationAddress": {
+																		"type": "string",
+																		"pattern": "^0x[a-fA-F0-9]{40}$",
+																		"description": "Implementation contract address of the LAT",
+																		"example": "0x93c4b944d05dfe6df7645a86cd2206016c51564d"
+																	},
+																	"name": {
+																		"type": "string",
+																		"description": "The name of the LAT",
+																		"example": "EigenDA-ETH Liquid AVS Token"
+																	},
+																	"symbol": {
+																		"type": "string",
+																		"description": "The symbol of the LAT",
+																		"example": "xEigenDA-ETH"
+																	},
+																	"avsAddress": {
+																		"type": "string",
+																		"pattern": "^0x[a-fA-F0-9]{40}$",
+																		"description": "Underlying AVS contract address",
+																		"example": "0x2344c0fe02ccd2b32155ca0ffcb1978a6d96a552"
+																	},
+																	"chainId": {
+																		"type": "number",
+																		"description": "The chain ID where the token is deployed",
+																		"example": 1
+																	},
+																	"maxNodes": {
+																		"type": "number",
+																		"description": "Maximum number of Staker Nodes allowed",
+																		"example": 12
+																	},
+																	"contractDeployments": {
+																		"type": "object",
+																		"properties": {
+																			"implementation": {
+																				"type": "object",
+																				"additionalProperties": {
+																					"type": "string",
+																					"pattern": "^0x[a-fA-F0-9]{40}$"
+																				},
+																				"description": "Implementation contracts",
+																				"example": {
+																					"liquidTokenManager": "0x35f4f28a8d3ff20eed10e087e8f96ea2641e6aa1"
+																				}
+																			},
+																			"proxy": {
+																				"type": "object",
+																				"additionalProperties": {
+																					"type": "string",
+																					"pattern": "^0x[a-fA-F0-9]{40}$"
+																				},
+																				"description": "Proxy contracts",
+																				"example": {
+																					"liquidTokenManager": "0x93c4b944d05dfe6df7645a86cd2206016c51564d"
+																				}
+																			}
+																		},
+																		"required": ["implementation", "proxy"]
+																	},
+																	"tokens": {
+																		"type": "array",
+																		"items": {
+																			"type": "object",
+																			"properties": {
+																				"address": {
+																					"type": "string",
+																					"pattern": "^0x[a-fA-F0-9]{40}$",
+																					"description": "Token contract address",
+																					"example": "0x35f4f28a8d3ff20eed10e087e8f96ea2641e6aa1"
+																				},
+																				"strategyAddress": {
+																					"type": "string",
+																					"pattern": "^0x[a-fA-F0-9]{40}$",
+																					"description": "Strategy contract address",
+																					"example": "0x93c4b944d05dfe6df7645a86cd2206016c51564d"
+																				},
+																				"volatilityThreshold": {
+																					"type": "string",
+																					"description": "Volatility threshold for the token",
+																					"example": "700000000000000000"
+																				},
+																				"pricePerUnit": {
+																					"type": "string",
+																					"description": "Price per unit for the token",
+																					"example": "1020000000000000000"
+																				},
+																				"decimals": {
+																					"type": "number",
+																					"description": "Number of decimals for the token",
+																					"example": 18
+																				}
+																			},
+																			"required": [
+																				"address",
+																				"strategyAddress",
+																				"volatilityThreshold",
+																				"pricePerUnit",
+																				"decimals"
+																			]
+																		},
+																		"description": "Tokens supported by the LAT"
+																	}
+																},
+																"required": [
+																	"proxyAddress",
+																	"implementationAddress",
+																	"name",
+																	"symbol",
+																	"avsAddress",
+																	"chainId",
+																	"maxNodes",
+																	"contractDeployments",
+																	"tokens"
+																]
+															},
+															"description": "ETH-grouped LATs",
+															"example": [
+																{
+																	"proxyAddress": "0x35f4f28a8d3ff20eed10e087e8f96ea2641e6aa1",
+																	"implementationAddress": "0x93c4b944d05dfe6df7645a86cd2206016c51564d",
+																	"name": "EigenDA-ETH Liquid AVS Token",
+																	"symbol": "xEigenDA-ETH",
+																	"avsAddress": "0x2344c0fe02ccd2b32155ca0ffcb1978a6d96a552",
+																	"chainId": 1,
+																	"maxNodes": 12,
+																	"contractDeployments": {
+																		"implementation": {
+																			"liquidTokenManager": "0x35f4f28a8d3ff20eed10e087e8f96ea2641e6aa1"
+																		},
+																		"proxy": {
+																			"liquidTokenManager": "0x93c4b944d05dfe6df7645a86cd2206016c51564d"
+																		}
+																	},
+																	"tokens": [
+																		{
+																			"address": "0x35f4f28a8d3ff20eed10e087e8f96ea2641e6aa1",
+																			"strategyAddress": "0x93c4b944d05dfe6df7645a86cd2206016c51564d",
+																			"volatilityThreshold": "700000000000000000",
+																			"pricePerUnit": "1020000000000000000",
+																			"decimals": 18
+																		}
+																	]
+																}
+															]
+														},
+														"BTC": {
+															"type": "array",
+															"items": {
+																"type": "object",
+																"properties": {
+																	"proxyAddress": {
+																		"type": "string",
+																		"pattern": "^0x[a-fA-F0-9]{40}$",
+																		"description": "Proxy contract address of the LAT",
+																		"example": "0x35f4f28a8d3ff20eed10e087e8f96ea2641e6aa1"
+																	},
+																	"implementationAddress": {
+																		"type": "string",
+																		"pattern": "^0x[a-fA-F0-9]{40}$",
+																		"description": "Implementation contract address of the LAT",
+																		"example": "0x93c4b944d05dfe6df7645a86cd2206016c51564d"
+																	},
+																	"name": {
+																		"type": "string",
+																		"description": "The name of the LAT",
+																		"example": "EigenDA-ETH Liquid AVS Token"
+																	},
+																	"symbol": {
+																		"type": "string",
+																		"description": "The symbol of the LAT",
+																		"example": "xEigenDA-ETH"
+																	},
+																	"avsAddress": {
+																		"type": "string",
+																		"pattern": "^0x[a-fA-F0-9]{40}$",
+																		"description": "Underlying AVS contract address",
+																		"example": "0x2344c0fe02ccd2b32155ca0ffcb1978a6d96a552"
+																	},
+																	"chainId": {
+																		"type": "number",
+																		"description": "The chain ID where the token is deployed",
+																		"example": 1
+																	},
+																	"maxNodes": {
+																		"type": "number",
+																		"description": "Maximum number of Staker Nodes allowed",
+																		"example": 12
+																	},
+																	"contractDeployments": {
+																		"type": "object",
+																		"properties": {
+																			"implementation": {
+																				"type": "object",
+																				"additionalProperties": {
+																					"type": "string",
+																					"pattern": "^0x[a-fA-F0-9]{40}$"
+																				},
+																				"description": "Implementation contracts",
+																				"example": {
+																					"liquidTokenManager": "0x35f4f28a8d3ff20eed10e087e8f96ea2641e6aa1"
+																				}
+																			},
+																			"proxy": {
+																				"type": "object",
+																				"additionalProperties": {
+																					"type": "string",
+																					"pattern": "^0x[a-fA-F0-9]{40}$"
+																				},
+																				"description": "Proxy contracts",
+																				"example": {
+																					"liquidTokenManager": "0x93c4b944d05dfe6df7645a86cd2206016c51564d"
+																				}
+																			}
+																		},
+																		"required": ["implementation", "proxy"]
+																	},
+																	"tokens": {
+																		"type": "array",
+																		"items": {
+																			"type": "object",
+																			"properties": {
+																				"address": {
+																					"type": "string",
+																					"pattern": "^0x[a-fA-F0-9]{40}$",
+																					"description": "Token contract address",
+																					"example": "0x35f4f28a8d3ff20eed10e087e8f96ea2641e6aa1"
+																				},
+																				"strategyAddress": {
+																					"type": "string",
+																					"pattern": "^0x[a-fA-F0-9]{40}$",
+																					"description": "Strategy contract address",
+																					"example": "0x93c4b944d05dfe6df7645a86cd2206016c51564d"
+																				},
+																				"volatilityThreshold": {
+																					"type": "string",
+																					"description": "Volatility threshold for the token",
+																					"example": "700000000000000000"
+																				},
+																				"pricePerUnit": {
+																					"type": "string",
+																					"description": "Price per unit for the token",
+																					"example": "1020000000000000000"
+																				},
+																				"decimals": {
+																					"type": "number",
+																					"description": "Number of decimals for the token",
+																					"example": 18
+																				}
+																			},
+																			"required": [
+																				"address",
+																				"strategyAddress",
+																				"volatilityThreshold",
+																				"pricePerUnit",
+																				"decimals"
+																			]
+																		},
+																		"description": "Tokens supported by the LAT"
+																	}
+																},
+																"required": [
+																	"proxyAddress",
+																	"implementationAddress",
+																	"name",
+																	"symbol",
+																	"avsAddress",
+																	"chainId",
+																	"maxNodes",
+																	"contractDeployments",
+																	"tokens"
+																]
+															},
+															"description": "BTC-grouped LATs",
+															"example": []
+														},
+														"Native": {
+															"type": "array",
+															"items": {
+																"type": "object",
+																"properties": {
+																	"proxyAddress": {
+																		"type": "string",
+																		"pattern": "^0x[a-fA-F0-9]{40}$",
+																		"description": "Proxy contract address of the LAT",
+																		"example": "0x35f4f28a8d3ff20eed10e087e8f96ea2641e6aa1"
+																	},
+																	"implementationAddress": {
+																		"type": "string",
+																		"pattern": "^0x[a-fA-F0-9]{40}$",
+																		"description": "Implementation contract address of the LAT",
+																		"example": "0x93c4b944d05dfe6df7645a86cd2206016c51564d"
+																	},
+																	"name": {
+																		"type": "string",
+																		"description": "The name of the LAT",
+																		"example": "EigenDA-ETH Liquid AVS Token"
+																	},
+																	"symbol": {
+																		"type": "string",
+																		"description": "The symbol of the LAT",
+																		"example": "xEigenDA-ETH"
+																	},
+																	"avsAddress": {
+																		"type": "string",
+																		"pattern": "^0x[a-fA-F0-9]{40}$",
+																		"description": "Underlying AVS contract address",
+																		"example": "0x2344c0fe02ccd2b32155ca0ffcb1978a6d96a552"
+																	},
+																	"chainId": {
+																		"type": "number",
+																		"description": "The chain ID where the token is deployed",
+																		"example": 1
+																	},
+																	"maxNodes": {
+																		"type": "number",
+																		"description": "Maximum number of Staker Nodes allowed",
+																		"example": 12
+																	},
+																	"contractDeployments": {
+																		"type": "object",
+																		"properties": {
+																			"implementation": {
+																				"type": "object",
+																				"additionalProperties": {
+																					"type": "string",
+																					"pattern": "^0x[a-fA-F0-9]{40}$"
+																				},
+																				"description": "Implementation contracts",
+																				"example": {
+																					"liquidTokenManager": "0x35f4f28a8d3ff20eed10e087e8f96ea2641e6aa1"
+																				}
+																			},
+																			"proxy": {
+																				"type": "object",
+																				"additionalProperties": {
+																					"type": "string",
+																					"pattern": "^0x[a-fA-F0-9]{40}$"
+																				},
+																				"description": "Proxy contracts",
+																				"example": {
+																					"liquidTokenManager": "0x93c4b944d05dfe6df7645a86cd2206016c51564d"
+																				}
+																			}
+																		},
+																		"required": ["implementation", "proxy"]
+																	},
+																	"tokens": {
+																		"type": "array",
+																		"items": {
+																			"type": "object",
+																			"properties": {
+																				"address": {
+																					"type": "string",
+																					"pattern": "^0x[a-fA-F0-9]{40}$",
+																					"description": "Token contract address",
+																					"example": "0x35f4f28a8d3ff20eed10e087e8f96ea2641e6aa1"
+																				},
+																				"strategyAddress": {
+																					"type": "string",
+																					"pattern": "^0x[a-fA-F0-9]{40}$",
+																					"description": "Strategy contract address",
+																					"example": "0x93c4b944d05dfe6df7645a86cd2206016c51564d"
+																				},
+																				"volatilityThreshold": {
+																					"type": "string",
+																					"description": "Volatility threshold for the token",
+																					"example": "700000000000000000"
+																				},
+																				"pricePerUnit": {
+																					"type": "string",
+																					"description": "Price per unit for the token",
+																					"example": "1020000000000000000"
+																				},
+																				"decimals": {
+																					"type": "number",
+																					"description": "Number of decimals for the token",
+																					"example": 18
+																				}
+																			},
+																			"required": [
+																				"address",
+																				"strategyAddress",
+																				"volatilityThreshold",
+																				"pricePerUnit",
+																				"decimals"
+																			]
+																		},
+																		"description": "Tokens supported by the LAT"
+																	}
+																},
+																"required": [
+																	"proxyAddress",
+																	"implementationAddress",
+																	"name",
+																	"symbol",
+																	"avsAddress",
+																	"chainId",
+																	"maxNodes",
+																	"contractDeployments",
+																	"tokens"
+																]
+															},
+															"description": "Native-grouped LATs",
+															"example": []
+														}
+													},
+													"required": ["ETH", "BTC", "Native"],
+													"description": "Array of LATs grouped by"
+												}
+											},
+											"required": ["data"]
+										}
+									]
+								}
+							}
+						}
+					},
+					"400": {
+						"$ref": "#/components/responses/400"
+					},
+					"401": {
+						"$ref": "#/components/responses/401"
+					},
+					"403": {
+						"$ref": "#/components/responses/403"
+					},
+					"404": {
+						"$ref": "#/components/responses/404"
+					},
+					"422": {
+						"$ref": "#/components/responses/422"
+					},
+					"429": {
+						"$ref": "#/components/responses/429"
+					},
+					"500": {
+						"$ref": "#/components/responses/500"
+					}
+				}
+			}
+		},
+		"/assets": {
+			"get": {
+				"operationId": "getAllSupportedTokens",
+				"summary": "Retrieve all supported tokens with their LATs",
+				"description": "Returns all tokens that are supported by the Area LAT ecosystem and their associated LATs.",
+				"tags": ["LAT"],
+				"responses": {
+					"200": {
+						"description": "List of supported tokens with their LATs",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"data": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"tokenAddress": {
+														"type": "string",
+														"pattern": "^0x[a-fA-F0-9]{40}$",
+														"description": "Token contract address",
+														"example": "0x1d8b30cc38dba8abce1ac29ea27d9cfd05379a09"
+													},
+													"tokenSymbol": {
+														"type": "string",
+														"description": "Symbol of the token",
+														"example": "LsETH"
+													},
+													"tokenName": {
+														"type": "string",
+														"description": "Name of the token",
+														"example": "Liquid Staked ETH"
+													},
+													"tokenDecimals": {
+														"type": "number",
+														"description": "Number of decimals for the token",
+														"example": 18
+													},
+													"tokenCmcId": {
+														"type": "number",
+														"nullable": true,
+														"description": "CoinMarketCap ID for the token",
+														"example": 23782
+													},
+													"lats": {
+														"type": "array",
+														"items": {
+															"type": "object",
+															"properties": {
+																"latAddress": {
+																	"type": "string",
+																	"pattern": "^0x[a-fA-F0-9]{40}$",
+																	"description": "LAT contract address",
+																	"example": "0xaa4398a908cae395dff7f5d620e5899905b52723"
+																},
+																"latName": {
+																	"type": "string",
+																	"description": "Name of the LAT",
+																	"example": "EigenDA-ETH Liquid Avs Token"
+																},
+																"latSymbol": {
+																	"type": "string",
+																	"description": "Symbol of the LAT",
+																	"example": "xEigenDA-ETH"
+																}
+															},
+															"required": ["latAddress", "latName", "latSymbol"]
+														},
+														"description": "All LATs where this token is supported"
+													}
+												},
+												"required": [
+													"tokenAddress",
+													"tokenSymbol",
+													"tokenName",
+													"tokenDecimals",
+													"tokenCmcId",
+													"lats"
+												]
+											},
+											"description": "Array of all supported tokens with their LATs"
+										}
+									},
+									"required": ["data"]
+								}
+							}
+						}
+					},
+					"400": {
+						"$ref": "#/components/responses/400"
+					},
+					"401": {
+						"$ref": "#/components/responses/401"
+					},
+					"403": {
+						"$ref": "#/components/responses/403"
+					},
+					"404": {
+						"$ref": "#/components/responses/404"
+					},
+					"422": {
+						"$ref": "#/components/responses/422"
+					},
+					"429": {
+						"$ref": "#/components/responses/429"
+					},
+					"500": {
+						"$ref": "#/components/responses/500"
+					}
+				}
+			}
+		},
+		"/operators": {
+			"get": {
+				"operationId": "getAllOperators",
+				"summary": "Retrieve all Operators delegated to in the Area LAT ecosystem",
+				"description": "Returns all unique Operator delegation addresses from all Staker Nodes across all LATs",
+				"tags": ["LAT"],
+				"responses": {
+					"200": {
+						"description": "List of Operator addresses",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"data": {
+											"type": "array",
+											"items": {
+												"type": "string",
+												"pattern": "^0x[a-fA-F0-9]{40}$",
+												"description": "Operator address",
+												"example": "0x481748cb75f586ec774f2b2b2f900d8248ab2a3e"
+											},
+											"description": "Array of Operator addresses"
+										}
+									},
+									"required": ["data"]
+								}
+							}
+						}
+					},
+					"400": {
+						"$ref": "#/components/responses/400"
+					},
+					"401": {
+						"$ref": "#/components/responses/401"
+					},
+					"403": {
+						"$ref": "#/components/responses/403"
+					},
+					"404": {
+						"$ref": "#/components/responses/404"
+					},
+					"422": {
+						"$ref": "#/components/responses/422"
+					},
+					"429": {
+						"$ref": "#/components/responses/429"
+					},
+					"500": {
+						"$ref": "#/components/responses/500"
+					}
+				}
+			}
+		},
+		"/operators/{address}": {
+			"get": {
+				"operationId": "getOperator",
+				"summary": "Retrieve Operator details",
+				"description": "Returns details about an Operator including metadata, LATs where Operator is delegated to, Staker Nodes info for whome this Operator is a delegation, and optionally TVL given to the Operator from all LATs.",
+				"tags": ["LAT"],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "address",
+						"description": "Address of the Operator",
+						"schema": {
+							"type": "string",
+							"pattern": "^0x[a-fA-F0-9]{40}$",
+							"description": "Address of the Operator",
+							"example": "0xa4e245c3a1cb2f0512a71b9cd908dca2f1641781"
+						},
+						"required": true
+					},
+					{
+						"in": "query",
+						"name": "withTvl",
+						"description": "Toggle whether the route should calculate the TVL from shares",
+						"schema": {
+							"type": "string",
+							"enum": ["true", "false"],
+							"default": "false",
+							"description": "Toggle whether the route should calculate the TVL from shares",
+							"example": "false"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Operator details",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"data": {
+											"type": "object",
+											"properties": {
+												"operatorAddress": {
+													"type": "string",
+													"pattern": "^0x[a-fA-F0-9]{40}$",
+													"description": "Operator address",
+													"example": "0xa4e245c3a1cb2f0512a71b9cd908dca2f1641781"
+												},
+												"metadata": {
+													"type": "object",
+													"properties": {
+														"metadataName": {
+															"type": "string",
+															"description": "Name of the Operator",
+															"example": "Kiln"
+														},
+														"metadataDescription": {
+															"type": "string",
+															"description": "Description of the Operator",
+															"example": "Kiln is the leading staking platform with over $7B stake under management, running over 4% of the Ethereum network."
+														},
+														"metadataDiscord": {
+															"type": "string",
+															"description": "Discord link of the operator",
+															"example": ""
+														},
+														"metadataLogo": {
+															"type": "string",
+															"description": "Logo URL of the operator",
+															"example": "https://raw.githubusercontent.com/kilnfi/public/main/icon.png"
+														},
+														"metadataTelegram": {
+															"type": "string",
+															"description": "Telegram link of the Operator",
+															"example": ""
+														},
+														"metadataWebsite": {
+															"type": "string",
+															"description": "Website URL of the Operator",
+															"example": "https://kiln.fi"
+														},
+														"metadataX": {
+															"type": "string",
+															"description": "X/Twitter link of the Operator",
+															"example": "https://twitter.com/Kiln_finance"
+														},
+														"totalStakers": {
+															"type": "number",
+															"description": "Total number of stakers",
+															"example": 1730
+														},
+														"tvl": {
+															"type": "number",
+															"description": "TVL of the Operator",
+															"example": 14045.306990857485
+														}
+													},
+													"description": "Operator metadata"
+												},
+												"liquidTokens": {
+													"type": "array",
+													"items": {
+														"type": "string",
+														"pattern": "^0x[a-fA-F0-9]{40}$"
+													},
+													"description": "LATs associated with the Operator",
+													"example": ["0xaa4398a908cae395dff7f5d620e5899905b52723"]
+												},
+												"stakerNodeAssets": {
+													"type": "array",
+													"items": {
+														"type": "object",
+														"properties": {
+															"nodeAddress": {
+																"type": "string",
+																"description": "Node address",
+																"example": "0x5696191d573b3cf282886028ad94edb8f586dba4"
+															},
+															"nodeId": {
+																"type": "number",
+																"description": "Node ID",
+																"example": 2
+															},
+															"assets": {
+																"type": "array",
+																"items": {
+																	"type": "object",
+																	"properties": {
+																		"asset": {
+																			"type": "string",
+																			"description": "Asset token address",
+																			"example": "0x3f1c547b21f65e10480de3ad8e19faac46c95034"
+																		},
+																		"strategy": {
+																			"type": "string",
+																			"description": "Strategy address",
+																			"example": "0x7D704507b76571a51d9caE8AdDAbBFd0ba0e63d3"
+																		},
+																		"stakedAmount": {
+																			"type": "string",
+																			"description": "Staked amount",
+																			"example": "338936078743497835"
+																		},
+																		"eigenLayerShares": {
+																			"type": "string",
+																			"description": "EigenLayer shares",
+																			"example": "402974731021952492"
+																		}
+																	},
+																	"required": [
+																		"asset",
+																		"strategy",
+																		"stakedAmount",
+																		"eigenLayerShares"
+																	]
+																},
+																"description": "Node assets"
+															}
+														},
+														"required": ["nodeAddress", "nodeId", "assets"]
+													},
+													"description": "Staker Node assets associated with the Operator"
+												},
+												"tvl": {
+													"type": "object",
+													"properties": {
+														"tvl": {
+															"type": "number",
+															"description": "Total TVL value",
+															"example": 0.6666606411338315
+														},
+														"tvlStrategies": {
+															"type": "object",
+															"additionalProperties": {
+																"type": "number"
+															},
+															"description": "TVL by strategy",
+															"example": {
+																"stETH": 0.33879547162730034,
+																"sfrxETH": 0.2978332589227976
+															}
+														},
+														"tvlStrategiesEth": {
+															"type": "object",
+															"additionalProperties": {
+																"type": "number"
+															},
+															"description": "TVL by strategy in ETH",
+															"example": {
+																"stETH": 0.33814533238964134,
+																"sfrxETH": 0.32851530874419016
+															}
+														}
+													},
+													"required": ["tvl", "tvlStrategies", "tvlStrategiesEth"],
+													"description": "TVL information across all LATs (included when withTvl=true)"
+												}
+											},
+											"required": [
+												"operatorAddress",
+												"metadata",
+												"liquidTokens",
+												"stakerNodeAssets"
+											]
+										}
+									},
+									"required": ["data"]
+								}
+							}
+						}
+					},
+					"400": {
+						"$ref": "#/components/responses/400"
+					},
+					"401": {
+						"$ref": "#/components/responses/401"
+					},
+					"403": {
+						"$ref": "#/components/responses/403"
+					},
+					"404": {
+						"$ref": "#/components/responses/404"
+					},
+					"422": {
+						"$ref": "#/components/responses/422"
+					},
+					"429": {
+						"$ref": "#/components/responses/429"
+					},
+					"500": {
+						"$ref": "#/components/responses/500"
+					}
+				}
+			}
+		},
+		"/avs/{address}": {
+			"get": {
+				"operationId": "getAvsLats",
+				"summary": "Retrieve all LATs for a specific AVS",
+				"description": "Returns all LATs associated with the provided AVS address.",
+				"tags": ["LAT"],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "address",
+						"description": "Address of the AVS",
+						"schema": {
+							"type": "string",
+							"pattern": "^0x[a-fA-F0-9]{40}$",
+							"description": "Address of the AVS",
+							"example": "0x2344c0fe02ccd2b32155ca0ffcb1978a6d96a552"
+						},
+						"required": true
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "List of LATs for the specified AVS",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"data": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"address": {
+														"type": "string",
+														"pattern": "^0x[a-fA-F0-9]{40}$",
+														"description": "LAT contract address",
+														"example": "0xaa4398a908cae395dff7f5d620e5899905b52723"
+													},
+													"symbol": {
+														"type": "string",
+														"description": "LAT token symbol",
+														"example": "xEigenDA-ETH"
+													}
+												},
+												"required": ["address", "symbol"]
+											},
+											"description": "Array of LATs for the specified AVS"
+										}
+									},
+									"required": ["data"]
+								}
+							}
+						}
+					},
+					"400": {
+						"$ref": "#/components/responses/400"
+					},
+					"401": {
+						"$ref": "#/components/responses/401"
+					},
+					"403": {
+						"$ref": "#/components/responses/403"
+					},
+					"404": {
+						"$ref": "#/components/responses/404"
+					},
+					"422": {
+						"$ref": "#/components/responses/422"
+					},
+					"429": {
+						"$ref": "#/components/responses/429"
+					},
+					"500": {
+						"$ref": "#/components/responses/500"
+					}
+				}
+			}
+		},
+		"/{address}": {
+			"get": {
+				"operationId": "getLat",
+				"summary": "Retrieve a specific LAT",
+				"description": "Returns detailed information about a specific LAT by address. Supports optional TVL, APY, and curated metadata inclusion.",
+				"tags": ["LAT"],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "address",
+						"description": "LAT contract address",
+						"schema": {
+							"type": "string",
+							"pattern": "^0x[a-fA-F0-9]{40}$",
+							"description": "LAT contract address"
+						},
+						"required": true
+					},
+					{
+						"in": "query",
+						"name": "withTvl",
+						"description": "Toggle whether the route should calculate the TVL from shares",
+						"schema": {
+							"type": "string",
+							"enum": ["true", "false"],
+							"default": "false",
+							"description": "Toggle whether the route should calculate the TVL from shares",
+							"example": "false"
+						}
+					},
+					{
+						"in": "query",
+						"name": "withCuratedMetadata",
+						"description": "Toggle whether the route should send curated metadata",
+						"schema": {
+							"type": "string",
+							"enum": ["true", "false"],
+							"default": "false",
+							"description": "Toggle whether the route should send curated metadata",
+							"example": "false"
+						}
+					},
+					{
+						"in": "query",
+						"name": "withApy",
+						"description": "Toggle whether the route should send apy data",
+						"schema": {
+							"type": "string",
+							"enum": ["true", "false"],
+							"default": "false",
+							"description": "Toggle whether the route should send apy data",
+							"example": "false"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Detailed information about the requested LAT",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"proxyAddress": {
+											"type": "string",
+											"pattern": "^0x[a-fA-F0-9]{40}$",
+											"description": "Proxy contract address of the LAT",
+											"example": "0x35f4f28a8d3ff20eed10e087e8f96ea2641e6aa1"
+										},
+										"implementationAddress": {
+											"type": "string",
+											"pattern": "^0x[a-fA-F0-9]{40}$",
+											"description": "Implementation contract address of the LAT",
+											"example": "0x93c4b944d05dfe6df7645a86cd2206016c51564d"
+										},
+										"name": {
+											"type": "string",
+											"description": "The name of the LAT",
+											"example": "EigenDA-ETH Liquid AVS Token"
+										},
+										"symbol": {
+											"type": "string",
+											"description": "The symbol of the LAT",
+											"example": "xEigenDA-ETH"
+										},
+										"avsAddress": {
+											"type": "string",
+											"pattern": "^0x[a-fA-F0-9]{40}$",
+											"description": "Underlying AVS contract address",
+											"example": "0x2344c0fe02ccd2b32155ca0ffcb1978a6d96a552"
+										},
+										"chainId": {
+											"type": "number",
+											"description": "The chain ID where the token is deployed",
+											"example": 1
+										},
+										"maxNodes": {
+											"type": "number",
+											"description": "Maximum number of Staker Nodes allowed",
+											"example": 12
+										},
+										"contractDeployments": {
+											"type": "object",
+											"properties": {
+												"implementation": {
+													"type": "object",
+													"additionalProperties": {
+														"type": "string",
+														"pattern": "^0x[a-fA-F0-9]{40}$"
+													},
+													"description": "Implementation contracts",
+													"example": {
+														"liquidTokenManager": "0x35f4f28a8d3ff20eed10e087e8f96ea2641e6aa1"
+													}
+												},
+												"proxy": {
+													"type": "object",
+													"additionalProperties": {
+														"type": "string",
+														"pattern": "^0x[a-fA-F0-9]{40}$"
+													},
+													"description": "Proxy contracts",
+													"example": {
+														"liquidTokenManager": "0x93c4b944d05dfe6df7645a86cd2206016c51564d"
+													}
+												}
+											},
+											"required": ["implementation", "proxy"]
+										},
+										"tokens": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"address": {
+														"type": "string",
+														"pattern": "^0x[a-fA-F0-9]{40}$",
+														"description": "Token contract address",
+														"example": "0x35f4f28a8d3ff20eed10e087e8f96ea2641e6aa1"
+													},
+													"strategyAddress": {
+														"type": "string",
+														"pattern": "^0x[a-fA-F0-9]{40}$",
+														"description": "Strategy contract address",
+														"example": "0x93c4b944d05dfe6df7645a86cd2206016c51564d"
+													},
+													"volatilityThreshold": {
+														"type": "string",
+														"description": "Volatility threshold for the token",
+														"example": "700000000000000000"
+													},
+													"pricePerUnit": {
+														"type": "string",
+														"description": "Price per unit for the token",
+														"example": "1020000000000000000"
+													},
+													"decimals": {
+														"type": "number",
+														"description": "Number of decimals for the token",
+														"example": 18
+													}
+												},
+												"required": [
+													"address",
+													"strategyAddress",
+													"volatilityThreshold",
+													"pricePerUnit",
+													"decimals"
+												]
+											},
+											"description": "Tokens supported by the LAT"
+										},
+										"assets": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"asset": {
+														"type": "string",
+														"pattern": "^0x[a-fA-F0-9]{40}$",
+														"description": "Asset contract address"
+													},
+													"balance": {
+														"type": "string",
+														"description": "Current balance of the asset"
+													},
+													"queuedBalance": {
+														"type": "string",
+														"description": "Queued balance of the asset"
+													}
+												},
+												"required": ["asset", "balance", "queuedBalance"]
+											},
+											"description": "Supported assets"
+										},
+										"tvl": {
+											"type": "object",
+											"properties": {
+												"tvl": {
+													"type": "number",
+													"description": "Total Value Locked in ETH"
+												},
+												"unstakedTvl": {
+													"type": "number",
+													"description": "Unstaked TVL in ETH"
+												},
+												"stakedTvl": {
+													"type": "number",
+													"description": "Staked TVL in ETH"
+												},
+												"queuedTvl": {
+													"type": "number",
+													"description": "Queued TVL in ETH"
+												},
+												"tvlAssets": {
+													"type": "object",
+													"additionalProperties": {
+														"type": "number"
+													},
+													"description": "TVL breakdown by asset symbol"
+												},
+												"tvlAssetsEth": {
+													"type": "object",
+													"additionalProperties": {
+														"type": "number"
+													},
+													"description": "TVL breakdown by asset symbol in ETH value"
+												}
+											},
+											"required": [
+												"tvl",
+												"unstakedTvl",
+												"stakedTvl",
+												"queuedTvl",
+												"tvlAssets",
+												"tvlAssetsEth"
+											],
+											"description": "TVL and breakdown"
+										},
+										"apys": {
+											"type": "object",
+											"properties": {
+												"current": {
+													"type": "object",
+													"properties": {
+														"apy": {
+															"type": "string",
+															"description": "APY from restaking (AVS rewards)"
+														},
+														"baseApy": {
+															"type": "string",
+															"description": "Base APY (from LST yield)"
+														},
+														"nativeApy": {
+															"type": "string",
+															"description": "Native APY (from EigenLayer programmatic incentives)"
+														},
+														"totalApy": {
+															"type": "string",
+															"description": "Total APY"
+														}
+													},
+													"required": ["apy", "baseApy", "nativeApy", "totalApy"],
+													"description": "Current APY values",
+													"example": {
+														"apy": "0.057",
+														"baseApy": "3.073",
+														"nativeApy": "0.128",
+														"totalApy": "3.257"
+													}
+												},
+												"avg30d": {
+													"type": "object",
+													"properties": {
+														"apy": {
+															"type": "string",
+															"description": "APY from restaking (AVS rewards)"
+														},
+														"baseApy": {
+															"type": "string",
+															"description": "Base APY (from LST yield)"
+														},
+														"nativeApy": {
+															"type": "string",
+															"description": "Native APY (from EigenLayer programmatic incentives)"
+														},
+														"totalApy": {
+															"type": "string",
+															"description": "Total APY"
+														}
+													},
+													"required": ["apy", "baseApy", "nativeApy", "totalApy"],
+													"description": "30-day average APY values",
+													"example": {
+														"apy": "0.057",
+														"baseApy": "3.073",
+														"nativeApy": "0.128",
+														"totalApy": "3.257"
+													}
+												},
+												"trailing7d": {
+													"type": "object",
+													"properties": {
+														"apy": {
+															"type": "string",
+															"description": "APY from restaking (AVS rewards)"
+														},
+														"baseApy": {
+															"type": "string",
+															"description": "Base APY (from LST yield)"
+														},
+														"nativeApy": {
+															"type": "string",
+															"description": "Native APY (from EigenLayer programmatic incentives)"
+														},
+														"totalApy": {
+															"type": "string",
+															"description": "Total APY"
+														}
+													},
+													"required": ["apy", "baseApy", "nativeApy", "totalApy"],
+													"description": "7-day trailing APY values",
+													"example": {
+														"apy": "0.057",
+														"baseApy": "3.073",
+														"nativeApy": "0.128",
+														"totalApy": "3.257"
+													}
+												},
+												"trailing30d": {
+													"type": "object",
+													"properties": {
+														"apy": {
+															"type": "string",
+															"description": "APY from restaking (AVS rewards)"
+														},
+														"baseApy": {
+															"type": "string",
+															"description": "Base APY (from LST yield)"
+														},
+														"nativeApy": {
+															"type": "string",
+															"description": "Native APY (from EigenLayer programmatic incentives)"
+														},
+														"totalApy": {
+															"type": "string",
+															"description": "Total APY"
+														}
+													},
+													"required": ["apy", "baseApy", "nativeApy", "totalApy"],
+													"description": "30-day trailing APY values",
+													"example": {
+														"apy": "0.057",
+														"baseApy": "3.073",
+														"nativeApy": "0.128",
+														"totalApy": "3.257"
+													}
+												},
+												"trailing3m": {
+													"type": "object",
+													"properties": {
+														"apy": {
+															"type": "string",
+															"description": "APY from restaking (AVS rewards)"
+														},
+														"baseApy": {
+															"type": "string",
+															"description": "Base APY (from LST yield)"
+														},
+														"nativeApy": {
+															"type": "string",
+															"description": "Native APY (from EigenLayer programmatic incentives)"
+														},
+														"totalApy": {
+															"type": "string",
+															"description": "Total APY"
+														}
+													},
+													"required": ["apy", "baseApy", "nativeApy", "totalApy"],
+													"description": "3-month trailing APY values",
+													"example": {
+														"apy": "0.057",
+														"baseApy": "3.073",
+														"nativeApy": "0.128",
+														"totalApy": "3.257"
+													}
+												},
+												"trailing6m": {
+													"type": "object",
+													"properties": {
+														"apy": {
+															"type": "string",
+															"description": "APY from restaking (AVS rewards)"
+														},
+														"baseApy": {
+															"type": "string",
+															"description": "Base APY (from LST yield)"
+														},
+														"nativeApy": {
+															"type": "string",
+															"description": "Native APY (from EigenLayer programmatic incentives)"
+														},
+														"totalApy": {
+															"type": "string",
+															"description": "Total APY"
+														}
+													},
+													"required": ["apy", "baseApy", "nativeApy", "totalApy"],
+													"description": "6-month trailing APY values",
+													"example": {
+														"apy": "0.057",
+														"baseApy": "3.073",
+														"nativeApy": "0.128",
+														"totalApy": "3.257"
+													}
+												},
+												"trailing1y": {
+													"type": "object",
+													"properties": {
+														"apy": {
+															"type": "string",
+															"description": "APY from restaking (AVS rewards)"
+														},
+														"baseApy": {
+															"type": "string",
+															"description": "Base APY (from LST yield)"
+														},
+														"nativeApy": {
+															"type": "string",
+															"description": "Native APY (from EigenLayer programmatic incentives)"
+														},
+														"totalApy": {
+															"type": "string",
+															"description": "Total APY"
+														}
+													},
+													"required": ["apy", "baseApy", "nativeApy", "totalApy"],
+													"description": "1-year trailing APY values",
+													"example": {
+														"apy": "0.057",
+														"baseApy": "3.073",
+														"nativeApy": "0.128",
+														"totalApy": "3.257"
+													}
+												}
+											},
+											"required": [
+												"current",
+												"avg30d",
+												"trailing7d",
+												"trailing30d",
+												"trailing3m",
+												"trailing6m",
+												"trailing1y"
+											],
+											"description": "APY breakdown for different time periods"
+										},
+										"curatedMetadata": {
+											"type": "object",
+											"additionalProperties": {
+												"anyOf": [
+													{
+														"type": "string"
+													},
+													{
+														"type": "array",
+														"items": {
+															"type": "string"
+														}
+													}
+												]
+											},
+											"description": "To curate visibility and additional information of the AVS ",
+											"example": {
+												"avsAddress": "0x2344c0fe02ccd2b32155ca0ffcb1978a6d96a552",
+												"metadataName": "Example AVS",
+												"metadataDescription": "This is an example AVS",
+												"metadataDiscord": "https://discord.com/invite/example",
+												"metadataLogo": "The URL of the AVS's logo",
+												"metadataTelegram": "The URL of the AVS's Telegram channel",
+												"metadataWebsite": "https://example.com",
+												"metadataX": "https://twitter.com/example",
+												"metadataGithub": "https://github.com/example",
+												"metadataTokenAddress": "0x2344c0fe02ccd2b32155ca0ffcb1978a6d96a552",
+												"tags": ["Example tag 1", "Example tag 2"]
+											}
+										}
+									},
+									"required": [
+										"proxyAddress",
+										"implementationAddress",
+										"name",
+										"symbol",
+										"avsAddress",
+										"chainId",
+										"maxNodes",
+										"contractDeployments",
+										"tokens"
+									]
+								}
+							}
+						}
+					},
+					"400": {
+						"$ref": "#/components/responses/400"
+					},
+					"401": {
+						"$ref": "#/components/responses/401"
+					},
+					"403": {
+						"$ref": "#/components/responses/403"
+					},
+					"404": {
+						"$ref": "#/components/responses/404"
+					},
+					"422": {
+						"$ref": "#/components/responses/422"
+					},
+					"429": {
+						"$ref": "#/components/responses/429"
+					},
+					"500": {
+						"$ref": "#/components/responses/500"
+					}
+				}
+			}
+		},
+		"/{address}/staker-nodes": {
+			"get": {
+				"operationId": "getLatStakerNodes",
+				"summary": "Retrieve staker nodes for a LAT",
+				"description": "Returns all staker nodes associated with a specific LAT address",
+				"tags": ["LAT"],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "address",
+						"description": "The address of the LAT",
+						"schema": {
+							"type": "string",
+							"pattern": "^0x[a-fA-F0-9]{40}$",
+							"description": "The address of the LAT"
+						},
+						"required": true
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Staker Nodes for the specified LAT",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"address": {
+											"type": "string",
+											"pattern": "^0x[a-fA-F0-9]{40}$",
+											"description": "The address of the LAT",
+											"example": "0xfd186d28c03a2847eaa9365847547466166d706b"
+										},
+										"maxNodes": {
+											"type": "number",
+											"description": "Maximum number of nodes allowed",
+											"example": 10
+										},
+										"stakerNodes": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"address": {
+														"type": "string",
+														"pattern": "^0x[a-fA-F0-9]{40}$",
+														"description": "The address of the Staker Node",
+														"example": "0x726b7b686745805a5941cc39aa761eca2f570a79"
+													},
+													"nodeId": {
+														"type": "number",
+														"description": "The ID of the node",
+														"example": 0
+													},
+													"operatorDelegation": {
+														"type": "string",
+														"pattern": "^0x[a-fA-F0-9]{40}$",
+														"description": "The address of the EigenLatyer Operator delegated to",
+														"example": "0x5accc90436492f24e6af278569691e2c942a676d"
+													},
+													"liquidTokenAddress": {
+														"type": "string",
+														"pattern": "^0x[a-fA-F0-9]{40}$",
+														"description": "The address of the LAT",
+														"example": "0xfd186d28c03a2847eaa9365847547466166d706b"
+													},
+													"createdAtBlock": {
+														"type": "number",
+														"description": "The block when the node was created",
+														"example": 22043696
+													},
+													"createdAt": {
+														"type": "string",
+														"description": "The timestamp when the node was created",
+														"example": "2025-03-14T07:41:47.000Z"
+													},
+													"updatedAtBlock": {
+														"type": "number",
+														"description": "The block when the node was last updated",
+														"example": 22043699
+													},
+													"updatedAt": {
+														"type": "string",
+														"description": "The timestamp when the node was last updated",
+														"example": "2025-03-14T07:41:50.000Z"
+													},
+													"assets": {
+														"type": "array",
+														"items": {
+															"type": "object",
+															"properties": {
+																"nodeAddress": {
+																	"type": "string",
+																	"pattern": "^0x[a-fA-F0-9]{40}$",
+																	"description": "The address of the node",
+																	"example": "0x726b7b686745805a5941cc39aa761eca2f570a79"
+																},
+																"asset": {
+																	"type": "string",
+																	"pattern": "^0x[a-fA-F0-9]{40}$",
+																	"description": "Asset contract address",
+																	"example": "0xae7ab96520de3a18e5e111b5eaab095312d7fe84"
+																},
+																"strategy": {
+																	"type": "string",
+																	"pattern": "^0x[a-fA-F0-9]{40}$",
+																	"description": "Strategy contract address",
+																	"example": "0x93c4b944D05dfe6df7645A86cd2206016c51564D"
+																},
+																"stakedAmount": {
+																	"type": "string",
+																	"description": "Amount staked in wei",
+																	"example": "7500000000000000000"
+																},
+																"eigenLayerShares": {
+																	"type": "string",
+																	"description": "Number of EigenLayer shares",
+																	"example": "7071856349086192297"
+																}
+															},
+															"required": [
+																"nodeAddress",
+																"asset",
+																"strategy",
+																"stakedAmount",
+																"eigenLayerShares"
+															]
+														},
+														"description": "Assets staked by the node"
+													}
+												},
+												"required": [
+													"address",
+													"nodeId",
+													"operatorDelegation",
+													"liquidTokenAddress",
+													"createdAtBlock",
+													"createdAt",
+													"updatedAtBlock",
+													"updatedAt",
+													"assets"
+												]
+											},
+											"description": "List of Staker Nodes"
+										}
+									},
+									"required": ["address", "maxNodes", "stakerNodes"]
+								}
+							}
+						}
+					},
+					"400": {
+						"$ref": "#/components/responses/400"
+					},
+					"401": {
+						"$ref": "#/components/responses/401"
+					},
+					"403": {
+						"$ref": "#/components/responses/403"
+					},
+					"404": {
+						"$ref": "#/components/responses/404"
+					},
+					"422": {
+						"$ref": "#/components/responses/422"
+					},
+					"429": {
+						"$ref": "#/components/responses/429"
+					},
+					"500": {
+						"$ref": "#/components/responses/500"
+					}
+				}
+			}
+		},
+		"/{address}/operators": {
+			"get": {
+				"operationId": "getLatOperators",
+				"summary": "Retrieve Operators for a LAT",
+				"description": "Returns all Operators delegated to by a specific LAT, including their allocations and optional TVL information.",
+				"tags": ["LAT"],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "address",
+						"description": "LAT contract address",
+						"schema": {
+							"type": "string",
+							"pattern": "^0x[a-fA-F0-9]{40}$",
+							"description": "LAT contract address",
+							"example": "0x35f4f28a8d3ff20eed10e087e8f96ea2641e6aa1"
+						},
+						"required": true
+					},
+					{
+						"in": "query",
+						"name": "withTvl",
+						"description": "Toggle whether the route should calculate the TVL from shares",
+						"schema": {
+							"type": "string",
+							"enum": ["true", "false"],
+							"default": "false",
+							"description": "Toggle whether the route should calculate the TVL from shares",
+							"example": "false"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "List of Operators delegated to by the LAT",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"data": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"operator": {
+														"type": "string",
+														"pattern": "^0x[a-fA-F0-9]{40}$",
+														"description": "Operator address",
+														"example": "0x481748cb75f586ec774f2b2b2f900d8248ab2a3e"
+													},
+													"allocations": {
+														"type": "array",
+														"items": {
+															"type": "object",
+															"properties": {
+																"asset": {
+																	"type": "string",
+																	"pattern": "^0x[a-fA-F0-9]{40}$",
+																	"description": "Asset contract address",
+																	"example": "0x3f1c547b21f65e10480de3ad8e19faac46c95034"
+																},
+																"strategy": {
+																	"type": "string",
+																	"pattern": "^0x[a-fA-F0-9]{40}$",
+																	"description": "Strategy contract address",
+																	"example": "0x7D704507b76571a51d9caE8AdDAbBFd0ba0e63d3"
+																},
+																"stakedAmount": {
+																	"type": "string",
+																	"description": "Total staked amount in this strategy",
+																	"example": "833048866576347130"
+																},
+																"eigenLayerShares": {
+																	"type": "string",
+																	"description": "Total EigenLayer shares for this strategy",
+																	"example": "990438677294402488"
+																}
+															},
+															"required": ["asset", "strategy", "stakedAmount", "eigenLayerShares"]
+														},
+														"description": "Operator allocations"
+													},
+													"tvl": {
+														"type": "object",
+														"properties": {
+															"tvl": {
+																"type": "number",
+																"description": "Total TVL for the Operator",
+																"example": 1.6474940553244894
+															},
+															"tvlStrategies": {
+																"type": "object",
+																"additionalProperties": {
+																	"type": "number"
+																},
+																"description": "TVL by strategy token",
+																"example": {
+																	"stETH": 0.8326977176481988,
+																	"sfrxETH": 0.7320249283999721
+																}
+															},
+															"tvlStrategiesEth": {
+																"type": "object",
+																"additionalProperties": {
+																	"type": "number"
+																},
+																"description": "TVL by strategy token (in ETH)",
+																"example": {
+																	"stETH": 0.8318301518857287,
+																	"sfrxETH": 0.8156639034387608
+																}
+															}
+														},
+														"required": ["tvl", "tvlStrategies", "tvlStrategiesEth"],
+														"description": "TVL information (optional, based on query parameter)"
+													}
+												},
+												"required": ["operator", "allocations"]
+											},
+											"description": "Array of Operators with their allocations"
+										}
+									},
+									"required": ["data"]
+								}
+							}
+						}
+					},
+					"400": {
+						"$ref": "#/components/responses/400"
+					},
+					"401": {
+						"$ref": "#/components/responses/401"
+					},
+					"403": {
+						"$ref": "#/components/responses/403"
+					},
+					"404": {
+						"$ref": "#/components/responses/404"
+					},
+					"422": {
+						"$ref": "#/components/responses/422"
+					},
+					"429": {
+						"$ref": "#/components/responses/429"
+					},
+					"500": {
+						"$ref": "#/components/responses/500"
+					}
+				}
+			}
+		},
+		"/{address}/tokens": {
+			"get": {
+				"operationId": "getLatTokens",
+				"summary": "Retrieve tokens supported by a specific LAT",
+				"description": "Returns all tokens supported by a specific LAT address",
+				"tags": ["LAT"],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "address",
+						"description": "LAT contract address",
+						"schema": {
+							"type": "string",
+							"pattern": "^0x[a-fA-F0-9]{40}$",
+							"description": "LAT contract address"
+						},
+						"required": true
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "List of supported tokens for the specified LAT",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"data": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"address": {
+														"type": "string",
+														"pattern": "^0x[a-fA-F0-9]{40}$",
+														"description": "Token contract address",
+														"example": "0xae7ab96520de3a18e5e111b5eaab095312d7fe84"
+													},
+													"strategyAddress": {
+														"type": "string",
+														"pattern": "^0x[a-fA-F0-9]{40}$",
+														"description": "Strategy contract address",
+														"example": "0x93c4b944d05dfe6df7645a86cd2206016c51564d"
+													},
+													"volatilityThreshold": {
+														"type": "string",
+														"description": "Volatility threshold for the token",
+														"example": "100000000000000000"
+													},
+													"pricePerUnit": {
+														"type": "string",
+														"description": "Price per unit for the token",
+														"example": "1045100000000000000"
+													},
+													"decimals": {
+														"type": "number",
+														"description": "Number of decimals for the token",
+														"example": 18
+													},
+													"cmcId": {
+														"type": "number",
+														"nullable": true,
+														"description": "CoinMarketCap ID for the token",
+														"example": 1027
+													}
+												},
+												"required": [
+													"address",
+													"strategyAddress",
+													"volatilityThreshold",
+													"pricePerUnit",
+													"decimals",
+													"cmcId"
+												]
+											},
+											"description": "Array of LAT tokens supported by the given LAT address"
+										}
+									},
+									"required": ["data"]
+								}
+							}
+						}
+					},
+					"400": {
+						"$ref": "#/components/responses/400"
+					},
+					"401": {
+						"$ref": "#/components/responses/401"
+					},
+					"403": {
+						"$ref": "#/components/responses/403"
+					},
+					"404": {
+						"$ref": "#/components/responses/404"
+					},
+					"422": {
+						"$ref": "#/components/responses/422"
+					},
+					"429": {
+						"$ref": "#/components/responses/429"
+					},
+					"500": {
+						"$ref": "#/components/responses/500"
+					}
+				}
+			}
+		},
+		"/{address}/fees": {
+			"get": {
+				"operationId": "getLatFees",
+				"summary": "Retrieve fee structure for a specific LAT",
+				"description": "Returns management, performance, and average operator performance fee percentages for a specified LAT address.",
+				"tags": ["LAT"],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "address",
+						"description": "LAT contract address",
+						"schema": {
+							"type": "string",
+							"pattern": "^0x[a-fA-F0-9]{40}$",
+							"description": "LAT contract address",
+							"example": "0x35f4f28a8d3ff20eed10e087e8f96ea2641e6aa1"
+						},
+						"required": true
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Fee structure for the requested LAT",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"data": {
+											"type": "object",
+											"properties": {
+												"managementFee": {
+													"type": "number",
+													"description": "LAT Management fee percentage",
+													"example": 0.1
+												},
+												"performanceFee": {
+													"type": "number",
+													"description": "LAT Performance fee percentage",
+													"example": 1
+												},
+												"avgOperatorPerformanceFee": {
+													"type": "number",
+													"description": "Average fee percentage from all delegated Operators",
+													"example": 10
+												}
+											},
+											"required": ["managementFee", "performanceFee", "avgOperatorPerformanceFee"],
+											"description": "LAT fees structure"
+										}
+									},
+									"required": ["data"]
+								}
+							}
+						}
+					},
+					"400": {
+						"$ref": "#/components/responses/400"
+					},
+					"401": {
+						"$ref": "#/components/responses/401"
+					},
+					"403": {
+						"$ref": "#/components/responses/403"
+					},
+					"404": {
+						"$ref": "#/components/responses/404"
+					},
+					"422": {
+						"$ref": "#/components/responses/422"
+					},
+					"429": {
+						"$ref": "#/components/responses/429"
+					},
+					"500": {
+						"$ref": "#/components/responses/500"
+					}
+				}
+			}
+		},
+		"/{address}/deposit": {
+			"post": {
+				"operationId": "latDeposit",
+				"summary": "Create a LAT deposit transaction",
+				"description": "Generates a transaction for depositing assets into a Liquid AVS Token contract",
+				"tags": ["LAT"],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "address",
+						"description": "LAT contract address",
+						"schema": {
+							"type": "string",
+							"pattern": "^0x[a-fA-F0-9]{40}$",
+							"description": "LAT contract address",
+							"example": "0xF2c15D5186E39F8899FE662cf795732A3108E28A"
+						},
+						"required": true
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"assets": {
+										"type": "array",
+										"items": {
+											"type": "string",
+											"pattern": "^0x[a-fA-F0-9]{40}$"
+										},
+										"minItems": 1,
+										"description": "The array of token addresses to be deposited"
+									},
+									"amounts": {
+										"type": "array",
+										"items": {
+											"type": "string",
+											"pattern": "^\\d+$"
+										},
+										"minItems": 1,
+										"description": "The array of amounts corresponding to each asset, in the decimals of that token"
+									},
+									"receiver": {
+										"type": "string",
+										"pattern": "^0x[a-fA-F0-9]{40}$",
+										"description": "The wallet address that will receive the minted Liquid Avs Tokens"
+									}
+								},
+								"required": ["assets", "amounts", "receiver"]
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Successful deposit transaction creation",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"data": {
+											"type": "object",
+											"properties": {
+												"transaction": {
+													"type": "object",
+													"properties": {
+														"to": {
+															"type": "string",
+															"pattern": "^0x[a-fA-F0-9]{40}$",
+															"description": "Target LAT address",
+															"example": "0xF2c15D5186E39F8899FE662cf795732A3108E28A"
+														},
+														"data": {
+															"type": "string",
+															"description": "Encoded transaction data",
+															"example": "0x98c601aa000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000c0000000000000000000000000742d35cc6634c0532925a3b844bc454e4438f44e00000000000000000000000000000000000000000000000000000000000000020000000000000000000000003f1c547b21f65e10480de3ad8e19faac46c950340000000000000000000000007322c24752f79c05ffd1e2a6fcb97020c1c264f100000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000de0b6b3a76400000000000000000000000000000000000000000000000000000de0b6b3a7640000"
+														},
+														"value": {
+															"type": "string",
+															"description": "Value of the transaction in wei",
+															"example": "0x0"
+														}
+													},
+													"required": ["to", "data", "value"],
+													"description": "Transaction details"
+												},
+												"chainId": {
+													"type": "string",
+													"description": "Chain ID",
+													"example": "17000"
+												},
+												"functionName": {
+													"type": "string",
+													"description": "Name of the function being called",
+													"example": "deposit"
+												}
+											},
+											"required": ["transaction", "chainId", "functionName"],
+											"description": "LAT deposit transaction data"
+										}
+									},
+									"required": ["data"]
+								}
+							}
+						}
+					},
+					"400": {
+						"$ref": "#/components/responses/400"
+					},
+					"401": {
+						"$ref": "#/components/responses/401"
+					},
+					"403": {
+						"$ref": "#/components/responses/403"
+					},
+					"404": {
+						"$ref": "#/components/responses/404"
+					},
+					"422": {
+						"$ref": "#/components/responses/422"
+					},
+					"429": {
+						"$ref": "#/components/responses/429"
+					},
+					"500": {
+						"$ref": "#/components/responses/500"
+					}
+				}
+			}
+		},
+		"/{address}/simulate-deposit": {
+			"post": {
+				"operationId": "simulateLatDeposit",
+				"summary": "Simulate a LAT deposit transaction",
+				"description": "Simulates depositing assets into a Liquid AVS Token contract without actually executing the transaction, returning expected results and fees",
+				"tags": ["LAT"],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "address",
+						"description": "LAT contract address",
+						"schema": {
+							"type": "string",
+							"pattern": "^0x[a-fA-F0-9]{40}$",
+							"description": "LAT contract address",
+							"example": "0xF2c15D5186E39F8899FE662cf795732A3108E28A"
+						},
+						"required": true
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"sender": {
+										"type": "string",
+										"pattern": "^0x[a-fA-F0-9]{40}$",
+										"description": "The wallet address that will submit the tx and get debited"
+									},
+									"assets": {
+										"type": "array",
+										"items": {
+											"type": "string",
+											"pattern": "^0x[a-fA-F0-9]{40}$"
+										},
+										"minItems": 1,
+										"description": "The array of token addresses to be deposited"
+									},
+									"amounts": {
+										"type": "array",
+										"items": {
+											"type": "string",
+											"pattern": "^\\d+$"
+										},
+										"minItems": 1,
+										"description": "The array of amounts corresponding to each asset, in the decimals of that token"
+									},
+									"receiver": {
+										"type": "string",
+										"pattern": "^0x[a-fA-F0-9]{40}$",
+										"description": "The wallet address that will receive the minted Liquid Avs Tokens"
+									}
+								},
+								"required": ["sender", "assets", "amounts", "receiver"]
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Successful deposit simulation result",
+						"content": {
+							"application/json": {
+								"schema": {
+									"oneOf": [
+										{
+											"type": "object",
+											"properties": {
+												"success": {
+													"type": "boolean",
+													"enum": [true],
+													"description": "Indicates if the simulation was successful"
+												},
+												"amounts": {
+													"type": "array",
+													"items": {
+														"type": "number"
+													},
+													"description": "Resulting token amounts after deposit",
+													"example": [1070792079207920800, 1122772277227722800]
+												},
+												"fees": {
+													"type": "object",
+													"properties": {
+														"gas": {
+															"type": "object",
+															"properties": {
+																"gasLimit": {
+																	"type": "string",
+																	"description": "Gas limit for the transaction",
+																	"example": "210000"
+																},
+																"gasPrice": {
+																	"type": "string",
+																	"description": "Current gas price in wei",
+																	"example": "25000000000"
+																},
+																"gasFee": {
+																	"type": "string",
+																	"description": "Total gas fee in wei",
+																	"example": "5250000000000000"
+																}
+															},
+															"required": ["gasLimit", "gasPrice", "gasFee"],
+															"description": "Gas-related fees"
+														},
+														"area": {
+															"type": "object",
+															"properties": {
+																"managementFee": {
+																	"type": "number",
+																	"description": "Management fee for the transaction",
+																	"example": 0
+																},
+																"performanceFee": {
+																	"type": "number",
+																	"description": "Performance fee for the transaction",
+																	"example": 0
+																}
+															},
+															"required": ["managementFee", "performanceFee"],
+															"description": "Protocol-specific fees"
+														}
+													},
+													"required": ["gas", "area"],
+													"description": "Fee details for the transaction"
+												}
+											},
+											"required": ["success", "amounts", "fees"]
+										},
+										{
+											"type": "object",
+											"properties": {
+												"success": {
+													"type": "boolean",
+													"enum": [false],
+													"description": "Indicates if the simulation failed"
+												},
+												"message": {
+													"type": "string",
+													"description": "Error message describing why the simulation failed",
+													"example": "execution reverted: ERC20: transfer amount exceeds balance"
+												}
+											},
+											"required": ["success", "message"]
+										}
+									]
+								}
+							}
+						}
+					},
+					"400": {
+						"$ref": "#/components/responses/400"
+					},
+					"401": {
+						"$ref": "#/components/responses/401"
+					},
+					"403": {
+						"$ref": "#/components/responses/403"
+					},
+					"404": {
+						"$ref": "#/components/responses/404"
+					},
+					"422": {
+						"$ref": "#/components/responses/422"
+					},
+					"429": {
+						"$ref": "#/components/responses/429"
+					},
+					"500": {
+						"$ref": "#/components/responses/500"
+					}
+				}
+			}
+		},
+		"/exchange/{address}": {
+			"get": {
+				"operationId": "getExchangeRates",
+				"summary": "Retrieve exchange rates for a LAT or token",
+				"description": "Returns exchange rates for a given LAT to all supported tokens or a token to all supported LATs",
+				"tags": ["LAT"],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "address",
+						"description": "Contract address of the token or LAT",
+						"schema": {
+							"type": "string",
+							"pattern": "^0x[a-fA-F0-9]{40}$",
+							"description": "Contract address of the token or LAT",
+							"example": "0xaa4398a908cae395dff7f5d620e5899905b52723"
+						},
+						"required": true
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Exchange rates for the specified token or LAT",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"address": {
+											"type": "string",
+											"pattern": "^0x[a-fA-F0-9]{40}$",
+											"description": "Contract address of the token or LAT",
+											"example": "0xaa4398a908cae395dff7f5d620e5899905b52723"
+										},
+										"exchangeRates": {
+											"type": "object",
+											"additionalProperties": {
+												"type": "number",
+												"description": "Exchange rate value for the token"
+											},
+											"description": "Exchange rates for the token or LAT",
+											"example": {
+												"lsETH": 1.0349318735540942,
+												"stETH": 0.9604424293594457,
+												"rETH": 1.0830969511435182,
+												"WETH": 0.9611719303441052
+											}
+										}
+									},
+									"required": ["address", "exchangeRates"]
+								}
+							}
+						}
+					},
+					"400": {
+						"$ref": "#/components/responses/400"
+					},
+					"401": {
+						"$ref": "#/components/responses/401"
+					},
+					"403": {
+						"$ref": "#/components/responses/403"
+					},
+					"404": {
+						"$ref": "#/components/responses/404"
+					},
+					"422": {
+						"$ref": "#/components/responses/422"
+					},
+					"429": {
+						"$ref": "#/components/responses/429"
+					},
+					"500": {
+						"$ref": "#/components/responses/500"
+					}
+				}
+			}
+		},
+		"/historical/lat/{address}": {
+			"get": {
+				"operationId": "getHistoricalLatAggregate",
+				"summary": "Retrieve historical aggregated data for a specific LAT",
+				"description": "Returns time-series data for a LAT including TVL, APY metrics, and user count over the specified time period.",
+				"tags": ["Metrics"],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "address",
+						"description": "LAT contract address",
+						"schema": {
+							"type": "string",
+							"pattern": "^0x[a-fA-F0-9]{40}$",
+							"description": "LAT contract address",
+							"example": "0x35f4f28a8d3ff20eed10e087e8f96ea2641e6aa1"
+						},
+						"required": true
+					},
+					{
+						"in": "query",
+						"name": "frequency",
+						"description": "Frequency of data points",
+						"schema": {
+							"type": "string",
+							"enum": ["1d", "7d"],
+							"default": "1d",
+							"description": "Frequency of data points"
+						}
+					},
+					{
+						"in": "query",
+						"name": "variant",
+						"description": "Type of tally, discrete or cumulative",
+						"schema": {
+							"type": "string",
+							"enum": ["discrete", "cumulative"],
+							"default": "cumulative",
+							"description": "Type of tally, discrete or cumulative",
+							"example": "cumulative"
+						}
+					},
+					{
+						"in": "query",
+						"name": "startAt",
+						"description": "Start date in ISO string format",
+						"schema": {
+							"type": "string",
+							"default": "",
+							"description": "Start date in ISO string format",
+							"example": "2024-04-11T08:31:11.000"
+						}
+					},
+					{
+						"in": "query",
+						"name": "endAt",
+						"description": "End date in ISO string format",
+						"schema": {
+							"type": "string",
+							"default": "",
+							"description": "End date in ISO string format",
+							"example": "2024-04-12T08:31:11.000"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Historical aggregated data for the specified LAT",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"data": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"timestamp": {
+														"type": "string",
+														"description": "Timestamp for the data point",
+														"example": "2025-04-28T00:00:00.000Z"
+													},
+													"totalTvlEth": {
+														"type": "number",
+														"description": "Total TVL in ETH",
+														"example": 6.971150594205651
+													},
+													"stakedTvlEth": {
+														"type": "number",
+														"description": "Staked TVL in ETH",
+														"example": 3.3671458538622976
+													},
+													"unstakedTvlEth": {
+														"type": "number",
+														"description": "Unstaked TVL in ETH",
+														"example": 3.6040047403433526
+													},
+													"apy": {
+														"type": "number",
+														"description": "APY from restaking (AVS rewards)",
+														"example": 0.057
+													},
+													"baseApy": {
+														"type": "number",
+														"description": "Base APY (from LST yield)",
+														"example": 3.0727
+													},
+													"nativeApy": {
+														"type": "number",
+														"description": "Native APY (from EigenLayer programmatic incentives)",
+														"example": 0.1277
+													},
+													"totalApy": {
+														"type": "number",
+														"description": "Total APY",
+														"example": 3.2574
+													},
+													"totalUsers": {
+														"type": "number",
+														"description": "Total number of users",
+														"example": 2
+													}
+												},
+												"required": [
+													"timestamp",
+													"totalTvlEth",
+													"stakedTvlEth",
+													"unstakedTvlEth",
+													"apy",
+													"baseApy",
+													"nativeApy",
+													"totalApy",
+													"totalUsers"
+												]
+											},
+											"description": "Array of historical LAT data points"
+										}
+									},
+									"required": ["data"]
+								}
+							}
+						}
+					},
+					"400": {
+						"$ref": "#/components/responses/400"
+					},
+					"401": {
+						"$ref": "#/components/responses/401"
+					},
+					"403": {
+						"$ref": "#/components/responses/403"
+					},
+					"404": {
+						"$ref": "#/components/responses/404"
+					},
+					"422": {
+						"$ref": "#/components/responses/422"
+					},
+					"429": {
+						"$ref": "#/components/responses/429"
+					},
+					"500": {
+						"$ref": "#/components/responses/500"
+					}
+				}
+			}
+		}
+	},
+	"components": {
+		"responses": {
+			"400": {
+				"description": "The server cannot or will not process the request due to something that is perceived to be a client error (e.g., malformed request syntax, invalid request message framing, or deceptive request routing).",
+				"content": {
+					"application/json": {
+						"schema": {
+							"type": "object",
+							"properties": {
+								"error": {
+									"type": "object",
+									"properties": {
+										"code": {
+											"type": "string",
+											"enum": ["bad_request"],
+											"description": "A short code indicating the error code returned.",
+											"example": "bad_request"
+										},
+										"message": {
+											"type": "string",
+											"description": "A human readable explanation of what went wrong.",
+											"example": "The requested resource was not found."
+										},
+										"doc_url": {
+											"type": "string",
+											"description": "A link to our documentation with more details about this error code",
+											"example": "https://docs.eigenexplorer.com/api-reference/errors#bad_request"
+										}
+									},
+									"required": ["code", "message"]
+								}
+							},
+							"required": ["error"]
+						}
+					}
+				}
+			},
+			"401": {
+				"description": "Although the HTTP standard specifies \"unauthorized\", semantically this response means \"unauthenticated\". That is, the client must authenticate itself to get the requested response.",
+				"content": {
+					"application/json": {
+						"schema": {
+							"type": "object",
+							"properties": {
+								"error": {
+									"type": "object",
+									"properties": {
+										"code": {
+											"type": "string",
+											"enum": ["unauthorized"],
+											"description": "A short code indicating the error code returned.",
+											"example": "unauthorized"
+										},
+										"message": {
+											"type": "string",
+											"description": "A human readable explanation of what went wrong.",
+											"example": "The requested resource was not found."
+										},
+										"doc_url": {
+											"type": "string",
+											"description": "A link to our documentation with more details about this error code",
+											"example": "https://docs.eigenexplorer.com/api-reference/errors#unauthorized"
+										}
+									},
+									"required": ["code", "message"]
+								}
+							},
+							"required": ["error"]
+						}
+					}
+				}
+			},
+			"403": {
+				"description": "The client does not have access rights to the content; that is, it is unauthorized, so the server is refusing to give the requested resource. Unlike 401 Unauthorized, the client's identity is known to the server.",
+				"content": {
+					"application/json": {
+						"schema": {
+							"type": "object",
+							"properties": {
+								"error": {
+									"type": "object",
+									"properties": {
+										"code": {
+											"type": "string",
+											"enum": ["forbidden"],
+											"description": "A short code indicating the error code returned.",
+											"example": "forbidden"
+										},
+										"message": {
+											"type": "string",
+											"description": "A human readable explanation of what went wrong.",
+											"example": "The requested resource was not found."
+										},
+										"doc_url": {
+											"type": "string",
+											"description": "A link to our documentation with more details about this error code",
+											"example": "https://docs.eigenexplorer.com/api-reference/errors#forbidden"
+										}
+									},
+									"required": ["code", "message"]
+								}
+							},
+							"required": ["error"]
+						}
+					}
+				}
+			},
+			"404": {
+				"description": "The server cannot find the requested resource.",
+				"content": {
+					"application/json": {
+						"schema": {
+							"type": "object",
+							"properties": {
+								"error": {
+									"type": "object",
+									"properties": {
+										"code": {
+											"type": "string",
+											"enum": ["not_found"],
+											"description": "A short code indicating the error code returned.",
+											"example": "not_found"
+										},
+										"message": {
+											"type": "string",
+											"description": "A human readable explanation of what went wrong.",
+											"example": "The requested resource was not found."
+										},
+										"doc_url": {
+											"type": "string",
+											"description": "A link to our documentation with more details about this error code",
+											"example": "https://docs.eigenexplorer.com/api-reference/errors#not_found"
+										}
+									},
+									"required": ["code", "message"]
+								}
+							},
+							"required": ["error"]
+						}
+					}
+				}
+			},
+			"422": {
+				"description": "The request was well-formed but was unable to be followed due to semantic errors.",
+				"content": {
+					"application/json": {
+						"schema": {
+							"type": "object",
+							"properties": {
+								"error": {
+									"type": "object",
+									"properties": {
+										"code": {
+											"type": "string",
+											"enum": ["unprocessable_entity"],
+											"description": "A short code indicating the error code returned.",
+											"example": "unprocessable_entity"
+										},
+										"message": {
+											"type": "string",
+											"description": "A human readable explanation of what went wrong.",
+											"example": "The requested resource was not found."
+										},
+										"doc_url": {
+											"type": "string",
+											"description": "A link to our documentation with more details about this error code",
+											"example": "https://docs.eigenexplorer.com/api-reference/errors#unprocessable_entity"
+										}
+									},
+									"required": ["code", "message"]
+								}
+							},
+							"required": ["error"]
+						}
+					}
+				}
+			},
+			"429": {
+				"description": "The user has sent too many requests in a given amount of time (\"rate limiting\")",
+				"content": {
+					"application/json": {
+						"schema": {
+							"type": "object",
+							"properties": {
+								"error": {
+									"type": "object",
+									"properties": {
+										"code": {
+											"type": "string",
+											"enum": ["rate_limit_exceeded"],
+											"description": "A short code indicating the error code returned.",
+											"example": "rate_limit_exceeded"
+										},
+										"message": {
+											"type": "string",
+											"description": "A human readable explanation of what went wrong.",
+											"example": "The requested resource was not found."
+										},
+										"doc_url": {
+											"type": "string",
+											"description": "A link to our documentation with more details about this error code",
+											"example": "https://docs.eigenexplorer.com/api-reference/errors#rate_limit_exceeded"
+										}
+									},
+									"required": ["code", "message"]
+								}
+							},
+							"required": ["error"]
+						}
+					}
+				}
+			},
+			"500": {
+				"description": "The server has encountered a situation it does not know how to handle.",
+				"content": {
+					"application/json": {
+						"schema": {
+							"type": "object",
+							"properties": {
+								"error": {
+									"type": "object",
+									"properties": {
+										"code": {
+											"type": "string",
+											"enum": ["internal_server_error"],
+											"description": "A short code indicating the error code returned.",
+											"example": "internal_server_error"
+										},
+										"message": {
+											"type": "string",
+											"description": "A human readable explanation of what went wrong.",
+											"example": "The requested resource was not found."
+										},
+										"doc_url": {
+											"type": "string",
+											"description": "A link to our documentation with more details about this error code",
+											"example": "https://docs.eigenexplorer.com/api-reference/errors#internal_server_error"
+										}
+									},
+									"required": ["code", "message"]
+								}
+							},
+							"required": ["error"]
+						}
+					}
+				}
+			}
+		}
+	}
+}

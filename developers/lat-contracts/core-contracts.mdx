@@ -1,0 +1,15 @@
+---
+title: 'Core Contracts'
+description: 'Liquid AVS Token Smart Contracts'
+icon: 'diamonds-4'
+---
+
+
+The LAT core contracts are the set of contracts that implement the LAT system. The user and the restaking manager interact with the core contracts.
+
+| Core Contract         | Description                                                                                                                                                                                                 |
+|-----------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| LiquidToken           | ERC-20 token contract that accepts deposits and withdrawals from users and manages the share accounting for minting and burning tokens.                                                                     |
+| LiquidTokenManager    | Coordinates asset allocation for deposited funds in `LiquidToken` across `StakerNodes`. Also manages system-wide controls like adding and removing supported assets.                                        |
+| StakerNodeCoordinator | Acts as a factory for creating new StakerNode instances, maintains control over their upgradability and is the source of truth registry for  StakerNodes to know about the other contracts and vice-versa.  |
+| StakerNode            | An individual staker that interacts with EigenLayer contracts to delegate, restake and request withdrawals of funds.                                                                                        |
