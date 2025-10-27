@@ -1,0 +1,209 @@
+---
+title: 'Quickstart'
+description: 'Get started with B402 in under 2 minutes'
+icon: 'rocket'
+---
+
+## Overview
+
+B402 enables gasless payments on BSC using EIP-712 signatures. No BNB required for buyers or sellers.
+
+<CardGroup cols={2}>
+  <Card title="For Sellers" icon="store" href="/get-started/seller">
+    Accept gasless payments from buyers
+  </Card>
+  <Card title="For Buyers" icon="wallet" href="/get-started/buyer">
+    Send gasless payments to sellers
+  </Card>
+</CardGroup>
+
+## Facilitator URL
+
+```
+https://facilitator.b402.ai
+```
+
+<Note>
+  No API keys required. Just point your server at the facilitator and go live.
+</Note>
+
+---
+
+## Drop-in Setup
+
+<Steps>
+  <Step title="Set Facilitator URL">
+    Point your server at the facilitator
+    ```javascript
+    const FACILITATOR_URL = 'https://facilitator.b402.ai';
+    ```
+  </Step>
+
+  <Step title="Choose Network">
+    Select BSC mainnet or testnet
+    ```javascript
+    const network = 'bsc'; // or 'bsc-testnet'
+    const RELAYER = '0xE1C2830d5DDd6B49E9c46EbE03a98Cb44CD8eA5a';
+    ```
+  </Step>
+
+  <Step title="Ship It">
+    The facilitator verifies & settles payments on your behalf
+  </Step>
+</Steps>
+
+---
+
+## Quick Example
+
+### Seller: Accept Payment
+
+```javascript
+const express = require('express');
+const app = express();
+app.use(express.json());
+
+const FACILITATOR_URL = 'https://facilitator.b402.ai';
+
+app.post('/accept-payment', async (req, res) => {
+  const { authorization, signature } = req.body;
+
+  // Verify with facilitator
+  const verifyRes = await fetch(`${FACILITATOR_URL}/verify`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ paymentPayload, paymentRequirements })
+  });
+
+  // Settle on-chain
+  const settleRes = await fetch(`${FACILITATOR_URL}/settle`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ paymentPayload, paymentRequirements })
+  });
+
+  const result = await settleRes.json();
+  res.json({ success: true, transaction: result.transaction });
+});
+
+app.listen(3000);
+```
+
+### Buyer: Send Payment
+
+```javascript
+import { ethers } from 'ethers';
+
+// Connect wallet
+const provider = new ethers.BrowserProvider(window.ethereum);
+const signer = await provider.getSigner();
+
+// Create authorization
+const authorization = {
+  from: await signer.getAddress(),
+  to: '0xRecipientAddress',
+  value: ethers.parseUnits('10', 18), // 10 USD1
+  validAfter: Math.floor(Date.now() / 1000),
+  validBefore: Math.floor(Date.now() / 1000) + 3600,
+  nonce: ethers.hexlify(ethers.randomBytes(32))
+};
+
+// Sign with EIP-712
+const domain = {
+  name: 'B402',
+  version: '1',
+  chainId: 56,
+  verifyingContract: '0xE1C2830d5DDd6B49E9c46EbE03a98Cb44CD8eA5a'
+};
+
+const types = {
+  TransferWithAuthorization: [
+    { name: 'from', type: 'address' },
+    { name: 'to', type: 'address' },
+    { name: 'value', type: 'uint256' },
+    { name: 'validAfter', type: 'uint256' },
+    { name: 'validBefore', type: 'uint256' },
+    { name: 'nonce', type: 'bytes32' }
+  ]
+};
+
+const signature = await signer.signTypedData(domain, types, authorization);
+
+// Send to seller
+await fetch('http://localhost:3000/accept-payment', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ authorization, signature })
+});
+```
+
+---
+
+## Network Configuration
+
+<Tabs>
+  <Tab title="BSC Mainnet">
+    | Parameter | Value |
+    |-----------|-------|
+    | Network | `bsc` |
+    | Chain ID | `56` |
+    | RPC | `https://bsc-dataseed.binance.org` |
+    | Relayer | `0xE1C2830d5DDd6B49E9c46EbE03a98Cb44CD8eA5a` |
+    | Facilitator | `https://facilitator.b402.ai` |
+  </Tab>
+
+  <Tab title="BSC Testnet">
+    | Parameter | Value |
+    |-----------|-------|
+    | Network | `bsc-testnet` |
+    | Chain ID | `97` |
+    | RPC | `https://data-seed-prebsc-1-s1.binance.org:8545` |
+    | Relayer | `0xd67eF16fa445101Ef1e1c6A9FB9F3014f1d60DE6` |
+  </Tab>
+</Tabs>
+
+---
+
+## Supported Tokens
+
+<CardGroup cols={3}>
+  <Card title="USD1" icon="dollar-sign">
+    World Liberty Financial USD
+
+    `0x8d0d000ee44948fc98c9b98a4fa4921476f08b0d`
+  </Card>
+
+  <Card title="USDT" icon="dollar-sign">
+    Tether USD
+
+    `0x55d398326f99059fF775485246999027B3197955`
+  </Card>
+
+  <Card title="USDC" icon="dollar-sign">
+    USD Coin
+
+    `0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d`
+  </Card>
+</CardGroup>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Seller Guide" icon="store" href="/get-started/seller">
+    Complete guide for accepting payments
+  </Card>
+
+  <Card title="Buyer Guide" icon="wallet" href="/get-started/buyer">
+    Complete guide for sending payments
+  </Card>
+
+  <Card title="Facilitator API" icon="server" href="/facilitator/introduction">
+    Learn about the facilitator service
+  </Card>
+
+  <Card title="Concepts" icon="book" href="/concepts/http-402">
+    Understand how B402 works
+  </Card>
+</CardGroup>

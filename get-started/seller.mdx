@@ -1,7 +1,120 @@
 ---
 title: Seller/Server Guide
-description: 'Guide for services to receive and verify payments via b402'
-icon: coin-vertical
+description: 'Accept gasless payments from buyers on BSC'
+icon: 'coin-vertical'
 ---
 
-This section is under construction, coming soon.
+## Overview
+
+Set up your resource server to accept gasless BSC payments. Buyers pay with USD1/USDT without needing BNB for gas fees.
+
+<Info>
+  **No API keys required.** The B402 facilitator handles all signature verification and on-chain settlement.
+</Info>
+
+---
+
+## Express Server Setup
+
+### Install Dependencies
+
+```bash
+npm install express ethers cors
+```
+
+### Create Server
+
+Create `server.js`:
+
+```javascript
+const express = require('express');
+const cors = require('cors');
+const { ethers } = require('ethers');
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+// Configuration
+const FACILITATOR_URL = 'https://facilitator.b402.ai';
+const SELLER_ADDRESS = process.env.SELLER_ADDRESS || '0xYourAddress';
+const RELAYER_CONTRACT = '0xE1C2830d5DDd6B49E9c46EbE03a98Cb44CD8eA5a';
+const USD1_TOKEN = '0x8d0d000ee44948fc98c9b98a4fa4921476f08b0d';
+
+/**
+ * Accept Payment Endpoint
+ */
+app.post('/accept-payment', async (req, res) => {
+  try {
+    const { authorization, signature } = req.body;
+
+    const payload = {
+      x402Version: 1,
+      scheme: 'exact',
+      network: 'bsc',
+      token: USD1_TOKEN,
+      payload: { authorization, signature }
+    };
+
+    const requirements = {
+      scheme: 'exact',
+      network: 'bsc',
+      asset: USD1_TOKEN,
+      payTo: SELLER_ADDRESS,
+      maxAmountRequired: authorization.value,
+      maxTimeoutSeconds: 600,
+      relayerContract: RELAYER_CONTRACT
+    };
+
+    // Verify
+    const verifyRes = await fetch(`${FACILITATOR_URL}/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ paymentPayload: payload, paymentRequirements: requirements })
+    });
+
+    const verifyData = await verifyRes.json();
+    if (!verifyData.isValid) {
+      return res.status(400).json({ success: false, error: verifyData.invalidReason });
+    }
+
+    // Settle
+    const settleRes = await fetch(`${FACILITATOR_URL}/settle`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ paymentPayload: payload, paymentRequirements: requirements })
+    });
+
+    const settleData = await settleRes.json();
+    if (!settleData.success) {
+      return res.status(500).json({ success: false, error: settleData.errorReason });
+    }
+
+    res.json({
+      success: true,
+      transaction: settleData.transaction,
+      payer: verifyData.payer,
+      amount: ethers.formatUnits(authorization.value, 18)
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.listen(3000, () => console.log('Seller ready on port 3000'));
+```
+
+<Check>Your server is now accepting gasless payments!</Check>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Buyer Guide" icon="wallet" href="/get-started/buyer">
+    Help buyers send payments
+  </Card>
+  <Card title="Facilitator API" icon="server" href="/facilitator/introduction">
+    Learn about the API
+  </Card>
+</CardGroup>
