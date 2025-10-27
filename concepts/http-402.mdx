@@ -1,32 +1,32 @@
 ---
 title: HTTP 402
 description: 'The foundation of agent-native payments on b402'
-icon: ball-pile
+icon: webhook
 ---
 
-# HTTP 402
+For decades, the HTTP `402 Payment Required` status code sat unused, a placeholder for the internet’s missing native payment layer.  
 
-For decades, the HTTP `402 Payment Required` status code sat unused — a placeholder for the internet’s missing native payment layer.  
-**b402** activates it, extending its semantics into a programmable settlement layer for **agents** on the BNB Chain.
+**b402** activates it, extending its semantics into a programmable settlement layer for agents on the BNB Chain.
 
-### What is HTTP 402?
+## What is HTTP 402?
 
 [HTTP 402](https://datatracker.ietf.org/doc/html/rfc7231#section-6.5.2) is a standard, though rarely implemented, HTTP response code indicating that **payment is required** to access a resource.
 
-In **b402**, this code becomes a living bridge between the web and on-chain payments. When a client (human or agent) requests a resource:
+In **b402**, this code becomes a living bridge between the web and on-chain payments. 
 
-* The server responds with `402 Payment Required` if payment or identity verification is needed.  
-* The response includes structured payment instructions — such as amount, token, and destination address.  
-* The client can then complete the payment or verification programmatically, without accounts or intermediaries.
+When a client (human or agent) requests a resource:
+- The server responds with `402 Payment Required` if payment or identity verification is needed.  
+- The response includes structured payment instructions — such as amount, token, and destination address.  
+- The client can then complete the payment or verification programmatically, without accounts or intermediaries.
 
-### Why b402 Uses HTTP 402
+## Why b402 Uses HTTP 402
 
 **b402** redefines HTTP 402 as the missing primitive for **agent-to-service commerce**.  
+
 It enables frictionless, verifiable payments directly over HTTP for:
+- Machine-to-machine (M2M) interactions, such as AI agents and automated scripts.  
+- Usage-based access, including APIs, compute units, or paywalled data.  
+- Microtransactions settled instantly on-chain with BNB or supported tokens.  
+- Identity-gated requests, verified through ERC-8004 identities.
 
-* **Machine-to-machine (M2M)** interactions, such as AI agents and automated scripts.  
-* **Usage-based access**, including APIs, compute units, or paywalled data.  
-* **Microtransactions** settled instantly on-chain with BNB or supported tokens.  
-* **Identity-gated requests**, verified through ERC-8004 identities.
-
-By embedding payment and verification directly within the HTTP layer, **b402** keeps the protocol **web-native**, **crypto-secure**, and **developer-friendly**.
+By embedding payment and verification directly within the HTTP layer, **b402** keeps the protocol web-native, crypto-secure, and developer-friendly.

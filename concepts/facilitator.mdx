@@ -1,65 +1,52 @@
 ---
 title: Facilitator
 description: 'Verification and settlement layer for b402 payments'
-icon: stars
+icon: circle-check
 ---
 
-# Facilitator
+In b402, the facilitator is a trust-minimized and off-chain service that handles the **verification and settlement** of payments between agents (clients) and service providers (servers).  
 
-This page explains the role of the **facilitator** in the **b402** protocol.
-
-In b402, the facilitator is a trust-minimized service that handles the **verification and settlement** of payments between agents (clients) and service providers (servers).  
 It serves as the connective tissue between **HTTP-level requests** and **on-chain execution**.
 
----
+## What is a Facilitator?
 
-### What is a Facilitator?
+A facilitator is an independent service that:
 
-A **facilitator** is an independent service that:
-
-* **Verifies** the validity of payment payloads submitted by clients.  
-* **Settles** payments or identity proofs on-chain on behalf of servers.  
+- **Verifies** the validity of payment payloads submitted by clients.  
+- **Settles** payments or identity proofs on-chain on behalf of servers.  
 
 By using a facilitator, servers can accept crypto-native payments without needing direct blockchain infrastructure or custom verification logic.  
+
 This design keeps b402 integrations light, fast, and modular.
 
----
+## Facilitator Responsibilities
 
-### Facilitator Responsibilities
+- **Verify payments:** Confirm that the client’s submitted payload satisfies the server’s declared payment terms.  
+- **Settle transactions:** Post valid transactions to the blockchain and monitor for confirmation.  
+- **Provide signed responses:** Return structured verification and settlement responses that the server can use to authorize access.  
 
-* **Verify payments:** Confirm that the client’s submitted payload satisfies the server’s declared payment terms.  
-* **Settle transactions:** Post valid transactions to the blockchain and monitor for confirmation.  
-* **Provide signed responses:** Return structured verification and settlement responses that the server can use to authorize access.  
+The facilitator never holds user funds or keys. It simply verifies signatures, executes transactions, and returns proofs of settlement.
 
-> The facilitator never holds user funds or keys.  
-> It simply verifies signatures, executes transactions, and returns proofs of settlement.
-
----
-
-### Why Use a Facilitator?
+## Why Use a Facilitator?
 
 Using a facilitator simplifies the integration process for service providers and ensures protocol-level consistency:
 
-* **Reduced complexity** — No need to maintain blockchain nodes or custom verification code.  
-* **Standardized flows** — Shared verification and settlement semantics across all b402 integrations.  
-* **Faster onboarding** — Start accepting payments instantly without blockchain-specific logic.  
-* **Scalable trust model** — Facilitators can be public, private, or self-hosted, depending on your architecture.  
+- **Reduced complexity**: No need to maintain blockchain nodes or custom verification code.  
+- **Standardized flows**: Shared verification and settlement semantics across all b402 integrations.  
+- **Faster onboarding**: Start accepting payments instantly without blockchain-specific logic.  
+- **Scalable trust model**: Facilitators can be public, private, or self-hosted, depending on your architecture.  
 
 While verification can be implemented locally, using a facilitator provides uniform behavior across the network and simplifies adoption.
 
----
+## Live Facilitators
 
-### Live Facilitators
+The [official b402 Facilitator](/facilitator) is currently live on BNB Chain mainnet and testnet, supporting BNB, USDT, USD1, and a growing list of BEP-20 tokens. See the [Facilitator guide](/facilitator) for architecture details and integration examples.
 
-1. **BNB Chain Reference Facilitator** — The canonical b402 facilitator running on BNB mainnet and testnet, supporting BNB and standard BEP-20 tokens.  
+We encourage community partners, node operators, and infrastructure teams to deploy their own facilitators to extend coverage across regions and networks.  
+Additional endpoints will be listed here as the ecosystem evolves.
 
-2. **Community Facilitators** — Partners and operators can deploy their own facilitators to serve specialized networks (e.g., LayerZero bridges, EVM sidechains).  
 
-More facilitator endpoints and documentation will be listed here as the ecosystem expands.
-
----
-
-### Interaction Flow
+## Interaction Flow
 
 Below is the typical end-to-end process for verification and settlement in **b402**:
 
@@ -74,14 +61,3 @@ Below is the typical end-to-end process for verification and settlement in **b40
 9. **Facilitator** executes the on-chain settlement transaction and waits for confirmation.  
 10. **Facilitator** returns a `Payment Execution Response` containing settlement metadata.  
 11. **Server** returns `200 OK` with the requested resource and an `X-PAYMENT-RESPONSE` header containing encoded settlement data.  
-
-This process allows every transaction to be **atomic**, **verifiable**, and **composable** with other on-chain systems.
-
----
-
-### Summary
-
-In **b402**, the facilitator acts as the **verification and execution layer** connecting the web and the blockchain.  
-It ensures that payments, signatures, and identity proofs are handled securely, allowing services to remain **stateless**, **modular**, and **agent-ready**.
-
-The facilitator turns HTTP 402 from a signal into an action — verifying, settling, and confirming payments for the autonomous web.

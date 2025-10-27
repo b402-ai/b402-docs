@@ -1,58 +1,61 @@
 ---
 title: Client / Server
 description: 'Understanding how agents and services interact through b402'
-icon: envelope-open-dollar
+icon: server
 ---
 
-# Client / Server
-
 This page explains the roles and responsibilities of the **client** and **server** within the **b402** protocol.  
-Understanding these roles is key to building, operating, or integrating services that use b402 for **autonomous, on-chain payments**.
 
-> **Note**  
-> **Client** refers to the technical component making an HTTP request — typically the *buyer* or *agent* requesting access.  
-> **Server** refers to the component responding to that request — typically the *seller* or *service provider* enforcing payment.
+Understanding these roles is key to building, operating, or integrating services that use b402 for autonomous, on-chain payments.
 
-### Client Role
+<Note>  
+**Client** refers to the technical component making an HTTP request, typically the *buyer* or *agent* requesting access.  
 
-The client is the initiating entity — an agent, service, or application that requests access to a resource protected by b402.
+**Server** refers to the component responding to that request, typically the *seller* or *service provider* enforcing payment.
+</Note>
+
+## Client Role
+
+The client is the initiating entity, an agent, service, or application that requests access to a resource protected by b402.
 
 Clients can include:
+- **Autonomous agents** operating under an ERC-8004 identity  
+-  **Human-operated applications** making on-chain payments  
+- **Programmatic services** acting on behalf of other systems  
 
-* **Autonomous agents** operating under an ERC-8004 identity  
-* **Human-operated applications** making on-chain payments  
-* **Programmatic services** acting on behalf of other systems  
+### Responsibilities
 
-#### Responsibilities
-
-* **Initiate requests:** Send HTTP requests to b402-enabled endpoints.  
-* **Handle payment requirements:** Detect the `402 Payment Required` response and parse its structured payment details.  
-* **Prepare payment payloads:** Construct a valid payment payload (e.g., signed permit, transaction hash, or token proof) according to the server’s scheme.  
-* **Resubmit request with proof:** Retry the request with an `X-PAYMENT` header containing the signed payload or verified transaction reference.  
+- **Initiate requests**: Send HTTP requests to b402-enabled endpoints.  
+-  **Handle payment requirements:** Detect the `402 Payment Required` response and parse its structured payment details.  
+-  **Prepare payment payloads:** Construct a valid payment payload (e.g., signed permit, transaction hash, or token proof) according to the server’s scheme.  
+-  **Resubmit request with proof:** Retry the request with an `X-PAYMENT` header containing the signed payload or verified transaction reference.  
 
 Clients never need to manage accounts or session tokens. All interactions are **stateless**, **verifiable**, and **crypto-native**, relying only on the client’s wallet or on-chain identity.
 
-### Server Role
+---
 
-The server acts as the service provider — enforcing payment, verification, or identity proof before granting access to its resources.
+## Server Role
+
+The server acts as the service provider, enforcing payment, verification, or identity proof before granting access to its resources.
 
 Servers can include:
 
-* API endpoints or compute services  
-* Data or content providers  
-* Gateways exposing on-chain or off-chain utilities  
+- API endpoints or compute services  
+- Data or content providers  
+- Gateways exposing on-chain or off-chain utilities  
 
-#### Responsibilities
+### Responsibilities
 
-* **Define payment requirements:** Respond to unpaid or unauthorized requests with an HTTP `402 Payment Required`, including all required payment details (amount, token, recipient, etc.).  
-* **Verify payment payloads:** Validate incoming payments using the b402 **facilitator**’s `/verify` and `/settle` endpoints or a local verifier.  
-* **Settle transactions:** Confirm payment settlement on-chain (typically via BNB or supported EVM-compatible tokens).  
-* **Serve the resource:** Once verified, respond with the requested data, API response, or content.  
+- **Define payment requirements:** Respond to unpaid or unauthorized requests with an HTTP `402 Payment Required`, including all required payment details (amount, token, recipient, etc.).  
+- **Verify payment payloads:** Validate incoming payments using the b402 **facilitator**’s `/verify` and `/settle` endpoints or a local verifier.  
+- **Settle transactions:** Confirm payment settlement on-chain (typically via USDT or supported EVM-compatible tokens).  
+- **Serve the resource:** Once verified, respond with the requested data, API response, or content.  
 
-Servers do not maintain sessions or user accounts — each request is self-contained, verifiable, and payable via HTTP semantics.
+Servers do not maintain sessions or user accounts. Each request is self-contained, verifiable, and payable via HTTP semantics.
 
+---
 
-### Communication Flow
+## Communication Flow
 
 The typical interaction between a **client (agent)** and a **server (service)** in the b402 protocol follows this sequence:
 
@@ -63,5 +66,5 @@ The typical interaction between a **client (agent)** and a **server (service)** 
 5. **Server settles** the transaction via `/settle` if valid.  
 6. **Server returns the requested resource**, completing the exchange.  
 
-This model makes every transaction **atomic**, **transparent**, and **independent of session state**.
+This model makes every transaction atomic, transparent, and independent of session state.
 
