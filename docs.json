@@ -22,7 +22,17 @@
                     },
                     {
                         "group": "Getting Started",
-                        "pages": []
+                        "pages": [
+                            "get-started/buyer",
+                            "get-started/seller"
+                        ]
+                    },
+                    {
+                        "group": "b402 Facilitator",
+                        "pages": [
+                            "facilitator/introduction",
+                            "facilitator/get-started"
+                        ]
                     },
                     {
                         "group": "Concepts",
@@ -35,20 +45,9 @@
                         ]
                     },
                     {
-                        "group": "Guides",
-                        "pages": [
-                            "guides/using-area",
-                            "guides/why-lat",
-                            "guides/comparison"
-                        ]
-                    },
-                    {
                         "group": "Resources",
                         "pages": [
-                            "resources/glossaries",
-                            "resources/faq",
-                            "resources/changelog",
-                            "resources/audits"
+                            "resources/faq"
                         ]
                     }
                 ]

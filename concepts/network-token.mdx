@@ -1,10 +1,90 @@
 ---
-title: Network & Token support
-description: 'How Area manages operator delegation'
+title: Network & Token Support
+description: 'How b402 handles cross-chain payments and token standards'
 icon: split
 ---
 
-Area allows you to directly restake into an AVS by automatically managing the operator delegation. 
+# Network & Token Support
 
+This page explains which blockchain networks and tokens are supported by **b402**, and how developers can extend support to new networks.
 
+---
 
+## Overview
+
+**b402** is designed to be **network-agnostic**, but **facilitators** implement the network-specific logic required for on-chain verification and settlement.  
+This modular structure allows b402 to function across any EVM-compatible chain — starting with **BNB Chain** as the primary network.
+
+Different facilitators may support different networks depending on their on-chain integrations and token standards.
+
+---
+
+### Supported Facilitators
+
+Network support in **b402** depends on the facilitator being used. Below are the currently available and planned facilitators.
+
+#### b402 Reference Facilitator
+
+* **Supports**: BNB Smart Chain (Mainnet & Testnet)
+* **Notes**: Default facilitator in the b402 SDK. Ideal for testing and quick integration.
+* **URL**: <https://facilitator.b402.org>
+
+#### Community Facilitators
+
+* **Supports**: BNB, Base, Polygon, Arbitrum, Avalanche, and other EVM-compatible networks
+* **Notes**: Operated by community partners and integrators. Support for additional tokens and LayerZero cross-chain proofs in progress.
+
+#### Self-Hosted Facilitators
+
+* **Supports**: Any EVM network
+* **Notes**: Run your own facilitator for full control, privacy, and customization. Suitable for high-throughput or private deployments.
+* **Setup**: See [Adding Support for New Networks](#adding-support-for-new-networks) for configuration details.
+
+---
+
+### Token Support
+
+b402 supports **any EVM-compatible token** that implements **permit-style authorization** — such as EIP-2612 or EIP-3009 — enabling off-chain, gasless approvals verified by facilitators.
+
+* **EVM (BNB, Polygon, Arbitrum, etc.):**  
+  Any ERC-20 token supporting `permit` or `transferWithAuthorization`.  
+* **BNB Native Support:**  
+  Built-in support for BNB and major BEP-20 tokens, including stablecoins such as USDT and USDC.
+
+> Facilitators enforce **network-level support**, not token-level allowlists.  
+> Any compatible ERC-20/BEP-20 token can be used if its permit signature can be verified.
+
+---
+
+#### Permit & Authorization Standards
+
+To ensure seamless integration and gas abstraction, supported tokens must implement one of the following:
+
+* **EIP-2612 `permit()`** — Enables off-chain approvals without sending on-chain approvals.  
+* **EIP-3009 `transferWithAuthorization()`** — Allows direct off-chain authorization and gasless transfers.  
+* **BEP-20 Permit Extensions** — Native support for signature-based authorization on BNB Chain.
+
+These standards allow b402 to settle payments directly from signed payloads, enabling **instant, agent-native transactions**.
+
+---
+
+### Specifying Payment Amounts
+
+When configuring payment requirements in a b402-enabled server, you can specify:
+
+1. **Price String** — e.g., `"$0.01"` (defaults to USDC).  
+2. **TokenAmount Object** — Explicitly define the amount and token metadata.  
+
+Example:
+
+```typescript
+{
+  tokenAmount: {
+    token: "0x55d398326f99059fF775485246999027B3197955", // USDT on BNB Chain
+    amount: "1000000", // 1 USDT in atomic units
+    eip712: {
+      name: "Tether USD",
+      version: "1"
+    }
+  }
+}

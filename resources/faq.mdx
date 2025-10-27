@@ -5,48 +5,124 @@ icon: 'messages'
 ---
 
 <Tabs>
-    <Tab title="Risks">
-        <Accordion title='How does Area manage liquidity risks for Liquid AVS Tokens during market volatility?'>
-            Liquid AVS Tokens (LATs) can be thought of as the native AVS token plus its staking rewards. To mitigate liquidity risks in volatile markets:
-
-            1. Public trading: Our primary liquidity mechanism is encouraging users to trade LATs on public markets. This allows users to exit positions quickly without impacting the underlying staked assets.
-            2. Unbonding process: If trading is not preferable, users can unbond their LAT. However, this is subject to an unbonding period set by the EigenLayer contract, which helps manage large-scale exits.
-            3. Diversification: By offering LATs for multiple AVSs, we provide users options to rebalance their portfolios rather than fully exiting the ecosystem.
-            4. Liquidity incentives: We may implement liquidity mining programs to ensure sufficient liquidity across various market conditions.
-            5. Risk monitoring: We continuously monitor market conditions and liquidity metrics to anticipate and prepare for potential liquidity crunches.
-
-            By combining these approaches, we aim to provide flexibility for users while maintaining overall system stability.
+    <Tab title="General">
+        <Accordion title='What is b402 in a single sentence?'>
+            b402 is an open, on-chain payment standard that extends the dormant HTTP `402 Payment Required` status code into a programmable settlement layer for AI agents and web services on the BNB Chain.
         </Accordion>
 
-        <Accordion title='How resilient is Area and the LAT to disruptions in the EigenLayer ecosystem, such as a major AVS or operator failure?'>
-            EigenLayer has established itself as a robust ecosystem with a diverse range of AVSs and the most built-out infrastructure and ecosystem support in the restaking space. This provides a strong foundation for our business model.
-
-            Our strategy to ensure resilience and maintain LAT liquidity focuses on:
-
-            1. Instant Tradability: LATs are designed to be immediately tradeable, allowing users to exit positions without going through the unbonding process.
-            2. Impact Isolation: Each LAT represents a single AVS, effectively isolating the impact of any individual AVS failure to its specific token.
-            3. Operator Diversification: We diversify across multiple operators, minimizing the impact if any single operator fails.
-            4. Active Monitoring and Governance: We continuously monitor the ecosystem and have governance mechanisms in place to quickly respond to and support the ecosystem in case of disruptions.
+        <Accordion title='Is b402 a Binance product?'>
+            No. b402 is an **open protocol** built on BNB Chain, governed by an open-source specification under the Apache-2.0 license.  
+            Binance and other ecosystem contributors may operate facilitators, but no single entity controls the protocol.
         </Accordion>
 
-        <Accordion title='How does Area ensure security for multi-AVS restaking with Liquid AVS Tokens?'>
-            The introduction of Liquid AVS Tokens (LATs) actually enhances our ability to manage security concerns in a multi-AVS environment. Each LAT represents a distinct AVS with its own specific risk and reward parameters. This clear delineation makes it easier for users and our platform to assess and manage the risks associated with each individual AVS.
+        <Accordion title='Why not use traditional payment rails or API keys?'>
+            Traditional systems rely on centralized processors, accounts, and manual flows.  
+            b402 removes those barriers — enabling **machine-to-machine, HTTP-native payments** that settle instantly on-chain with minimal fees.
+        </Accordion>
 
-            When users compose multiple LATs into a portfolio, this granular risk visibility allows for more sophisticated and effective risk management strategies. Users can easily understand the risk profile of each component in their portfolio and adjust their holdings accordingly. From a platform perspective, we can implement more targeted security measures and monitoring systems for each AVS, rather than applying a one-size-fits-all approach.
-
-            Furthermore, this structure allows us to isolate potential security issues to specific LATs, reducing the risk of systemic failures across the entire platform. We continuously monitor each AVS and its corresponding LAT, enabling us to quickly identify and respond to any security concerns that may arise.
-            In essence, while the composability of LATs adds a layer of complexity, it also provides us with powerful tools for risk management and security enhancement. This approach allows us to offer users the benefits of composability while maintaining a robust security framework.
+        <Accordion title='Is b402 only for crypto-native projects?'>
+            No. Any service — from API providers to AI agents to websites — can integrate b402 to enable programmatic, per-request or usage-based payments.
         </Accordion>
     </Tab>
 
-    <Tab title="Product">
-        <Accordion title='How does Area differentiate from competitors such as Mellow and Stride and maintain its competitive edge?'>
-            Area differentiates itself from competitors like Mellow and Stride in both technical and business aspects. Our Liquid AVS Token (LAT) addresses a specific need within the EigenLayer ecosystem that currently lacks native support for individual AVS restaking. Users in EigenLayer must go through operator delegation, which inherently involves AVS diversification. LAT's core functionality is built directly on top of EigenLayer's native smart contracts, giving us a significant advantage in this specific ecosystem.
-
-            From a technical standpoint, this means that competitors like Mellow and Stride would need to exit their current ecosystems and rebuild their technical architecture to offer similar functionality within EigenLayer. This barrier provides us with a strong competitive edge in the near term.
-
-            From a business perspective, it's important to note that LAT is just the first step in our broader vision. We aim to drastically improve the way people restake, operate, and build AVSs. Our long-term plan to maintain our competitive edge involves continuous innovation and expansion of our product suite. We will leverage our deep integration with EigenLayer to develop additional tools and services that enhance the restaking experience for all ecosystem participants.
+    <Tab title="Language & Frameworks">
+        <Accordion title='Which languages and frameworks are supported?'>
+            The b402 reference implementations are written in **TypeScript** and **Python**, but the protocol is open and language-agnostic.  
+            Anyone can implement it in Go, Rust, or any environment that supports HTTP requests and ECDSA/EIP-712 signing.  
+            Developers are encouraged to open PRs or RFCs in the GitHub repository to expand SDK coverage.
         </Accordion>
     </Tab>
 
+    <Tab title="Facilitators">
+        <Accordion title='Who operates facilitators?'>
+            b402 is permissionless — anyone can deploy and operate a facilitator.  
+            The **b402 Reference Facilitator** runs on BNB mainnet and testnet, and community facilitators extend support to Base, Polygon, and other EVM networks.
+        </Accordion>
+
+        <Accordion title='What prevents a malicious facilitator from stealing funds?'>
+            Each payment payload is **signed by the buyer** and **settled directly on-chain**.  
+            A facilitator that tampers with a payload fails cryptographic verification.  
+            b402 is a **non-custodial** protocol — facilitators never hold funds.
+        </Accordion>
+    </Tab>
+
+    <Tab title="Pricing & Schemes">
+        <Accordion title='How should I price my endpoint or API?'>
+            Common pricing models include:
+            1. **Flat per-call** — fixed fee per request (e.g., `$0.001`).
+            2. **Tiered** — different prices for `/basic` vs `/pro` routes.
+            3. **Up-to** — pay-as-you-go pricing that adjusts with usage (under development).
+        </Accordion>
+
+        <Accordion title='Can I integrate b402 with existing usage meters or subscription systems?'>
+            Yes. b402 handles the **payment execution**, not usage tracking.  
+            You can still use existing metering tools or subscription logic (like Metronome or custom CRON billing) and trigger b402 payments when thresholds are reached.
+        </Accordion>
+    </Tab>
+
+    <Tab title="Networks & Tokens">
+        <Accordion title='Which networks and tokens are supported today?'>
+            | Network | Tokens | Fees | Status |
+            | -------- | ------- | ---- | ------- |
+            | BNB Chain | BNB, USDT, USDC | Near-zero | **Mainnet** |
+            | BNB Testnet | Test tokens | None | **Testnet** |
+            | Polygon | USDC, USDT | Minimal | **Community** |
+            | Base | USDC | Minimal | **Community** |
+
+            *Gas is paid on-chain; facilitators do not add extra fees.*  
+            Support for additional EVM and LayerZero networks is expanding.
+        </Accordion>
+
+        <Accordion title='Does b402 support fiat on- or off-ramps?'>
+            Not natively.  
+            However, facilitators or third-party gateways can integrate fiat payment bridges for deposits or withdrawals if required.
+        </Accordion>
+    </Tab>
+
+    <Tab title="Security">
+        <Accordion title='Do I need to expose my private key to the backend?'>
+            No.  
+            Agents or buyers **sign locally** in their runtime environment (browser, VM, or enclave).  
+            Servers and facilitators only verify signatures — they never have access to private keys.
+        </Accordion>
+
+        <Accordion title='How are refunds handled?'>
+            b402 currently supports **push-style payments** — once settled, they’re final.  
+            Refunds are handled at the business-logic level by sending a new transaction back to the buyer.  
+            Future “conditional” or **escrow schemes** may introduce reversible or time-locked transfers.
+        </Accordion>
+    </Tab>
+
+    <Tab title="Agents & Automation">
+        <Accordion title='How do AI agents know what to pay?'>
+            Agents follow the same 402 lifecycle:
+            1. Request the resource.  
+            2. Receive `402 Payment Required` with structured payment options.  
+            3. Select a scheme and sign a payload via the b402 SDK.  
+            4. Resubmit with the `X-PAYMENT` header.
+        </Accordion>
+
+        <Accordion title='Do agents need wallets?'>
+            Yes. Each agent must have a **programmable wallet** capable of signing EIP-712 payloads.  
+            Wallets can be EOAs, smart wallets (EIP-1271), or ERC-8004 agent identities.  
+            Libraries like **viem**, **ethers-v6**, or the **b402 SDK** simplify this setup.
+        </Accordion>
+    </Tab>
+
+    <Tab title="Governance & Roadmap">
+        <Accordion title='Is there a formal specification or whitepaper?'>
+            * **Specification:** [GitHub Spec Repository](https://github.com/b402/specs)  
+            * **Whitepaper:** [b402.org Whitepaper](https://b402.org/whitepaper.pdf)  
+            * **License:** Apache-2.0, fully open standard.
+        </Accordion>
+
+        <Accordion title='How will b402 evolve?'>
+            b402 development is public and community-driven.  
+            Upcoming priorities include:
+            * Expanded facilitator network (BNB, LayerZero, SVM)  
+            * Multi-token and cross-chain support  
+            * ERC-8004-based identity verification  
+            * Standardized trust and reputation layer for agents
+        </Accordion>
+</Tab>
 </Tabs>
