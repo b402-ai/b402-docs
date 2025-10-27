@@ -1,0 +1,50 @@
+---
+title: b402 Relayer
+description: 'On-chain contract for gasless BEP-20 payments in b402'
+icon: ballot-check
+---
+
+The **b402 Relayer** is the on-chain smart contract that enables gasless BEP-20 payments on the BNB Chain.  
+
+It works in tandem with the Facilitator service, verifying off-chain signatures and executing authorized token transfers on behalf of users.
+
+Beyond gasless execution, the Relayer supports **multiple tokens within the BNB Chain ecosystem**, allowing agents and applications to send and receive payments in custom BEP-20 assets.
+
+<Note>
+The b402 Relayer contract is currently **unaudited** and **not intended for production use**. It should only be deployed in testing or development environments.
+</Note>
+
+---
+
+## Key Capabilities
+
+The **b402 Relayer** serves as a meta-transaction executor for tokens that do not natively implement EIP-3009 or `permit()` functionality.  
+
+It allows a facilitator to submit a signed authorization from a user and pay the associated gas cost to execute the transfer on-chain.
+
+This design enables off-chain payment authorization, ideal for agents, automated clients, or users without BNB for gas.
+
+**Features:**
+- Executes gasless BEP-20 or ERC-20 transfers (e.g., USDT, USDC, BUSD)  
+- Verifies **EIP-712** signatures for authenticity  
+- Prevents replay attacks using nonces  
+- Enforces validity windows (`validAfter`, `validBefore`)  
+- Supports **token whitelisting** for enhanced security  
+- Compatible with all **standard EVM tokens** on BNB Chain  
+
+---
+
+## How It Works
+
+1. **User signs off-chain authorization**  
+   The user (or agent) signs an **EIP-712 message** authorizing a specific token transfer.  
+   Example message:  
+   > “I authorize the transfer of 1 USDT from my address to the recipient.”
+
+2. **Facilitator verifies and relays on-chain**  
+   The facilitator validates the user’s signature locally.  
+   If valid, it calls the `transferWithAuthorization()` function on the Relayer contract and **pays the gas** for execution.
+
+3. **Contract executes the transfer**  
+   The Relayer verifies the signature, ensures nonce and time constraints are met, and then calls the token contract’s `transferFrom()` function on behalf of the user.
+

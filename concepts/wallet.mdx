@@ -1,91 +1,45 @@
 ---
 title: Wallet
 description: 'Agent identity and payment mechanism in b402'
-icon: coin-vertical
+icon: wallet
 ---
 
-# Wallet
+In **b402**, a wallet functions as both a payment interface and a cryptographic identity for agents, buyers, and service providers.
 
-This page explains the role of the **wallet** in the **b402** protocol.
-
-In **b402**, a wallet functions as both a **payment interface** and a **cryptographic identity** for agents, buyers, and service providers.  
-It authorizes payments, verifies identity, and serves as the anchor of trust between clients and servers in every 402 exchange.
+It authorizes payments, verifies identity, and serves as the anchor of trust between clients and servers in every b402 exchange.
 
 ---
 
-### Role of the Wallet
+## Role of the Wallet
 
-#### For Agents (Buyers)
+### For Agents (Buyers)
 
 Agent wallets are used to:
 
-* **Hold tokens** — such as BNB, USDT, or USDC for on-chain payments.  
-* **Sign payment payloads** — cryptographically authorize transfers or proofs via `permit()` or `transferWithAuthorization()`.  
-* **Establish identity** — bind ERC-8004 agent credentials to a verified on-chain address.  
-* **Automate payments** — enable autonomous agents to pay for API calls or data access programmatically.  
+- **Hold tokens** — such as BNB, USDT, or USDC for on-chain payments.  
+- **Sign payment payloads** — cryptographically authorize transfers or proofs via `permit()` or `transferWithAuthorization()`.  
+- **Establish identity** — bind ERC-8004 agent credentials to a verified on-chain address.  
+- **Automate payments** — enable autonomous agents to pay for API calls or data access programmatically.  
 
-With b402, agents can transact directly over HTTP — no accounts, credentials, or session management required.
-
----
-
-#### For Services (Sellers)
+### For Services (Sellers)
 
 Service provider wallets are used to:
 
-* **Receive payments** — define the on-chain destination for settlements in their server configuration.  
-* **Authenticate responses** — optionally sign responses or attach proof of ownership.  
-* **Integrate with facilitators** — register destination addresses for verified settlements and receipts.  
+- **Receive payments** — define the on-chain destination for settlements in their server configuration.  
+- **Authenticate responses** — optionally sign responses or attach proof of ownership.  
+- **Integrate with facilitators** — register destination addresses for verified settlements and receipts.  
 
 A seller’s wallet address is included in the `402 Payment Required` response so that clients know exactly where to direct payments.
 
 ---
 
-### Identity Layer
+## Identity Layer
 
-In b402, wallets extend beyond payment — they represent **verifiable, programmable identities** through the [ERC-8004 standard](https://eips.ethereum.org/EIPS/eip-8004).  
+In b402, wallets extend beyond payment. They represent verifiable, programmable identities through the [ERC-8004 standard](https://eips.ethereum.org/EIPS/eip-8004).  
+
 This standard allows agents and services to:
+- **Mint and verify unique identities** on-chain  
+- **Sign requests with reputation-linked addresses**  
+- **Enable delegation**, allowing one wallet to act on behalf of another  
 
-* **Mint and verify unique identities** on-chain  
-* **Sign requests with reputation-linked addresses**  
-* **Enable delegation**, allowing one wallet to act on behalf of another  
-
-This makes b402 not just a payment protocol, but a **trust fabric for machine-to-machine commerce**.
-
----
-
-### Supported Wallet Types
-
-| Wallet Type            | Compatibility          | Use Case                                  |
-| ----------------------- | ---------------------- | ------------------------------------------ |
-| EOA (Externally Owned)  | ✅ All EVM networks     | Simple agent or service wallet             |
-| Smart Contract Wallet   | ✅ (EIP-1271)           | Multi-signature or programmable agent      |
-| ERC-8004 Identity       | ✅ (BNB, EVM)           | Verified on-chain identity for agents      |
-| Custodial Wallets       | ⚙️ Optional integration | Exchange or enterprise-level accounts      |
-
-Developers can use standard EVM-compatible wallets such as **MetaMask**, **Safe**, or **Rainbow**, or integrate with custom agent wallets via the b402 SDK.
-
----
-
-### Best Practices
-
-* Always **store private keys securely**, preferably in HSMs or encrypted agent environments.  
-* Use **dedicated wallets per agent** for clearer tracking and reduced key risk.  
-* For service operators, use **separate wallets** for revenue collection and facilitator settlement.  
-* For automated agents, implement **periodic rotation or delegation** through ERC-8004 credentials.  
-
----
-
-### Summary
-
-* Wallets in **b402** act as both **payment endpoints** and **verifiable identities**.  
-* Agents (buyers) use wallets to authorize and settle payments programmatically.  
-* Services (sellers) use wallets to define where payments are received.  
-* ERC-8004 expands wallets into **programmable agent identities**, enabling a trust layer for the autonomous web.
-
----
-
-Next, explore:
-
-* [HTTP 402](https://b402.gitbook.io/b402/core-concepts/http-402) — How payment requirements are communicated  
-* [Client / Server](https://b402.gitbook.io/b402/core-concepts/client-server) — How agents and services interact  
-* [Facilita]()*
+This makes b402 not just a payment protocol, but a trust fabric for machine-to-machine commerce.

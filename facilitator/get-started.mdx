@@ -1,49 +1,8 @@
 ---
 title: Get Started
-description: 'Gasless payment architecture on BNB Chain'
-icon: zap
+description: 'Start using the b402 facilitator'
+icon: flag-checkered
 ---
 
-## ⚡ Overview
 
-The **B402 Facilitator** is the off-chain service that powers **gasless ERC-20 token transfers** on the BNB Chain.  
-It bridges **off-chain signatures** and **on-chain execution**, allowing users and agents to transact without holding BNB for gas.
-
-> **In short:**  
-> **b402** is a **gasless payment protocol** that removes the need for users to hold BNB to make USDT or USDC transactions — think of it as **meta-transactions for payments**.
-
----
-
-### 🧠 Concept
-
-1. **Users sign** a transaction authorization (EIP-712) — no gas required.  
-2. **Facilitators verify** the signature off-chain.  
-3. **Facilitators relay** the transaction on-chain through the **B402Relayer** contract, paying gas on behalf of the user.  
-4. **Transfers settle** on-chain instantly, and optionally the facilitator collects a small fee.
-
-This architecture allows agents, users, and applications to interact programmatically without manual wallet confirmation or native gas.
-
----
-
-### ✳️ Why It Matters
-
-| Problem | Impact | Solution |
-| -------- | ------- | -------- |
-| Users need BNB to pay gas | Prevents first-time users from transacting | Facilitator pays gas on behalf of the user |
-| Legacy tokens (e.g., USDT on BSC) lack meta-tx support | Cannot use `permit()` or `transferWithAuthorization()` | **B402Relayer** adds EIP-3009-style authorization |
-| High UX friction for AI agents | Agents can’t directly pay for API/data services | Gasless meta-transactions enable autonomous agent payments |
-
----
-
-### 🔗 Contracts (BNB Chain)
-
-| Contract | Network | Address |
-| -------- | -------- | ------- |
-| **B402Relayer** | BSC Testnet | `0xd67eF16fa445101Ef1e1c6A9FB9F3014f1d60DE6` |
-| **B402Relayer** | BSC Mainnet | `0xE1C2830d5DDd6B49E9c46EbE03a98Cb44CD8eA5a` |
-
----
-
-### 🧩 System Diagram
-
-
+This section is under construction, coming soon.
