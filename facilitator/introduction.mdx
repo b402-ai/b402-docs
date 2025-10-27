@@ -1,6 +1,37 @@
 ---
 title: Introduction
-description: 'The official b402 facilitator'
+description: 'Overview of the official b402 Facilitator service'
 icon: arrow-progress
 ---
-This section is under construction, coming soon.
+
+The **b402 Facilitator** is the official off-chain service that powers payment verification and settlement for the **b402 protocol**.  
+
+It provides shared infrastructure for verifying signed payment payloads, executing on-chain settlements, and ensuring consistent behavior across networks and token schemes.  
+
+By abstracting blockchain complexity, the facilitator offers a uniform API for developers and resource servers—enabling better reliability, observability, and interoperability across multiple merchants and applications.
+
+<Note>
+Official b402 Facilitator endpoint: `https://api.b402.ai` 
+</Note>
+---
+
+## Key Benefits
+
+- **Unified verification and settlement:** Consistent handling of all supported schemes and networks.  
+- **Reduced on-chain complexity:** Offload blockchain operations from individual servers.  
+- **Multi-tenant design:** Serve multiple merchants or applications through a common `/verify` and `/settle` API.  
+- **Service discovery:** Help clients identify compatible merchants via the `/list` endpoint.
+
+---
+
+## Facilitator Responsibilities
+
+The facilitator is responsible for securely mediating between clients (buyers) and resource servers (sellers) while ensuring correct on-chain behavior.
+
+- Expose secure `/verify` and `/settle` endpoints following **x402-compatible** request/response formats  
+- Validate **Payment Payloads** according to scheme and network specifications  
+- Prevent replay attacks and ensure **idempotent verification**  
+- Submit verified transactions for **on-chain settlement** and monitor confirmations  
+- Provide clear, structured error responses for failed verifications or settlements  
+- Maintain reliable RPC and wallet infrastructure for supported networks  
+- Implement **logging**, **metrics**, **rate limiting**, and **alerting** for operational robustness
