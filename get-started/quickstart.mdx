@@ -6,14 +6,14 @@ icon: 'rocket'
 
 ## Overview
 
-B402 enables gasless payments on BSC using EIP-712 signatures. No BNB required for buyers or sellers.
+B402 enables payments on BSC using EIP-712 signatures. The facilitator handles gas fees and on-chain settlement.
 
 <CardGroup cols={2}>
   <Card title="For Sellers" icon="store" href="/get-started/seller">
-    Accept gasless payments from buyers
+    Accept payments from buyers
   </Card>
   <Card title="For Buyers" icon="wallet" href="/get-started/buyer">
-    Send gasless payments to sellers
+    Send payments to sellers
   </Card>
 </CardGroup>
 
@@ -24,39 +24,35 @@ https://facilitator.b402.ai
 ```
 
 <Note>
-  No API keys required. Just point your server at the facilitator and go live.
+  No API keys required. Point your server at the facilitator.
 </Note>
 
 ---
 
-## Drop-in Setup
+## Setup
 
 <Steps>
   <Step title="Set Facilitator URL">
-    Point your server at the facilitator
     ```javascript
     const FACILITATOR_URL = 'https://facilitator.b402.ai';
     ```
   </Step>
 
   <Step title="Choose Network">
-    Select BSC mainnet or testnet
     ```javascript
     const network = 'bsc'; // or 'bsc-testnet'
     const RELAYER = '0xE1C2830d5DDd6B49E9c46EbE03a98Cb44CD8eA5a';
     ```
   </Step>
 
-  <Step title="Ship It">
-    The facilitator verifies & settles payments on your behalf
+  <Step title="Integrate">
+    The facilitator verifies signatures and submits transactions.
   </Step>
 </Steps>
 
 ---
 
-## Quick Example
-
-### Seller: Accept Payment
+## Example: Seller
 
 ```javascript
 const express = require('express');
@@ -89,7 +85,7 @@ app.post('/accept-payment', async (req, res) => {
 app.listen(3000);
 ```
 
-### Buyer: Send Payment
+## Example: Buyer
 
 ```javascript
 import { ethers } from 'ethers';
@@ -102,7 +98,7 @@ const signer = await provider.getSigner();
 const authorization = {
   from: await signer.getAddress(),
   to: '0xRecipientAddress',
-  value: ethers.parseUnits('10', 18), // 10 USD1
+  value: ethers.parseUnits('10', 18),
   validAfter: Math.floor(Date.now() / 1000),
   validBefore: Math.floor(Date.now() / 1000) + 3600,
   nonce: ethers.hexlify(ethers.randomBytes(32))
@@ -169,19 +165,19 @@ await fetch('http://localhost:3000/accept-payment', {
 <CardGroup cols={3}>
   <Card title="USD1" icon="dollar-sign">
     World Liberty Financial USD
-
+    
     `0x8d0d000ee44948fc98c9b98a4fa4921476f08b0d`
   </Card>
 
   <Card title="USDT" icon="dollar-sign">
     Tether USD
-
+    
     `0x55d398326f99059fF775485246999027B3197955`
   </Card>
 
   <Card title="USDC" icon="dollar-sign">
     USD Coin
-
+    
     `0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d`
   </Card>
 </CardGroup>
@@ -200,10 +196,10 @@ await fetch('http://localhost:3000/accept-payment', {
   </Card>
 
   <Card title="Facilitator API" icon="server" href="/facilitator/introduction">
-    Learn about the facilitator service
+    Learn about the facilitator
   </Card>
 
   <Card title="Concepts" icon="book" href="/concepts/http-402">
-    Understand how B402 works
+    How B402 works
   </Card>
 </CardGroup>

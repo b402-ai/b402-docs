@@ -1,30 +1,28 @@
 ---
 title: Seller/Server Guide
-description: 'Accept gasless payments from buyers on BSC'
+description: 'Accept payments from buyers on BSC'
 icon: 'coin-vertical'
 ---
 
 ## Overview
 
-Set up your resource server to accept gasless BSC payments. Buyers pay with USD1/USDT without needing BNB for gas fees.
+Set up your server to accept BSC payments. Buyers sign authorizations off-chain, the facilitator handles gas and settlement.
 
 <Info>
-  **No API keys required.** The B402 facilitator handles all signature verification and on-chain settlement.
+  No API keys required. The facilitator verifies signatures and submits transactions.
 </Info>
 
 ---
 
-## Express Server Setup
+## Express Server
 
-### Install Dependencies
+### Install
 
 ```bash
 npm install express ethers cors
 ```
 
-### Create Server
-
-Create `server.js`:
+### Code
 
 ```javascript
 const express = require('express');
@@ -35,15 +33,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Configuration
 const FACILITATOR_URL = 'https://facilitator.b402.ai';
 const SELLER_ADDRESS = process.env.SELLER_ADDRESS || '0xYourAddress';
 const RELAYER_CONTRACT = '0xE1C2830d5DDd6B49E9c46EbE03a98Cb44CD8eA5a';
 const USD1_TOKEN = '0x8d0d000ee44948fc98c9b98a4fa4921476f08b0d';
 
-/**
- * Accept Payment Endpoint
- */
 app.post('/accept-payment', async (req, res) => {
   try {
     const { authorization, signature } = req.body;
@@ -101,10 +95,15 @@ app.post('/accept-payment', async (req, res) => {
   }
 });
 
-app.listen(3000, () => console.log('Seller ready on port 3000'));
+app.listen(3000);
 ```
 
-<Check>Your server is now accepting gasless payments!</Check>
+### Run
+
+```bash
+export SELLER_ADDRESS=0xYourAddress
+node server.js
+```
 
 ---
 
@@ -112,9 +111,9 @@ app.listen(3000, () => console.log('Seller ready on port 3000'));
 
 <CardGroup cols={2}>
   <Card title="Buyer Guide" icon="wallet" href="/get-started/buyer">
-    Help buyers send payments
+    How buyers send payments
   </Card>
   <Card title="Facilitator API" icon="server" href="/facilitator/introduction">
-    Learn about the API
+    API documentation
   </Card>
 </CardGroup>
