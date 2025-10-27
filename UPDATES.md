@@ -51,7 +51,7 @@ Getting Started/
 
 Deploy to Mintlify:
 ```bash
-cd /Users/mayurchougule/development/ethereum/b402-docs
+cd /path/to/b402-docs
 mintlify dev  # Test locally
 mintlify deploy  # Deploy to production
 ```
