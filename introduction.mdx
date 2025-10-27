@@ -4,18 +4,20 @@ description: 'The open payment standard on BNB Chain'
 icon: star
 ---
 
-b402 is an open protocol for internet-native payments on the [BNB Chain](https://www.bnbchain.org/en). 
+b402 is an open protocol for internet-native payments on the [BNB Chain](https://www.bnbchain.org/en).
 
 b402 builds on the `HTTP 402 Payment Required` standard and extends the work pioneered by [x402](https://x402.org), transforming it into a fully programmable settlement layer for agents, enabling instant, verifiable payments, identity, and service access without intermediaries, accounts, or manual steps.
 
-With b402, any service can require payment or identity proof before responding to a request, using native crypto payments for speed, privacy, and efficiency.
+With b402, any service can require payment or identity proof before responding to a request, using native BNB Chain payments for speed, privacy, and efficiency.
+
+The b402 protocol is initiated and maintained by [Vistara Labs](https://www.vistara.dev/). We invite developers, operators, and builders across the ecosystem to join us in evolving the standard.
 
 
 ## Why Use b402?
 
 b402 addresses the friction between today’s web protocols and tomorrow’s autonomous systems:
 
-* **Machine-to-machine payments** made seamless with native crypto primitives
+* **Agent-to-agent (a2a) payments** made seamless with native crypto primitives
 * **Low-fee micropayments** and usage-based monetization without custodians
 * **Integrated identity** through ERC-8004 for verified agent transactions
 * **BNB-native deployment** with compatibility toward EVM
@@ -45,33 +47,23 @@ b402 unlocks a new category of agent-native applications on the BNB Chain:
 
 The flow is simple and transparent:
 
-1. A buyer (agent) requests a resource from a b402-enabled server.
-2. If payment is required, the server responds with `402 Payment Required` and b402-formatted payment instructions.
-3. The buyer sends a **payment payload** to the facilitator for settlement.
+1. A buyer (agent) requests a resource from a b402-enabled service.
+2. If payment is required, the service responds with `402 Payment Required` and b402-formatted payment instructions.
+3. The buyer sends a **payment payload** to the b402 facilitator for settlement.
 4. The server verifies the transaction through `/verify` and `/settle` endpoints.
 5. Once verified, the server releases the requested resource.
 
 
-
-## Get Started
-
-Ready to build?
-
-* [Quickstart for Sellers](#)
-* [Quickstart for Buyers](#)
-* [Core Concepts](#)
-
-Join the discussion in our [Discord](#) and help shape the future of agent-native commerce on BNB Chain.
-
-
 ## Get Started with b402
 <CardGroup cols={2}>
-<Card title='Concepts' icon='book-open-cover' href='/lat/introduction'>
+
+<Card title='Concepts' icon='book-open-cover' href='/concepts'>
     
 </Card>
 
-<Card title='Quickstart Guies' icon='file-contract' href='/api-reference/introduction'>
+<Card title='Get Started' icon='play' href='/get-started'>
 </Card>
+
 </CardGroup>
 
 
@@ -81,7 +73,9 @@ We love seeing new ideas, improvements, and documentation contributions flow bac
 If you’ve spotted a bug, have a suggestion, or want to improve the docs, open a PR or issue.
 
 <CardGroup cols={2}>
-<Card title='b402 GitHub' icon='github' href=''>
-    Track progress, file issues, or submit pull requests directly on GitHub.
+<Card title='b402 GitHub' icon='github' href='https://github.com/Vistara-Labs/b402'>
+</Card>
+
+<Card title='b402 Discord' icon='discord' href='https://gg.vistara.dev/'>
 </Card>
 </CardGroup>

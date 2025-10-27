@@ -71,24 +71,18 @@
         }
     },
     "navbar": {
-        "links": [
-            {
-                "label": "Developer Dashboard",
-                "href": "https://developer.eigenexplorer.com"
-            }
-        ],
         "primary": {
             "type": "button",
-            "label": "Open App",
-            "href": "https://area.club"
+            "label": "Website",
+            "href": "https://b402.ai"
         }
     },
     "footer": {
         "socials": {
-            "twitter": "https://twitter.com/eigenexplorer",
-            "telegram": "https://t.me/eigenexplorer",
-            "discord": "https://discord.gg/3aTdnXgGNg",
-            "github": "https://github.com/eigenexplorer"
+            "twitter": "https://twitter.com/b402ai",
+            "telegram": "",
+            "discord": "https://gg.vistara.dev/",
+            "github": "https://github.com/Vistara-Labs/b402"
         }
     }
 }
