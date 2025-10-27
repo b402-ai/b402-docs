@@ -1,7 +1,7 @@
 {
     "$schema": "https://mintlify.com/docs.json",
     "theme": "mint",
-    "name": "Area Docs",
+    "name": "b402 Docs",
     "colors": {
         "primary": "#71717a",
         "light": "#ffffff",
@@ -22,14 +22,17 @@
                         ]
                     },
                     {
+                        "group": "Getting Started",
+                        "pages": []
+                    },
+                    {
                         "group": "Concepts",
                         "pages": [
-                            "concepts/direct-liquid-restaking",
-                            "concepts/lat",
-                            "concepts/yield",
-                            "concepts/fee",
-                            "concepts/base-asset",
-                            "concepts/operator-delegation"
+                            "concepts/http-402",
+                            "concepts/client-server",
+                            "concepts/facilitator",
+                            "concepts/wallet",
+                            "concepts/network-token"
                         ]
                     },
                     {
@@ -81,43 +84,12 @@
                         }
                     }
                 ]
-            },
-            {
-                "tab": "Data Reference",
-                "groups": [
-                    {
-                        "group": "Getting Started",
-                        "pages": [
-                            "data-reference/introduction"
-                        ]
-                    },
-                    {
-                        "group": "Metrics",
-                        "pages": [
-                            "data-reference/metrics"
-                        ]
-                    },
-                    {
-                        "group": "Entities",
-                        "pages": [
-                            "data-reference/avs",
-                            "data-reference/operators",
-                            "data-reference/stakers"
-                        ]
-                    },
-                    {
-                        "group": "Mechanisms",
-                        "pages": [
-                            "data-reference/rewards"
-                        ]
-                    }
-                ]
             }
         ]
     },
     "logo": {
-        "light": "/public/logo/logo-light.svg",
-        "dark": "/public/logo/logo-dark.svg"
+        "light": "/public/logo/b402-logo.svg",
+        "dark": "/public/logo/b402-logo.svg"
     },
     "api": {
         "mdx": {
