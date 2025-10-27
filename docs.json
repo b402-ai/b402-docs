@@ -51,37 +51,6 @@
                         ]
                     }
                 ]
-            },
-            {
-                "tab": "Developers",
-                "groups": [
-                    {
-                        "group": "Introduction",
-                        "pages": [
-                            "developers/introduction",
-                            "developers/support",
-                            "developers/pricing",
-                            "developers/rate-limit",
-                            "developers/errors",
-                            "developers/changelog",
-                            "developers/api-status"
-                        ]
-                    },
-                    {
-                        "group": "Area Smart Contracts",
-                        "pages": [
-                            "developers/lat-contracts/core-contracts",
-                            "developers/lat-contracts/utility-contracts"
-                        ]
-                    },
-                    {
-                        "group": "API Reference",
-                        "openapi": {
-                            "source": "/developers/api-reference/openapi.json",
-                            "directory": "/developers/api-reference"
-                        }
-                    }
-                ]
             }
         ]
     },
