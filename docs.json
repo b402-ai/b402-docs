@@ -17,7 +17,6 @@
                         "group": "Introduction",
                         "pages": [
                             "introduction",
-                            "support",
                             "community"
                         ]
                     },
@@ -88,8 +87,8 @@
         ]
     },
     "logo": {
-        "light": "/public/logo/b402-logo.svg",
-        "dark": "/public/logo/b402-logo.svg"
+        "light": "/public/logo/logo-light.svg",
+        "dark": "/public/logo/logo-light.svg"
     },
     "api": {
         "mdx": {

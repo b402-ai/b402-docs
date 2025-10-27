@@ -1,28 +1,75 @@
 ---
 title: Welcome to b402
-description: 'b402 -- the open payment standard on BNB Chain'
+description: 'The open payment standard on BNB Chain'
 icon: star
 ---
 
-## What is b402
+b402 is an open protocol for internet-native payments on the [BNB Chain](https://www.bnbchain.org/en). 
+
+b402 extends the HTTP 402 Payment Required standard and references the work done by [x402](https://x402.org) into a fully programmable settlement layer for agents — enabling instant, verifiable payments, identity, and service access without intermediaries, accounts, or manual steps.
+
+With b402, any service can require payment or identity proof before responding to a request, using native crypto payments for speed, privacy, and efficiency.
+
+
+## Why Use b402?
+
+b402 addresses the friction between today’s web protocols and tomorrow’s autonomous systems:
+
+* **Machine-to-machine payments** made seamless with native crypto primitives
+* **Low-fee micropayments** and usage-based monetization without custodians
+* **Integrated identity** through ERC-8004 for verified agent transactions
+* **BNB-native deployment** with compatibility toward EVM
+
+## Who Is b402 For?
+
+**Agents & Developers (Buyers):**
+AI agents, bots, and scripts that need to autonomously pay for or charge for data, compute, or APIs.
+
+**Service Providers (Sellers):**
+Developers and businesses who want to monetize APIs or digital content directly over HTTP, without centralized gateways.
+
+Both sellers and buyers interact directly through HTTP requests, with payment handled transparently through the protocol.
+
+## What Can You Build?
+
+b402 unlocks a new category of agent-native applications on the BNB Chain:
+
+* **Autonomous API trading bots** that pay per query
+* **AI agents** that purchase verified data feeds or inference time
+* **Usage-based paywalls** for analytics, content, or utilities
+* **Proxy or relay services** that resell API capabilities
+* **Identity-gated endpoints** requiring ERC-8004 verification
+
+
+## How It Works
+
+The flow is simple and transparent:
+
+1. A buyer (agent) requests a resource from a b402-enabled server.
+2. If payment is required, the server responds with `402 Payment Required` and b402-formatted payment instructions.
+3. The buyer sends a **payment payload** to the facilitator for settlement.
+4. The server verifies the transaction through `/verify` and `/settle` endpoints.
+5. Once verified, the server releases the requested resource.
 
 
 
-## Get Familiar with b402
+## Get Started
+
+Ready to build?
+
+* [Quickstart for Sellers](#)
+* [Quickstart for Buyers](#)
+* [Core Concepts](#)
+
+Join the discussion in our [Discord](#) and help shape the future of agent-native commerce on BNB Chain.
+
+
+## Get Started with b402
 <CardGroup cols={2}>
 <Card title='Concepts' icon='book-open-cover' href='/lat/introduction'>
-    Learn the basics.
+    
 </Card>
 
-<Card title='Developers' icon='file-contract' href='/api-reference/introduction'>
-    Interact with Area smart contracts.
-</Card>
-</CardGroup>
-
-## Use Area
-
-<CardGroup cols={2}>
-<Card title='Area App' icon='grid-round-2-plus' href='https://area.club'>
-    Restake, earn, and more.
+<Card title='Quickstart Guies' icon='file-contract' href='/api-reference/introduction'>
 </Card>
 </CardGroup>
