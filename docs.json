@@ -60,7 +60,7 @@
     },
     "api": {
         "mdx": {
-            "server": "https://api.eigenexplorer.com"
+            "server": "https://api.b402.ai"
         }
     },
     "background": {
