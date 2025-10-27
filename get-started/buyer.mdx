@@ -1,9 +1,220 @@
 ---
 title: Buyer/Client Guide
-description: 'Implementing payment requests and wallet flows for buyers in b402'
-icon: cart-shopping
+description: 'Send payments to sellers on BSC'
+icon: 'cart-shopping'
 ---
 
+## Overview
 
+Send payments on BSC by signing EIP-712 authorizations. Sellers use the facilitator to verify and settle.
 
-This section is under construction, coming soon.
+<Info>
+  Buyers sign off-chain. The facilitator handles gas and submits transactions.
+</Info>
+
+---
+
+## Browser Integration
+
+### Install
+
+```bash
+npm install ethers
+```
+
+### Code
+
+```javascript
+import { ethers } from 'ethers';
+
+export async function sendPayment(sellerUrl, recipientAddress, amountUSD1) {
+  const provider = new ethers.BrowserProvider(window.ethereum);
+  await provider.send('eth_requestAccounts', []);
+  const signer = await provider.getSigner();
+  const userAddress = await signer.getAddress();
+
+  const network = await provider.getNetwork();
+  if (network.chainId !== 56n) {
+    throw new Error('Switch to BSC Mainnet (Chain ID: 56)');
+  }
+
+  const USD1_TOKEN = '0x8d0d000ee44948fc98c9b98a4fa4921476f08b0d';
+  const RELAYER_CONTRACT = '0xE1C2830d5DDd6B49E9c46EbE03a98Cb44CD8eA5a';
+
+  const authorization = {
+    from: userAddress,
+    to: recipientAddress,
+    value: ethers.parseUnits(amountUSD1.toString(), 18).toString(),
+    validAfter: Math.floor(Date.now() / 1000),
+    validBefore: Math.floor(Date.now() / 1000) + 3600,
+    nonce: ethers.hexlify(ethers.randomBytes(32))
+  };
+
+  const domain = {
+    name: 'B402',
+    version: '1',
+    chainId: 56,
+    verifyingContract: RELAYER_CONTRACT
+  };
+
+  const types = {
+    TransferWithAuthorization: [
+      { name: 'from', type: 'address' },
+      { name: 'to', type: 'address' },
+      { name: 'value', type: 'uint256' },
+      { name: 'validAfter', type: 'uint256' },
+      { name: 'validBefore', type: 'uint256' },
+      { name: 'nonce', type: 'bytes32' }
+    ]
+  };
+
+  const signature = await signer.signTypedData(domain, types, authorization);
+
+  const response = await fetch(`${sellerUrl}/accept-payment`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ authorization, signature })
+  });
+
+  const result = await response.json();
+  if (result.success) {
+    return result;
+  } else {
+    throw new Error(result.error);
+  }
+}
+```
+
+### Usage
+
+```javascript
+const result = await sendPayment(
+  'http://localhost:3000',
+  '0xa23beff60ad1b91f35e91476475f9e3eba0897d7',
+  10
+);
+```
+
+---
+
+## React Component
+
+```jsx
+import { useState } from 'react';
+import { ethers } from 'ethers';
+
+export function PaymentButton({ sellerUrl, recipient, amount }) {
+  const [loading, setLoading] = useState(false);
+  const [txHash, setTxHash] = useState(null);
+
+  const handlePayment = async () => {
+    setLoading(true);
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      await provider.send('eth_requestAccounts', []);
+      const signer = await provider.getSigner();
+      const userAddress = await signer.getAddress();
+
+      const USD1_TOKEN = '0x8d0d000ee44948fc98c9b98a4fa4921476f08b0d';
+      const RELAYER_CONTRACT = '0xE1C2830d5DDd6B49E9c46EbE03a98Cb44CD8eA5a';
+
+      const authorization = {
+        from: userAddress,
+        to: recipient,
+        value: ethers.parseUnits(amount.toString(), 18).toString(),
+        validAfter: Math.floor(Date.now() / 1000),
+        validBefore: Math.floor(Date.now() / 1000) + 3600,
+        nonce: ethers.hexlify(ethers.randomBytes(32))
+      };
+
+      const domain = {
+        name: 'B402',
+        version: '1',
+        chainId: 56,
+        verifyingContract: RELAYER_CONTRACT
+      };
+
+      const types = {
+        TransferWithAuthorization: [
+          { name: 'from', type: 'address' },
+          { name: 'to', type: 'address' },
+          { name: 'value', type: 'uint256' },
+          { name: 'validAfter', type: 'uint256' },
+          { name: 'validBefore', type: 'uint256' },
+          { name: 'nonce', type: 'bytes32' }
+        ]
+      };
+
+      const signature = await signer.signTypedData(domain, types, authorization);
+
+      const response = await fetch(`${sellerUrl}/accept-payment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ authorization, signature })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setTxHash(result.transaction);
+      }
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div>
+      <button onClick={handlePayment} disabled={loading}>
+        {loading ? 'Processing...' : `Pay ${amount} USD1`}
+      </button>
+      {txHash && (
+        <a href={`https://bscscan.com/tx/${txHash}`} target="_blank">
+          View transaction
+        </a>
+      )}
+    </div>
+  );
+}
+```
+
+---
+
+## Error Handling
+
+<AccordionGroup>
+  <Accordion title="Wallet Not Found">
+    ```javascript
+    if (!window.ethereum) {
+      alert('Install MetaMask');
+      return;
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Wrong Network">
+    ```javascript
+    const network = await provider.getNetwork();
+    if (network.chainId !== 56n) {
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: '0x38' }]
+      });
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Seller Guide" icon="store" href="/get-started/seller">
+    How sellers accept payments
+  </Card>
+  <Card title="Concepts" icon="book" href="/concepts/http-402">
+    How B402 works
+  </Card>
+</CardGroup>

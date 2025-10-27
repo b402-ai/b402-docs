@@ -23,6 +23,7 @@
                     {
                         "group": "Getting Started",
                         "pages": [
+                            "get-started/quickstart",
                             "get-started/buyer",
                             "get-started/seller"
                         ]
