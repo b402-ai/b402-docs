@@ -1,220 +1,227 @@
 ---
-title: Buyer/Client Guide
-description: 'Send payments to sellers on BSC'
+title: Buyer Guide
+description: 'Send payments to sellers on the BNB Chain'
 icon: 'cart-shopping'
 ---
 
+The b402 protocol enables users to make gasless payments in BEP-20 tokens such as USD1 and USDT on the BNB Chain.
+
+This guide shows how to send a payment to a seller using the b402 TypeScript SDK.
+
 ## Overview
 
-Send payments on BSC by signing EIP-712 authorizations. Sellers use the facilitator to verify and settle.
+As a buyer, you can authorize payments using EIP-712 signatures without paying any gas fees.
 
-<Info>
-  Buyers sign off-chain. The facilitator handles gas and submits transactions.
-</Info>
+The [b402 Facilitator](/b402-services/b402-facilitator) covers the gas cost and settles the transaction on-chain via the b402 Relayer.
 
----
+Payments typically finalize in under 3 seconds.
 
-## Browser Integration
+## Prerequisites
 
-### Install
+Before running the example, make sure you have:
 
-```bash
-npm install ethers
+1. Node.js 18+
+2. A BNB Chain wallet with USD1 tokens
+3. A valid private key exported as an environment variable
+
+```ts .env
+export PRIVATE_KEY=your_private_key_here
 ```
 
-### Code
+## Installation
 
-```javascript
-import { ethers } from 'ethers';
+Install the required packages:
 
-export async function sendPayment(sellerUrl, recipientAddress, amountUSD1) {
-  const provider = new ethers.BrowserProvider(window.ethereum);
-  await provider.send('eth_requestAccounts', []);
-  const signer = await provider.getSigner();
-  const userAddress = await signer.getAddress();
+``` bash
+npm install ethers b402-sdk
+```
 
-  const network = await provider.getNetwork();
-  if (network.chainId !== 56n) {
-    throw new Error('Switch to BSC Mainnet (Chain ID: 56)');
+## Example
+The following example demonstrates how to send a USD1 payment to a seller service that supports the b402 protocol.
+
+This walkthrough shows the complete flow from connecting your wallet to confirming the on-chain transaction.
+
+1. **Initialize Provider & Wallet**: Connect to BNB Chain and load your wallet.
+2. **Check Balance**: Ensure you have enough USD1.
+3. **Approve Relayer**: Allow the b402 relayer contract to spend tokens on your behalf.
+4. **Send Payment**: Use the b402.pay() method to send a gasless payment to a seller.
+5. **Confirm Transaction**: The SDK returns a transaction hash for verification on BscScan.
+
+
+### Step 1. Connect Wallet and Provider
+
+```ts lines
+// Import Packages and Define Constants
+import { Wallet, Contract, JsonRpcProvider } from 'ethers';
+import { B402 } from 'b402-sdk';
+
+// USD1 stablecoin and b402 relayer contract on BNB Chain
+const USD1 = '0x8d0d000ee44948fc98c9b98a4fa4921476f08b0d';
+const RELAYER = '0xE1C2830d5DDd6B49E9c46EbE03a98Cb44CD8eA5a';
+const RPC = 'https://bsc-dataseed1.binance.org';
+
+async function main() {
+  if (!process.env.PRIVATE_KEY) {
+    console.error('❌ Set PRIVATE_KEY environment variable');
+    process.exit(1);
   }
 
-  const USD1_TOKEN = '0x8d0d000ee44948fc98c9b98a4fa4921476f08b0d';
-  const RELAYER_CONTRACT = '0xE1C2830d5DDd6B49E9c46EbE03a98Cb44CD8eA5a';
+  // Connect to BNB Chain RPC
+  const provider = new JsonRpcProvider(RPC);
 
-  const authorization = {
-    from: userAddress,
-    to: recipientAddress,
-    value: ethers.parseUnits(amountUSD1.toString(), 18).toString(),
-    validAfter: Math.floor(Date.now() / 1000),
-    validBefore: Math.floor(Date.now() / 1000) + 3600,
-    nonce: ethers.hexlify(ethers.randomBytes(32))
-  };
+  // Create wallet instance
+  const wallet = new Wallet(process.env.PRIVATE_KEY, provider);
+  console.log('Wallet address:', wallet.address);
+```
 
-  const domain = {
-    name: 'B402',
-    version: '1',
-    chainId: 56,
-    verifyingContract: RELAYER_CONTRACT
-  };
+### Step 2. Load the Token Contract
+```ts lines
+  // Minimal BEP-20 ABI for balance, allowance, and approval
+  const token = new Contract(
+    USD1,
+    [
+      'function balanceOf(address) view returns (uint256)',
+      'function allowance(address,address) view returns (uint256)',
+      'function approve(address,uint256) returns (bool)',
+    ],
+    wallet
+  );
 
-  const types = {
-    TransferWithAuthorization: [
-      { name: 'from', type: 'address' },
-      { name: 'to', type: 'address' },
-      { name: 'value', type: 'uint256' },
-      { name: 'validAfter', type: 'uint256' },
-      { name: 'validBefore', type: 'uint256' },
-      { name: 'nonce', type: 'bytes32' }
-    ]
-  };
+  // Check user’s USD1 balance
+  console.log('Checking balance...');
+  const balance = await token.balanceOf(wallet.address);
+  console.log('USD1 Balance:', Number(balance) / 1e18);
 
-  const signature = await signer.signTypedData(domain, types, authorization);
+  if (balance === 0n) {
+    console.error('❌ You need USD1 tokens to continue');
+    process.exit(1);
+  }
+```
 
-  const response = await fetch(`${sellerUrl}/accept-payment`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ authorization, signature })
+### Step 3. Approve the Relayer (Once Per Token)
+```ts lines
+  console.log('Checking approval...');
+  const allowance = await token.allowance(wallet.address, RELAYER);
+
+  // If not approved yet, give the relayer unlimited allowance
+  if (allowance === 0n) {
+    console.log('Approving relayer...');
+    const tx = await token.approve(
+      RELAYER,
+      '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+    );
+    await tx.wait();
+    console.log('✅ Relayer approved');
+  }
+```
+
+### Step 4. Send the Payment
+``` ts lines
+  console.log('Sending payment...');
+
+  // Initialize b402 SDK
+  const b402 = new B402('mainnet');
+
+  // Execute the payment
+  const result = await b402.pay(wallet, {
+    amount: '0.01', // payment amount in token units
+    token: 'USD1',  // token symbol
+    recipient: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb', // seller’s address
   });
 
-  const result = await response.json();
+  // Display result
   if (result.success) {
-    return result;
+    console.log('✅ Payment successful');
+    console.log('Transaction Hash:', result.txHash);
+    console.log(`View on BscScan: https://bscscan.com/tx/${result.txHash}`);
   } else {
-    throw new Error(result.error);
+    console.error('❌ Payment failed:', result.error);
   }
 }
+
+main();
 ```
 
-### Usage
+## Complete Example Code
+``` ts lines
+// Import dependencies from ethers.js and the b402 SDK
+import { Wallet, Contract, JsonRpcProvider } from 'ethers';
+import { B402 } from 'b402-sdk';
 
-```javascript
-const result = await sendPayment(
-  'http://localhost:3000',
-  '0xa23beff60ad1b91f35e91476475f9e3eba0897d7',
-  10
-);
-```
+// Define constants for the USD1 token, b402 Relayer contract, and BNB Chain RPC endpoint
+const USD1 = '0x8d0d000ee44948fc98c9b98a4fa4921476f08b0d';
+const RELAYER = '0xE1C2830d5DDd6B49E9c46EbE03a98Cb44CD8eA5a';
+const RPC = 'https://bsc-dataseed1.binance.org';
 
----
+async function main() {
+  // Ensure the user has provided a private key for signing transactions
+  if (!process.env.PRIVATE_KEY) {
+    console.log('Set PRIVATE_KEY');
+    process.exit(1);
+  }
 
-## React Component
+  // Connect to the BNB Chain and initialize the wallet
+  const provider = new JsonRpcProvider(RPC);
+  const wallet = new Wallet(process.env.PRIVATE_KEY, provider);
+  console.log('Wallet:', wallet.address);
 
-```jsx
-import { useState } from 'react';
-import { ethers } from 'ethers';
-
-export function PaymentButton({ sellerUrl, recipient, amount }) {
-  const [loading, setLoading] = useState(false);
-  const [txHash, setTxHash] = useState(null);
-
-  const handlePayment = async () => {
-    setLoading(true);
-    try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      await provider.send('eth_requestAccounts', []);
-      const signer = await provider.getSigner();
-      const userAddress = await signer.getAddress();
-
-      const USD1_TOKEN = '0x8d0d000ee44948fc98c9b98a4fa4921476f08b0d';
-      const RELAYER_CONTRACT = '0xE1C2830d5DDd6B49E9c46EbE03a98Cb44CD8eA5a';
-
-      const authorization = {
-        from: userAddress,
-        to: recipient,
-        value: ethers.parseUnits(amount.toString(), 18).toString(),
-        validAfter: Math.floor(Date.now() / 1000),
-        validBefore: Math.floor(Date.now() / 1000) + 3600,
-        nonce: ethers.hexlify(ethers.randomBytes(32))
-      };
-
-      const domain = {
-        name: 'B402',
-        version: '1',
-        chainId: 56,
-        verifyingContract: RELAYER_CONTRACT
-      };
-
-      const types = {
-        TransferWithAuthorization: [
-          { name: 'from', type: 'address' },
-          { name: 'to', type: 'address' },
-          { name: 'value', type: 'uint256' },
-          { name: 'validAfter', type: 'uint256' },
-          { name: 'validBefore', type: 'uint256' },
-          { name: 'nonce', type: 'bytes32' }
-        ]
-      };
-
-      const signature = await signer.signTypedData(domain, types, authorization);
-
-      const response = await fetch(`${sellerUrl}/accept-payment`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ authorization, signature })
-      });
-
-      const result = await response.json();
-      if (result.success) {
-        setTxHash(result.transaction);
-      }
-    } catch (error) {
-      alert(error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div>
-      <button onClick={handlePayment} disabled={loading}>
-        {loading ? 'Processing...' : `Pay ${amount} USD1`}
-      </button>
-      {txHash && (
-        <a href={`https://bscscan.com/tx/${txHash}`} target="_blank">
-          View transaction
-        </a>
-      )}
-    </div>
+  // Create a contract instance for USD1 (BEP-20) with minimal ABI for balance, allowance, and approval
+  const token = new Contract(
+    USD1,
+    [
+      'function balanceOf(address) view returns (uint256)',
+      'function allowance(address,address) view returns (uint256)',
+      'function approve(address,uint256) returns (bool)',
+    ],
+    wallet
   );
+
+  // Check the user's USD1 balance before sending payment
+  console.log('Checking balance...');
+  const balance = await token.balanceOf(wallet.address);
+  console.log('USD1:', Number(balance) / 1e18);
+
+  if (balance === 0n) {
+    console.log('Need USD1 tokens');
+    process.exit(1);
+  }
+
+  // Check if the b402 Relayer contract has approval to transfer tokens on behalf of the user
+  console.log('Checking approval...');
+  const allowance = await token.allowance(wallet.address, RELAYER);
+
+  // If no approval exists, approve the Relayer with a large (max) allowance
+  if (allowance === 0n) {
+    console.log('Approving relayer...');
+    const tx = await token.approve(
+      RELAYER,
+      '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+    );
+    await tx.wait();
+    console.log('Approved');
+  }
+
+  // Initialize the b402 SDK and send a gasless payment
+  console.log('Sending payment...');
+  const b402 = new B402('mainnet');
+
+  // Define payment details: amount, token, and recipient (seller)
+  const result = await b402.pay(wallet, {
+    amount: '0.01', // Amount of USD1 to send
+    token: 'USD1',  // Token symbol
+    recipient: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb', // Seller’s wallet
+  });
+
+  // Display the transaction result and link to BscScan
+  if (result.success) {
+    console.log('Payment successful');
+    console.log('TX:', result.txHash);
+    console.log(`View on BscScan: https://bscscan.com/tx/${result.txHash}`);
+  } else {
+    console.log('Payment failed:', result.error);
+  }
 }
+
+// Execute the script
+main();
 ```
-
----
-
-## Error Handling
-
-<AccordionGroup>
-  <Accordion title="Wallet Not Found">
-    ```javascript
-    if (!window.ethereum) {
-      alert('Install MetaMask');
-      return;
-    }
-    ```
-  </Accordion>
-
-  <Accordion title="Wrong Network">
-    ```javascript
-    const network = await provider.getNetwork();
-    if (network.chainId !== 56n) {
-      await window.ethereum.request({
-        method: 'wallet_switchEthereumChain',
-        params: [{ chainId: '0x38' }]
-      });
-    }
-    ```
-  </Accordion>
-</AccordionGroup>
-
----
-
-## Next Steps
-
-<CardGroup cols={2}>
-  <Card title="Seller Guide" icon="store" href="/get-started/seller">
-    How sellers accept payments
-  </Card>
-  <Card title="Concepts" icon="book" href="/concepts/http-402">
-    How B402 works
-  </Card>
-</CardGroup>
