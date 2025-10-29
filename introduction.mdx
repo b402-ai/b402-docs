@@ -4,14 +4,21 @@ description: 'The open payment standard on BNB Chain'
 icon: star
 ---
 
-b402 is an open protocol for internet-native payments on the [BNB Chain](https://www.bnbchain.org/en).
+b402 is a complete internet-native payment infrastructure built on the [BNB Chain](https://www.bnbchain.org/en), inspired by the `HTTP 402` standard and [x402](https://x402.org) protocol.
 
-b402 builds on the `HTTP 402 Payment Required` standard and extends the work pioneered by [x402](https://x402.org), transforming it into a fully programmable settlement layer for agents, enabling instant, verifiable payments, identity, and service access without intermediaries, accounts, or manual steps.
+It enables HTTP-native payment requests that support multi-token transactions, bringing frictionless payment capabilities to the BNB ecosystem.
 
-With b402, any service can require payment or identity proof before responding to a request, using native BNB Chain payments for speed, privacy, and efficiency.
+## b402 Architecture
 
-The b402 protocol is initiated and maintained by [Vistara Labs](https://www.vistara.dev/). We invite developers, operators, and builders across the ecosystem to join us in evolving the standard.
+<Frame>
+  <img src="public/images/b402-architecture.png" alt="b402 architecture" />
+</Frame>
 
+The b402 ecosystem integrates three key layers:
+
+1. **Protocol Layer (b402 Protocol)**: the open payment protocol.
+2. **Service Layer (Facilitator & b402scan)**: the operational backbone enabling settlement and onboarding.
+3. **Developer Experience Layer (SDKs)**: the usability interface driving adoption.
 
 ## Why Use b402?
 

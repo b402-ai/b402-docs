@@ -21,6 +21,13 @@
                         ]
                     },
                     {
+                        "group": "b402 Protocol",
+                        "pages": [
+                            "b402-protocol/introduction",
+                            "b402-protocol/supported-tokens"
+                        ]
+                    },
+                    {
                         "group": "Getting Started",
                         "pages": [
                             "get-started/quickstart",
@@ -82,6 +89,7 @@
     "footer": {
         "socials": {
             "twitter": "https://twitter.com/b402ai",
+            "telegram": "https://t.me/zarasportal",
             "discord": "https://discord.gg/JpCB9SbK",
             "github": "https://github.com/Vistara-Labs/b402"
         }

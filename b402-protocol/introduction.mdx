@@ -1,0 +1,66 @@
+---
+title: Introduction
+description: 'The foundation of the BNB Chain open payment standard'
+icon: cubes-stacked
+---
+
+The **b402 Protocol** is an open standard for internet-native payments on the [BNB Chain](https://www.bnbchain.org/en).
+
+It serves as the foundational layer of the broader b402 infrastructure and ecosystem, enabling seamless, programmable, and gasless payment experiences for users, developers, autonomous AI agents alike.
+
+At the core of the protocol is the **b402 Relayer smart contract**, an intermediary that powers gasless transactions across the network.
+
+The Relayer bridges the gap between tokens that do not natively support [EIP-3009 (`transferWithAuthorization`)](https://eips.ethereum.org/EIPS/eip-3009) and applications that rely on it for meta-transactions.
+
+In simple terms, it allows users to authorize a payment off-chain with a signature, while the Relayer executes the payment on-chain on their behalf, eliminating the need for users to send transactions or pay gas directly.
+
+<Card
+  title="b402 Relayer"
+  icon="github"
+  href="https://github.com/Vistara-Labs/b402/blob/main/contracts/B402RelayerV2.sol"
+>
+  ⚠️ Note: This smart contract is currently unaudited. It is provided for testing and reference purposes only. We do not recommend using it in production environments.
+</Card>
+
+## Why it matters
+
+Most BEP-20 tokens, including major ones like BNB, USDT, or USD1 on the BNB Chain, do not implement EIP-3009, meaning they can’t natively process signed “transfer with authorization” operations.
+
+The B402 Relayer solves this by acting as a trusted middle layer that simulates EIP-3009 behavior using standard BEP-20 functions.
+
+This enables:
+1. Gasless payments: users sign a message; the relayer pays gas.
+2. Off-chain authorization: signatures replace manual on-chain approvals.
+3. Compatibility: works with any whitelisted ERC-20 token, even if it lacks EIP-3009 support.
+4. Security & auditability — verified with EIP-712 signatures and nonces.
+
+## How it works
+<Steps>
+  <Step title="User Signs an Authorization">
+    The user signs an EIP-712 structured message off-chain (using their wallet) that says: “I authorize B402 to transfer X tokens from me to Y, valid until Z.”
+    
+    This signed message includes:
+    - The sender and receiver addresses
+    - The token amount
+    - Valid time window (validAfter, validBefore)
+    - A unique nonce
+    - The signature (v, r, s)
+  </Step>
+  <Step title="Relayer Executes On-Chain">
+    When the Facilitator (B402’s off-chain service) receives the signed authorization from the client, it submits that authorization to the Relayer contract on-chain by calling `transferWithAuthorization()`.
+    
+    Inside this function, the contract performs a series of strict checks before executing the transfer:
+    
+    1. Token Whitelist Check: The contract first verifies that the token is whitelisted. This prevents unknown or malicious ERC-20s from being used.
+    
+    2. Signature Verification: It then uses proper EIP-712 signature recovery to confirm the message was genuinely signed by the token owner (from). This ensures the relayer cannot forge authorizations.
+    
+    3. Authorization Validation: The contract confirms the signature’s time window is valid and that the nonce hasn’t been used or canceled before. This protects against replay attacks.
+    
+    4. Transfer Execution: Once validated, the relayer calls the actual token contract’s transferFrom() to move the specified amount from the sender to the recipient.
+    
+    5. Event Emission: Finally, it marks the nonce as used and emits AuthorizationUsed, creating an auditable on-chain record of the meta-transaction.
+  </Step>
+</Steps>
+
+Through these steps, the Relayer securely mimics EIP-3009 behavior even for tokens that lack native support.
