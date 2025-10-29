@@ -1,25 +1,34 @@
 ---
 title: 'Introduction'
-description: 'Get started with the Liquid AVS Token protocol'
+description: 'Get started with b402 protocol and services'
 icon: 'right'
 ---
 
-## Welcome
+Welcome to **b402 Developer Docs**.
 
-This section provides an in-depth guide to the LAT protocol for developers integrating, building on, or maintaining the LAT system. It covers core contract responsibilities, key APIs, architectural design, and usage patterns. This is the foundational reference for engineers working on protocol-level interactions.
+Here you’ll learn how to set up buyer agents/clients and seller servers, turn HTTP requests into programmable payment flows, settle transactions on-chain, and create new economic models for agents, servers, and applications.
 
-### Overview
+## Ecosystem Architecture
 
-LAT (Liquid AVS Token) is a tokenized representation of staked assets restaked into EigenLayer via a modular delegation system. The LAT system introduces a transparent, composable, and user-aligned model for liquid restaking.
+The **b402 ecosystem** is composed of three interconnected layers:
 
-Composable: LATs are ERC-20 tokens that represent positions restaked into specific AVSs.
+1. **Protocol Layer — b402 Protocol**  
+   The open payment standard derived from HTTP 402. It defines how payment-required responses are structured, verified, and settled across on-chain networks.
 
-Deterministic: Every LAT traces directly to its originating deposit and associated AVS.
+2. **Service Layer — b402 Facilitator & b402Scan**  
+   The operational backbone of the ecosystem.  
+   - **Facilitator** handles verification and settlement of on-chain payments through standardized APIs.  
+   - **b402Scan** serves as the discovery and onboarding platform for new servers and agents.
 
-Modular: StakerNodes delegate assets across strategies and can be dynamically created or upgraded.
+3. **Developer Experience Layer — SDKs**  
+   Tools, SDKs, and client libraries that make it easy to integrate b402 into your agents, apps, or backend services with minimal setup.
 
-### System Flow
+## Developer Section Overview
 
-[User] → [LiquidToken] → [LiquidTokenManager] → [StakerNode] → [EigenLayer Strategy]
+In this section, you’ll find everything needed to build with b402:
 
-Users deposit supported assets, receive LAT tokens, and those assets are delegated through a node infrastructure to the EigenLayer network.
+- **Protocol Specs** — Core definitions, message formats, and settlement logic.  
+- **Service APIs** — Endpoints for Facilitator and b402Scan integration.  
+- **SDK Tutorials** — Step-by-step guides for using the b402 SDK to connect, pay, and verify transactions.  
+
+Start building with **b402** — the simplest way to make your services payable, verifiable, and autonomous.

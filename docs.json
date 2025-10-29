@@ -60,6 +60,33 @@
                         ]
                     }
                 ]
+            },
+            {
+                "tab": "Developers",
+                "groups": [
+                    {
+                        "group": "Introduction",
+                        "pages": [
+                            "developers/introduction",
+                            "developers/support"
+                        ]
+                    },
+                    {
+                        "group": "b402 Facilitator",
+                        "pages": [
+                            "developers/facilitator/get-started",
+                            {
+                                "group": "b402 Facilitator API",
+                                "icon": "webhook",
+                                "pages": [
+                                    "developers/facilitator/api-reference/facilitator/health-check",
+                                    "developers/facilitator/api-reference/facilitator/verify-payment-payload",
+                                    "developers/facilitator/api-reference/facilitator/settle-verified-payment"
+                                ]
+                            }
+                        ]
+                    }
+                ]
             }
         ]
     },

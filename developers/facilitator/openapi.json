@@ -1,0 +1,307 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "b402 Facilitator API",
+        "version": "1.0.0",
+        "description": "The **b402 Facilitator API** provides secure verification and settlement of on-chain payments made through the b402 protocol. It validates EIP-712 signatures, prevents replay attacks, and handles settlement via supported relayer contracts."
+    },
+    "servers": [
+        {
+            "url": "https://facilitator.b402.ai",
+            "description": "Production server"
+        }
+    ],
+    "tags": [
+        {
+            "name": "Facilitator",
+            "description": "Verification and settlement endpoints"
+        }
+    ],
+    "paths": {
+        "/verify": {
+            "post": {
+                "tags": [
+                    "Facilitator"
+                ],
+                "summary": "Verify payment payload",
+                "description": "Validates a signed payment payload against on-chain requirements.",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VerifyRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Verification result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VerifyResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request schema or missing fields"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
+        },
+        "/settle": {
+            "post": {
+                "tags": [
+                    "Facilitator"
+                ],
+                "summary": "Settle verified payment",
+                "description": "Executes an on-chain settlement using the provided relayer contract.",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SettleRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Settlement result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SettleResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request or signature"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
+        },
+        "/health": {
+            "get": {
+                "tags": [
+                    "Facilitator"
+                ],
+                "summary": "Health check",
+                "description": "Returns service and network status.",
+                "responses": {
+                    "200": {
+                        "description": "Health status",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HealthResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Authorization": {
+                "type": "object",
+                "properties": {
+                    "from": {
+                        "type": "string",
+                        "description": "Address of the payer"
+                    },
+                    "to": {
+                        "type": "string",
+                        "description": "Address of the payee"
+                    },
+                    "value": {
+                        "type": "string",
+                        "description": "Token amount (in smallest units)"
+                    },
+                    "validAfter": {
+                        "type": "number",
+                        "description": "Earliest valid timestamp (unix)"
+                    },
+                    "validBefore": {
+                        "type": "number",
+                        "description": "Expiration timestamp (unix)"
+                    },
+                    "nonce": {
+                        "type": "string",
+                        "description": "Unique nonce for replay protection"
+                    }
+                },
+                "required": [
+                    "from",
+                    "to",
+                    "value",
+                    "validAfter",
+                    "validBefore",
+                    "nonce"
+                ]
+            },
+            "PaymentPayload": {
+                "type": "object",
+                "properties": {
+                    "token": {
+                        "type": "string",
+                        "description": "BEP-20 token contract address"
+                    },
+                    "payload": {
+                        "type": "object",
+                        "properties": {
+                            "authorization": {
+                                "$ref": "#/components/schemas/Authorization"
+                            },
+                            "signature": {
+                                "type": "string",
+                                "description": "EIP-712 signature"
+                            }
+                        },
+                        "required": [
+                            "authorization",
+                            "signature"
+                        ]
+                    }
+                },
+                "required": [
+                    "token",
+                    "payload"
+                ]
+            },
+            "PaymentRequirements": {
+                "type": "object",
+                "properties": {
+                    "network": {
+                        "type": "string",
+                        "description": "Network identifier (e.g., bnb-mainnet, bnb-testnet)"
+                    },
+                    "relayerContract": {
+                        "type": "string",
+                        "description": "Address of the relayer contract used for settlement"
+                    }
+                },
+                "required": [
+                    "network",
+                    "relayerContract"
+                ]
+            },
+            "VerifyRequest": {
+                "type": "object",
+                "properties": {
+                    "paymentPayload": {
+                        "$ref": "#/components/schemas/PaymentPayload"
+                    },
+                    "paymentRequirements": {
+                        "$ref": "#/components/schemas/PaymentRequirements"
+                    }
+                },
+                "required": [
+                    "paymentPayload",
+                    "paymentRequirements"
+                ]
+            },
+            "VerifyResponse": {
+                "type": "object",
+                "properties": {
+                    "isValid": {
+                        "type": "boolean"
+                    },
+                    "payer": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "invalidReason": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "required": [
+                    "isValid"
+                ]
+            },
+            "SettleRequest": {
+                "type": "object",
+                "properties": {
+                    "paymentPayload": {
+                        "$ref": "#/components/schemas/PaymentPayload"
+                    },
+                    "paymentRequirements": {
+                        "$ref": "#/components/schemas/PaymentRequirements"
+                    }
+                },
+                "required": [
+                    "paymentPayload",
+                    "paymentRequirements"
+                ]
+            },
+            "SettleResponse": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "transaction": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "network": {
+                        "type": "string"
+                    },
+                    "payer": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "blockNumber": {
+                        "type": "number",
+                        "nullable": true
+                    },
+                    "errorReason": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "required": [
+                    "success",
+                    "network"
+                ]
+            },
+            "HealthResponse": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string"
+                    },
+                    "service": {
+                        "type": "string"
+                    },
+                    "network": {
+                        "type": "string"
+                    },
+                    "relayer": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "status",
+                    "service",
+                    "network",
+                    "relayer"
+                ]
+            }
+        }
+    }
+}
