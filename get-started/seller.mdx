@@ -43,7 +43,7 @@ app.use(b402(
 ```
 
 ## Route Configuration
-### Protected Routes
+### Protected/Paid Routes
 
 Endpoints listed in the middleware configuration require payment before access.
 When called without valid proof of payment, the middleware automatically returns an HTTP 402 (Payment Required) response containing all necessary payment details.
