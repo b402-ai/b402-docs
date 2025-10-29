@@ -28,18 +28,18 @@
                         ]
                     },
                     {
+                        "group": "b402 Services",
+                        "pages": [
+                            "b402-services/b402-facilitator",
+                            "b402-services/b402scan"
+                        ]
+                    },
+                    {
                         "group": "Getting Started",
                         "pages": [
                             "get-started/quickstart",
                             "get-started/buyer",
                             "get-started/seller"
-                        ]
-                    },
-                    {
-                        "group": "b402 Facilitator",
-                        "pages": [
-                            "facilitator/introduction",
-                            "facilitator/get-started"
                         ]
                     },
                     {
