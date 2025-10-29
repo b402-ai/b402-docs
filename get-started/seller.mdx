@@ -4,116 +4,70 @@ description: 'Accept payments from buyers on BSC'
 icon: 'coin-vertical'
 ---
 
-## Overview
+The **b402 protocol** enables you to monetize your APIs or web services with **gasless BEP-20 token payments** on the BNB Chain.
 
-Set up your server to accept BSC payments. Buyers sign authorizations off-chain, the facilitator handles gas and settlement.
+This guide walks you through integrating the `b402-express` middleware to create paid API routes that require crypto payments before access.
+
+Currently, a TypeScript SDK is available for developers. Additional SDKs including Python will be released soon.
+
 
 <Info>
-  No API keys required. The facilitator verifies signatures and submits transactions.
+  b402 does not require you to set up API keys. The b402 facilitator verifies signatures and submits transactions.
 </Info>
 
----
+## Installation
 
-## Express Server
+First, install the seller middleware package:
 
-### Install
-
-```bash
-npm install express ethers cors
+``` ts
+npm install b402-express
 ```
 
-### Code
+## Basic Setup
 
-```javascript
+Import and configure the middleware in your Express app, specifying your wallet address and the services you want to sell:
+
+```ts lines
 const express = require('express');
-const cors = require('cors');
-const { ethers } = require('ethers');
+const { b402 } = require('b402-express');
 
 const app = express();
-app.use(cors());
-app.use(express.json());
 
-const FACILITATOR_URL = 'https://facilitator.b402.ai';
-const SELLER_ADDRESS = process.env.SELLER_ADDRESS || '0xYourAddress';
-const RELAYER_CONTRACT = '0xE1C2830d5DDd6B49E9c46EbE03a98Cb44CD8eA5a';
-const USD1_TOKEN = '0x8d0d000ee44948fc98c9b98a4fa4921476f08b0d';
-
-app.post('/accept-payment', async (req, res) => {
-  try {
-    const { authorization, signature } = req.body;
-
-    const payload = {
-      x402Version: 1,
-      scheme: 'exact',
-      network: 'bsc',
-      token: USD1_TOKEN,
-      payload: { authorization, signature }
-    };
-
-    const requirements = {
-      scheme: 'exact',
-      network: 'bsc',
-      asset: USD1_TOKEN,
-      payTo: SELLER_ADDRESS,
-      maxAmountRequired: authorization.value,
-      maxTimeoutSeconds: 600,
-      relayerContract: RELAYER_CONTRACT
-    };
-
-    // Verify
-    const verifyRes = await fetch(`${FACILITATOR_URL}/verify`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ paymentPayload: payload, paymentRequirements: requirements })
-    });
-
-    const verifyData = await verifyRes.json();
-    if (!verifyData.isValid) {
-      return res.status(400).json({ success: false, error: verifyData.invalidReason });
-    }
-
-    // Settle
-    const settleRes = await fetch(`${FACILITATOR_URL}/settle`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ paymentPayload: payload, paymentRequirements: requirements })
-    });
-
-    const settleData = await settleRes.json();
-    if (!settleData.success) {
-      return res.status(500).json({ success: false, error: settleData.errorReason });
-    }
-
-    res.json({
-      success: true,
-      transaction: settleData.transaction,
-      payer: verifyData.payer,
-      amount: ethers.formatUnits(authorization.value, 18)
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+app.use(b402(
+  { payTo: '0x...' }, // your BNB Chain wallet address
+  {
+    'GET /premium': { price: '0.01', token: 'USD1' },
+    'GET /basic': { price: '0.001', token: 'USDT' },
   }
-});
-
-app.listen(3000);
+));
 ```
 
-### Run
+## Route Configuration
+### Protected Routes
 
-```bash
-export SELLER_ADDRESS=0xYourAddress
-node server.js
+Endpoints listed in the middleware configuration require payment before access.
+When called without valid proof of payment, the middleware automatically returns an HTTP 402 (Payment Required) response containing all necessary payment details.
+
+### Free Routes
+
+Any route not listed in the configuration remains free and accessible as usual.
+
+## Payment Details
+
+When a protected endpoint is accessed without payment, the middleware returns a JSON payload with:
+- Token contract address
+- Your receiving wallet (payTo)
+- Required amount
+- Relayer contract address (0xE1C2830d5DDd6B49E9c46EbE03a98Cb44CD8eA5a)
+- Description of the payment
+
+After payment, verified details become available in the request object:
+
+``` ts lines
+req.b402.txHash  // transaction hash on the BNB Chain
+req.b402.payer   // payer’s wallet address
 ```
 
----
+## Supported Tokens
 
-## Next Steps
-
-<CardGroup cols={2}>
-  <Card title="Buyer Guide" icon="wallet" href="/get-started/buyer">
-    How buyers send payments
-  </Card>
-  <Card title="Facilitator API" icon="server" href="/facilitator/introduction">
-    API documentation
-  </Card>
-</CardGroup>
+For the complete list of supported tokens across both BNB Chain Mainnet and Testnet, see the [Supported Tokens](/b402-protocol/supported-tokens) page. 
