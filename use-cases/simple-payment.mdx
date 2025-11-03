@@ -1,0 +1,207 @@
+---
+title: 'Simple Payment'
+description: 'Send gasless crypto payments in one line of code'
+---
+
+## Overview
+
+The simplest way to get started with B402 - send a payment with zero gas fees for your users. Perfect for payment processors, tipping systems, or any application that needs basic payment functionality.
+
+## What You'll Build
+
+A basic payment flow that:
+- Sends tokens from one wallet to another
+- User pays $0 in gas fees
+- Completes in under 3 seconds
+- Works on BNB Chain mainnet and testnet
+
+## Prerequisites
+
+<Steps>
+  <Step title="Install Dependencies">
+    ```bash
+    npm install b402-sdk ethers@6
+    ```
+  </Step>
+
+  <Step title="Fund Your Wallet">
+    Get testnet tokens:
+    - [BSC Testnet BNB](https://testnet.bnbchain.org/faucet-smart)
+    - Test tokens from the contract addresses
+  </Step>
+
+  <Step title="Approve the Relayer (One-Time)">
+    Before the first payment, approve the B402 relayer to spend your tokens. See the [complete payment flow example](/use-cases/complete-payment-flow) for details.
+  </Step>
+</Steps>
+
+## Implementation
+
+### Basic Payment
+
+```typescript
+import { Wallet } from 'ethers';
+import { B402 } from 'b402-sdk';
+
+async function sendPayment() {
+  // Initialize wallet
+  const wallet = new Wallet(process.env.PRIVATE_KEY);
+
+  // Create B402 client
+  const b402 = new B402({
+    network: 'mainnet'
+  });
+
+  // Send payment
+  const result = await b402.pay(wallet, {
+    amount: '0.01',
+    token: 'USD1',
+    recipient: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb'
+  });
+
+  if (result.success) {
+    console.log('Payment successful!');
+    console.log('Transaction:', result.txHash);
+    console.log(`https://bscscan.com/tx/${result.txHash}`);
+  } else {
+    console.log('Payment failed:', result.error);
+  }
+}
+
+sendPayment();
+```
+
+### Response Structure
+
+```typescript
+{
+  success: boolean;
+  txHash?: string;      // Transaction hash on BSCScan
+  error?: string;       // Error message if failed
+  payer: string;        // Sender address
+  recipient: string;    // Receiver address
+  amount: string;       // Amount sent
+  token: string;        // Token symbol
+}
+```
+
+## Supported Tokens
+
+<CardGroup cols={2}>
+  <Card title="Mainnet (BSC)" icon="binance">
+    - USD1
+    - USDT
+    - USDC
+  </Card>
+
+  <Card title="Testnet" icon="flask">
+    - USDT
+  </Card>
+</CardGroup>
+
+## Configuration Options
+
+### Network Selection
+
+```typescript
+// Mainnet (default)
+const b402 = new B402({ network: 'mainnet' });
+
+// Testnet
+const b402 = new B402({ network: 'testnet' });
+```
+
+### Custom Facilitator URL
+
+```typescript
+// Use local development facilitator
+const b402 = new B402({
+  network: 'testnet',
+  facilitatorUrl: 'http://localhost:3000'
+});
+
+// Or use environment variable
+export B402_FACILITATOR_URL=http://localhost:3000
+```
+
+See [Custom Facilitator Configuration](/use-cases/custom-facilitator) for more details.
+
+## Common Use Cases
+
+<CardGroup cols={2}>
+  <Card title="Tipping Systems" icon="hand-holding-dollar">
+    Enable gasless tips in social apps
+  </Card>
+
+  <Card title="Payment Processors" icon="credit-card">
+    Accept crypto payments without gas complexity
+  </Card>
+
+  <Card title="Micro-transactions" icon="coins">
+    Enable small payments without gas eating profits
+  </Card>
+
+  <Card title="Subscription Payments" icon="repeat">
+    Recurring payments with predictable costs
+  </Card>
+</CardGroup>
+
+## How It Works
+
+<Steps>
+  <Step title="User Signs Authorization">
+    User signs an EIP-712 message (free, off-chain)
+  </Step>
+
+  <Step title="Facilitator Validates">
+    B402 facilitator validates the signature
+  </Step>
+
+  <Step title="Facilitator Pays Gas">
+    Facilitator submits the transaction and pays gas
+  </Step>
+
+  <Step title="Payment Settles">
+    Transaction completes in under 3 seconds
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Insufficient allowance error">
+    You need to approve the relayer first. Run the approval step from the [complete payment flow example](/use-cases/complete-payment-flow).
+  </Accordion>
+
+  <Accordion title="Insufficient balance error">
+    Check your token balance. Get tokens from the faucet or token contracts.
+  </Accordion>
+
+  <Accordion title="Network errors">
+    Check your RPC endpoint and network connectivity. Make sure you're using the correct network (mainnet/testnet).
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Complete Payment Flow" icon="list-check" href="/use-cases/complete-payment-flow">
+    Full example with balance checks and approvals
+  </Card>
+
+  <Card title="Gasless Token Swaps" icon="arrow-right-arrow-left" href="/use-cases/gasless-swap">
+    Enable PancakeSwap trades with zero gas
+  </Card>
+
+  <Card title="Custom Facilitator" icon="gear" href="/use-cases/custom-facilitator">
+    Configure facilitator for different environments
+  </Card>
+
+  <Card title="API Reference" icon="code" href="/developers/facilitator/api-reference">
+    Full API documentation
+  </Card>
+</CardGroup>
+
+## Example Code
+
+View the complete example in the [B402 SDK repository](https://github.com/Vistara-Labs/b402-sdk/blob/main/examples/simple-payment.ts).
