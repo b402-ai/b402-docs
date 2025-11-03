@@ -1,0 +1,373 @@
+---
+title: 'Gasless Token Swaps'
+description: 'Enable PancakeSwap trades with zero gas fees using B402'
+---
+
+## Overview
+
+Enable users to swap tokens on PancakeSwap without needing any BNB for gas. Perfect for Telegram mini-apps, web3 applications, or any platform where you want to remove the gas fee barrier.
+
+## What You'll Build
+
+A gasless swap system that:
+- Gets real-time quotes from PancakeSwap
+- Executes swaps with $0 gas for users
+- Works with PancakeSwap V3 for best prices
+- Supports all major BSC tokens
+
+## Key Benefits
+
+<CardGroup cols={2}>
+  <Card title="Zero Gas Fees" icon="gas-pump">
+    Users pay $0 in BNB - facilitator covers all gas costs
+  </Card>
+
+  <Card title="Best Prices" icon="chart-line">
+    Automatic routing through PancakeSwap V3 for optimal execution
+  </Card>
+
+  <Card title="Simple Integration" icon="plug">
+    Clean HTTP API - no complex Web3 setup required
+  </Card>
+
+  <Card title="Fast Execution" icon="bolt">
+    Swaps complete in seconds with automatic slippage protection
+  </Card>
+</CardGroup>
+
+## Prerequisites
+
+<Steps>
+  <Step title="Install Dependencies">
+    ```bash
+    npm install b402-sdk ethers@6
+    ```
+  </Step>
+
+  <Step title="Set Up Environment">
+    ```bash
+    # .env
+    SWAP_SERVER_URL=https://swap-server-production-b8a3.up.railway.app
+    SWAP_FACILITATOR_ADDRESS=0xE1C2830d5DDd6B49E9c46EbE03a98Cb44CD8eA5a
+    USER_PRIVATE_KEY=your_private_key_here
+    ```
+  </Step>
+
+  <Step title="One-Time Setup: Permit2 Approval">
+    First-time users need to approve Permit2 (costs gas once, then gasless forever)
+  </Step>
+</Steps>
+
+## Implementation
+
+### 1. Initialize Swap Client
+
+```typescript
+import { ethers } from 'ethers';
+import { B402Swap } from 'b402-sdk';
+
+// Token addresses on BSC
+const TOKENS = {
+  WBNB: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
+  USDT: '0x55d398326f99059fF775485246999027B3197955',
+  USDC: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d',
+  CAKE: '0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82',
+};
+
+// Initialize swapper (defaults to https://swap.b402.ai if no URL provided)
+const swapper = new B402Swap({
+  url: process.env.SWAP_SERVER_URL,
+  facilitatorAddress: process.env.SWAP_FACILITATOR_ADDRESS,
+});
+
+// User wallet
+const wallet = new ethers.Wallet(
+  process.env.USER_PRIVATE_KEY,
+  new ethers.JsonRpcProvider('https://bsc-dataseed.binance.org')
+);
+```
+
+### 2. Get Swap Quote
+
+```typescript
+// Get quote for 100 USDT → WBNB
+const amountIn = ethers.parseUnits('100', 18).toString();
+
+const quote = await swapper.getQuote({
+  tokenIn: TOKENS.USDT,
+  tokenOut: TOKENS.WBNB,
+  amountIn,
+  slippageBps: 50, // 0.5% slippage tolerance
+});
+
+console.log('Quote received:');
+console.log(`  Input: ${ethers.formatUnits(quote.amountIn, 18)} USDT`);
+console.log(`  Output: ${ethers.formatUnits(quote.amountOut, 18)} WBNB`);
+console.log(`  Min output: ${ethers.formatUnits(quote.minAmountOut, 18)} WBNB`);
+console.log(`  Price impact: ${quote.priceImpact}%`);
+```
+
+### 3. Check Permit2 Approval (First Time Only)
+
+```typescript
+const needsApproval = await swapper.needsPermit2Approval(
+  TOKENS.USDT,
+  wallet.address,
+  wallet.provider
+);
+
+if (needsApproval) {
+  console.log('First-time setup: Approving Permit2...');
+  const approveTx = await swapper.getPermit2ApprovalTx(TOKENS.USDT);
+
+  // User signs this transaction (costs gas, but only once per token)
+  const tx = await wallet.sendTransaction(approveTx);
+  await tx.wait();
+
+  console.log('✅ Permit2 approved! Future swaps will be gasless.');
+}
+```
+
+### 4. Execute Gasless Swap
+
+```typescript
+const result = await swapper.swap(wallet, {
+  tokenIn: TOKENS.USDT,
+  tokenOut: TOKENS.WBNB,
+  amountIn,
+  slippageBps: 50,
+  // Optional: referrer for revenue share
+  referrer: process.env.REFERRER_ADDRESS,
+});
+
+if (result.success) {
+  console.log('✅ Swap successful!');
+  console.log(`  Tx: ${result.txHash}`);
+  console.log(`  Output: ${ethers.formatUnits(result.amountOut, 18)} WBNB`);
+  console.log(`  Explorer: ${result.explorerUrl}`);
+  console.log('🎉 User paid ZERO gas fees!');
+} else {
+  console.error(`❌ Swap failed: ${result.error}`);
+}
+```
+
+## How It Works
+
+<Steps>
+  <Step title="Get Quote">
+    Query PancakeSwap V3 pools to find the best price across all fee tiers (0.01%, 0.05%, 0.25%, 1%)
+  </Step>
+
+  <Step title="User Signs (Off-Chain)">
+    User signs a Permit2 signature - completely free, no gas
+  </Step>
+
+  <Step title="Facilitator Executes">
+    B402 facilitator submits the swap transaction and pays all gas fees
+  </Step>
+
+  <Step title="Tokens Received">
+    Swapped tokens arrive in user's wallet - they paid $0 in gas!
+  </Step>
+</Steps>
+
+## Supported Tokens
+
+The swap service supports all tokens available on PancakeSwap V3:
+
+<CardGroup cols={3}>
+  <Card title="Stablecoins" icon="dollar-sign">
+    - USDT
+    - USDC
+    - BUSD
+    - DAI
+  </Card>
+
+  <Card title="Native & Wrapped" icon="coins">
+    - WBNB
+    - ETH
+    - BTCB
+  </Card>
+
+  <Card title="DeFi Tokens" icon="chart-network">
+    - CAKE
+    - And 100+ more tokens
+  </Card>
+</CardGroup>
+
+## API Reference
+
+### `getQuote()`
+
+Get a swap quote from PancakeSwap.
+
+```typescript
+interface QuoteParams {
+  tokenIn: string;      // Input token address
+  tokenOut: string;     // Output token address
+  amountIn: string;     // Amount to swap (wei)
+  slippageBps: number;  // Slippage tolerance in basis points
+}
+
+interface QuoteResult {
+  amountIn: string;
+  amountOut: string;
+  minAmountOut: string;
+  priceImpact: string;
+  route: {
+    path: string[];
+    poolFees: number[];
+  };
+}
+```
+
+### `swap()`
+
+Execute a gasless swap.
+
+```typescript
+interface SwapParams {
+  tokenIn: string;
+  tokenOut: string;
+  amountIn: string;
+  slippageBps: number;
+  referrer?: string;  // Optional referrer address for revenue sharing
+}
+
+interface SwapResult {
+  success: boolean;
+  txHash?: string;
+  amountOut?: string;
+  explorerUrl?: string;
+  error?: string;
+}
+```
+
+## Real-World Use Cases
+
+<CardGroup cols={2}>
+  <Card title="Telegram Trading Bots" icon="telegram" href="/use-cases/telegram-bot">
+    Enable swap commands directly in Telegram chats
+  </Card>
+
+  <Card title="DeFi Mobile Apps" icon="mobile">
+    Provide seamless trading without gas complexity
+  </Card>
+
+  <Card title="Web3 Games" icon="gamepad">
+    Let players swap in-game tokens without friction
+  </Card>
+
+  <Card title="Payment Processors" icon="credit-card">
+    Accept any token, auto-swap to stablecoin
+  </Card>
+</CardGroup>
+
+## Architecture
+
+```
+User Wallet (No BNB needed!)
+        ↓
+    Sign Permit2 (FREE)
+        ↓
+B402 Swap Service
+        ↓
+B402 Facilitator (verifies signature)
+        ↓
+PancakeSwap V3 Router
+        ↓
+User receives swapped tokens!
+```
+
+## Economics
+
+### User Costs
+- **Gas fees**: $0.00 ✅
+- **Service fee**: ~0.35% (included in quote)
+- **PancakeSwap fee**: 0.01-1% (depends on pool)
+
+### Facilitator Costs (Per Swap)
+- Approval: ~$0.0083 (one-time per token)
+- Pull tokens: ~$0.0020
+- Execute swap: ~$0.0048
+- **Total**: ~$0.0175 per swap
+
+### Profit Margin
+- Revenue: $0.35 (service fee)
+- Cost: $0.0175 (gas)
+- **Profit**: $0.33 per swap (95% margin!)
+
+## Advanced Features
+
+### Custom Slippage
+
+```typescript
+// Higher slippage for faster execution
+await swapper.swap(wallet, {
+  tokenIn: TOKENS.USDT,
+  tokenOut: TOKENS.WBNB,
+  amountIn,
+  slippageBps: 100, // 1% slippage
+});
+
+// Lower slippage for better price (may fail in volatile markets)
+await swapper.swap(wallet, {
+  tokenIn: TOKENS.USDT,
+  tokenOut: TOKENS.WBNB,
+  amountIn,
+  slippageBps: 10, // 0.1% slippage
+});
+```
+
+### Referral Revenue Sharing
+
+```typescript
+// Earn a portion of swap fees
+await swapper.swap(wallet, {
+  tokenIn: TOKENS.USDT,
+  tokenOut: TOKENS.WBNB,
+  amountIn,
+  slippageBps: 50,
+  referrer: '0xYourReferrerAddress', // Receives revenue share
+});
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Permit2 approval failed">
+    Ensure the user has a small amount of BNB for the one-time approval (~$0.01). After this, all swaps are gasless.
+  </Accordion>
+
+  <Accordion title="Slippage too high">
+    Increase the `slippageBps` parameter or wait for better market conditions. Try 100 (1%) for volatile pairs.
+  </Accordion>
+
+  <Accordion title="Insufficient liquidity">
+    The token pair may not have enough liquidity on PancakeSwap. Check available pools on PancakeSwap.finance.
+  </Accordion>
+
+  <Accordion title="Swap server connection failed">
+    Verify your `SWAP_SERVER_URL` is correct and the service is running. For local development, ensure the server is started.
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Telegram Bot Integration" icon="telegram" href="/use-cases/telegram-bot">
+    Build a trading bot for Telegram
+  </Card>
+
+  <Card title="Copy Trading Platform" icon="users" href="/use-cases/copy-trading">
+    Create a copy trading system with Zara Agents
+  </Card>
+
+  <Card title="API Reference" icon="code" href="/developers/facilitator/api-reference">
+    Full API documentation
+  </Card>
+
+  <Card title="Example Code" icon="github" href="https://github.com/Vistara-Labs/b402-sdk/blob/main/examples/gasless-swap.ts">
+    View complete example on GitHub
+  </Card>
+</CardGroup>

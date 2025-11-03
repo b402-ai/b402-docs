@@ -1,0 +1,623 @@
+---
+title: 'Non-Custodial Trading Platform'
+description: 'Build a gasless copy trading platform with verifiable receipts and SLA enforcement'
+---
+
+## Overview
+
+Zara Agents is a copy trading platform that lets followers mirror leader strategies with built-in SLA enforcement and verifiable execution receipts. All follower trades are gasless, non-custodial, and protected by automatic refunds if execution quality falls below agreed thresholds.
+
+## What You'll Build
+
+A complete copy trading system that:
+- Enables non-custodial following of trading strategies
+- Provides gasless execution for all followers
+- Issues ERC-8004 NFT receipts for every trade
+- Enforces SLA limits (max slippage, max latency)
+- Auto-refunds followers for SLA breaches
+- Charges performance fees only on verified profits
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Non-Custodial" icon="shield-check">
+    Funds never leave follower's wallet until trade execution
+  </Card>
+
+  <Card title="Gasless Following" icon="gas-pump">
+    Followers pay $0 in gas - server covers all costs
+  </Card>
+
+  <Card title="Verifiable Receipts" icon="receipt">
+    ERC-8004 NFTs prove exact execution data on-chain
+  </Card>
+
+  <Card title="SLA Protection" icon="shield-halved">
+    Auto-refunds if latency or slippage exceeds limits
+  </Card>
+
+  <Card title="Performance Fees" icon="percent">
+    Only pay 10% on verified profit, plus 0.20% execution fee
+  </Card>
+
+  <Card title="Permissionless" icon="unlock">
+    Any trader can become a leader and list strategies
+  </Card>
+</CardGroup>
+
+## Architecture
+
+```
+┌──────────────────────────────────────────────┐
+│ FOLLOWER                                      │
+│ Signs spend cap: dailyCapUSDT, maxSlippageBps│
+│                  maxLatencyMs via B402        │
+└───────────────┬──────────────────────────────┘
+                │
+                ▼
+┌──────────────────────────────────────────────┐
+│ LEADER TRADES                                 │
+│ Leader executes → webhook to Zara server     │
+└───────────────┬──────────────────────────────┘
+                │
+                ▼
+┌──────────────────────────────────────────────┐
+│ MIRROR & TRACK                                │
+│ • Record leader price & timestamp             │
+│ • Execute follower trade via PancakeSwap V3  │
+│ • Calculate latency & slippage                │
+│ • Mint ERC-8004 receipt with verification    │
+└───────────────┬──────────────────────────────┘
+                │
+                ▼
+┌──────────────────────────────────────────────┐
+│ SETTLEMENT                                    │
+│ • Calculate PnL from verified receipts       │
+│ • IF slippage/latency > max: auto-refund     │
+│ • ELSE IF PnL > 0: charge 10% + 0.20% fee   │
+└──────────────────────────────────────────────┘
+```
+
+## Prerequisites
+
+<Steps>
+  <Step title="Install Dependencies">
+    ```bash
+    npm install b402-sdk ethers@6
+    cd packages/zara-agents
+    npm install
+    ```
+  </Step>
+
+  <Step title="Configure Environment">
+    ```bash
+    cp .env.example .env
+    # Edit .env with your keys
+    ```
+
+    Required variables:
+    - `BSC_RPC_URL` - BSC RPC endpoint
+    - `ETHEREUM_RPC_URL` - Ethereum Sepolia RPC (for receipts)
+    - `SERVER_PRIVATE_KEY` - Server wallet private key
+    - `PINATA_JWT` - Pinata JWT for IPFS uploads
+    - `B402_FACILITATOR_URL` - B402 facilitator endpoint
+  </Step>
+
+  <Step title="Fund Server Wallet">
+    Server wallet needs BNB for gas (~$10-20 for testing)
+  </Step>
+</Steps>
+
+## Implementation
+
+### 1. Register as a Leader
+
+```typescript
+// POST /leader/register
+const response = await fetch('http://localhost:3003/leader/register', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    address: '0xLeaderAddress',
+    name: 'Strategy Alpha',
+    description: 'High-frequency stablecoin arbitrage on BSC'
+  })
+});
+
+const { leaderId, status } = await response.json();
+console.log(`Leader registered: ${leaderId}`);
+```
+
+### 2. Authorize Following (Follower)
+
+```typescript
+// Step 1: Start authorization flow
+const authStart = await fetch('http://localhost:3003/auth/start', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    follower: followerAddress,
+    leaderId: 'leader-uuid',
+    dailyCapUSDT: 25,        // Max $25/day
+    maxSlippageBps: 30,      // Max 0.3% slippage
+    maxLatencyMs: 1500       // Max 1.5 second delay
+  })
+});
+
+const { eip712Payload } = await authStart.json();
+
+// Step 2: Sign B402 authorization
+const signature = await wallet.signTypedData(
+  eip712Payload.domain,
+  eip712Payload.types,
+  eip712Payload.message
+);
+
+// Step 3: Complete authorization
+await fetch('http://localhost:3003/auth/complete', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    follower: followerAddress,
+    leaderId: 'leader-uuid',
+    dailyCapUSDT: 25,
+    maxSlippageBps: 30,
+    maxLatencyMs: 1500,
+    signature
+  })
+});
+
+console.log('✅ Following enabled! Trades will be mirrored with SLA protection.');
+```
+
+### 3. Execute Leader Trade
+
+```typescript
+// Leader executes trade and sends webhook
+await fetch('http://localhost:3003/lead/fill', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    leader: leaderAddress,
+    tokenIn: '0x55d398326f99059fF775485246999027B3197955', // USDT
+    tokenOut: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c', // WBNB
+    amountIn: ethers.parseUnits('10', 18).toString(),
+    price: '1.0002',
+    txHash: '0xLeaderTxHash...'
+  })
+});
+
+// Server automatically mirrors trade to all followers
+```
+
+### 4. View Trade Receipts
+
+```typescript
+// Get all receipts for an address
+const receipts = await fetch(
+  `http://localhost:3003/receipts?address=${followerAddress}`
+);
+
+const trades = await receipts.json();
+
+trades.forEach(trade => {
+  console.log(`Trade #${trade.id}:`);
+  console.log(`  Leader price: ${trade.leaderPrice}`);
+  console.log(`  Follower price: ${trade.followerPrice}`);
+  console.log(`  Latency: ${trade.latencyMs}ms`);
+  console.log(`  Slippage: ${trade.slippageBps}bps`);
+  console.log(`  SLA breached: ${trade.slaBreached}`);
+  console.log(`  ERC-8004 NFT: ${trade.receiptTokenId}`);
+  console.log(`  IPFS: ${trade.ipfsUrl}`);
+});
+```
+
+### 5. Settle and Collect Fees
+
+```typescript
+// Settle last 24 hours of trades
+await fetch('http://localhost:3003/settle/period', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    followerId: 'follower-uuid',
+    leaderAddress: leaderAddress
+  })
+});
+
+// Server calculates:
+// - Total PnL from verified receipts
+// - Issues refunds for SLA-breached trades
+// - Charges 10% performance fee on profits
+// - Charges 0.20% execution fee on all trades
+```
+
+## API Reference
+
+### Leader Management
+
+#### `POST /leader/register`
+
+Register a new trading strategy.
+
+```typescript
+interface RegisterLeaderRequest {
+  address: string;
+  name: string;
+  description: string;
+}
+
+interface RegisterLeaderResponse {
+  leaderId: string;
+  status: string;
+}
+```
+
+### Follower Authorization
+
+#### `POST /auth/start`
+
+Start authorization flow for following a leader.
+
+```typescript
+interface AuthStartRequest {
+  follower: string;
+  leaderId: string;
+  dailyCapUSDT: number;
+  maxSlippageBps: number;
+  maxLatencyMs: number;
+}
+
+interface AuthStartResponse {
+  eip712Payload: {
+    domain: any;
+    types: any;
+    message: any;
+  };
+}
+```
+
+#### `POST /auth/complete`
+
+Complete authorization after signing.
+
+```typescript
+interface AuthCompleteRequest {
+  follower: string;
+  leaderId: string;
+  dailyCapUSDT: number;
+  maxSlippageBps: number;
+  maxLatencyMs: number;
+  signature: string;
+}
+```
+
+### Trade Execution
+
+#### `POST /lead/fill`
+
+Notify server of leader trade (mirrors to followers).
+
+```typescript
+interface LeadFillRequest {
+  leader: string;
+  tokenIn: string;
+  tokenOut: string;
+  amountIn: string;
+  price: string;
+  txHash: string;
+}
+```
+
+### Receipts
+
+#### `GET /receipts?address=0x...`
+
+Get all trade receipts for an address.
+
+```typescript
+interface TradeReceipt {
+  id: number;
+  follower: string;
+  leader: string;
+  tokenIn: string;
+  tokenOut: string;
+  amountIn: string;
+  amountOut: string;
+  leaderPrice: string;
+  followerPrice: string;
+  leaderTimestamp: number;
+  followerTimestamp: number;
+  latencyMs: number;
+  slippageBps: number;
+  slaBreached: boolean;
+  breachReason?: string;
+  receiptTokenId: string;
+  ipfsUrl: string;
+  txHash: string;
+}
+```
+
+## ERC-8004 Receipt Format
+
+Every trade mints an ERC-8004 NFT with full execution data:
+
+```json
+{
+  "version": "1.0.0",
+  "type": "zara_copy_trade_receipt",
+  "copyTrade": {
+    "follower": "0xFollowerAddress",
+    "leader": "0xLeaderAddress",
+    "strategy": "real_time_mirror"
+  },
+  "execution": {
+    "leader": {
+      "txHash": "0xLeaderTx...",
+      "price": "1.0002",
+      "timestamp": 1699000000
+    },
+    "follower": {
+      "txHash": "0xFollowerTx...",
+      "price": "1.0005",
+      "timestamp": 1699000500
+    }
+  },
+  "performance": {
+    "latencyMs": 500,
+    "slippageBps": 3,
+    "priceDeviation": "0.03%"
+  },
+  "sla": {
+    "maxSlippageBps": 30,
+    "maxLatencyMs": 1500,
+    "breached": false,
+    "enforcementAction": "none"
+  },
+  "tokens": {
+    "tokenIn": "0xUSDT...",
+    "tokenOut": "0xWBNB...",
+    "amountIn": "10000000000000000000",
+    "amountOut": "91824855215068900"
+  }
+}
+```
+
+## Fee Structure
+
+<CardGroup cols={3}>
+  <Card title="Execution Fee" icon="bolt">
+    **0.20%** of trade notional
+
+    Always charged, covers gas costs
+  </Card>
+
+  <Card title="Performance Fee" icon="chart-line">
+    **10%** of verified profit
+
+    Only on positive PnL
+  </Card>
+
+  <Card title="Gas" icon="gas-pump">
+    **$0.00** for followers
+
+    Server pays all gas
+  </Card>
+</CardGroup>
+
+## SLA Enforcement
+
+Automatic protection for followers:
+
+<Steps>
+  <Step title="Track Execution Quality">
+    Server records exact leader price, timestamp, and follower execution data
+  </Step>
+
+  <Step title="Calculate Metrics">
+    Latency = follower timestamp - leader timestamp
+    Slippage = price deviation in basis points
+  </Step>
+
+  <Step title="Check Against Limits">
+    If latency > maxLatencyMs OR slippage > maxSlippageBps:
+    - Trade marked as `slaBreached: true`
+    - Breach reason recorded on-chain
+  </Step>
+
+  <Step title="Issue Refunds">
+    During settlement:
+    - Follower receives refund = execution fee + slippage delta
+    - No performance fee charged
+  </Step>
+</Steps>
+
+## Tech Stack
+
+<CardGroup cols={2}>
+  <Card title="Smart Execution" icon="layer-group">
+    PancakeSwap V3 (multi-tier routing)
+  </Card>
+
+  <Card title="Payment Rails" icon="coins">
+    B402 (gasless, non-custodial)
+  </Card>
+
+  <Card title="Receipts" icon="receipt">
+    ERC-8004 (on-chain verification)
+  </Card>
+
+  <Card title="Storage" icon="database">
+    SQLite (trade tracking)
+  </Card>
+
+  <Card title="IPFS" icon="cube">
+    Pinata (receipt metadata)
+  </Card>
+
+  <Card title="Networks" icon="network-wired">
+    BSC Mainnet (swaps) + Ethereum Sepolia (receipts)
+  </Card>
+</CardGroup>
+
+## Real-World Use Cases
+
+<CardGroup cols={2}>
+  <Card title="Social Trading" icon="users">
+    Follow top traders in your community
+  </Card>
+
+  <Card title="Influencer Strategies" icon="star">
+    Enable followers to copy influencer trades
+  </Card>
+
+  <Card title="DAO Trading" icon="building-columns">
+    Execute DAO strategies across member wallets
+  </Card>
+
+  <Card title="Index Funds" icon="chart-pie">
+    Create on-chain index fund strategies
+  </Card>
+</CardGroup>
+
+## Security Considerations
+
+<Warning>
+  **Production Checklist**:
+  - [ ] Server wallet funded and monitored
+  - [ ] Database backups configured
+  - [ ] Rate limiting on API endpoints
+  - [ ] Authentication for leader webhooks
+  - [ ] Automated settlement cron jobs
+  - [ ] Low balance alerts
+  - [ ] Transaction monitoring
+</Warning>
+
+### Best Practices
+
+<Steps>
+  <Step title="Wallet Security">
+    - Use HSM or KMS for server private key
+    - Monitor wallet balance and set alerts
+    - Rotate keys periodically
+  </Step>
+
+  <Step title="Trade Validation">
+    - Verify leader signatures on webhook calls
+    - Check follower authorization before execution
+    - Validate daily spend caps
+  </Step>
+
+  <Step title="Receipt Storage">
+    - Pin all receipts to IPFS permanently
+    - Store backup copies in database
+    - Verify ERC-8004 minting succeeded
+  </Step>
+
+  <Step title="Monitoring">
+    - Alert on failed trades
+    - Track SLA breach rates
+    - Monitor settlement errors
+  </Step>
+</Steps>
+
+## Deployment
+
+### Local Development
+
+```bash
+npm run dev
+# Server runs on http://localhost:3003
+```
+
+### Production Deployment
+
+<Tabs>
+  <Tab title="Railway">
+    ```bash
+    railway login
+    railway init
+    railway up
+    ```
+  </Tab>
+
+  <Tab title="Render">
+    1. Connect GitHub repository
+    2. Build: `npm install && npm run build`
+    3. Start: `npm start`
+    4. Add environment variables
+  </Tab>
+</Tabs>
+
+### Environment Setup
+
+```bash
+# Production .env
+BSC_RPC_URL=https://bsc-dataseed.bnbchain.org
+ETHEREUM_RPC_URL=https://eth-mainnet.alchemyapi.io/v2/YOUR_KEY
+SERVER_PRIVATE_KEY=0x...
+PINATA_JWT=eyJ...
+B402_FACILITATOR_URL=https://facilitator.b402.ai
+DATABASE_URL=postgresql://...
+PORT=3003
+```
+
+## Future Enhancements
+
+- [ ] Multi-chain support (Ethereum, Arbitrum, Polygon)
+- [ ] Real-time WebSocket updates for followers
+- [ ] Advanced routing (multi-hop, aggregation)
+- [ ] Leader leaderboard and analytics
+- [ ] Portfolio management dashboard
+- [ ] Automated strategy discovery
+- [ ] Social features (follower chat, leader profiles)
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Follower authorization failed">
+    - Check follower has sufficient balance for daily cap
+    - Verify B402 facilitator is accessible
+    - Ensure correct network and token addresses
+  </Accordion>
+
+  <Accordion title="Trade not mirrored">
+    - Verify leader is registered
+    - Check follower has active authorization
+    - Ensure daily cap not exceeded
+    - Review server logs for errors
+  </Accordion>
+
+  <Accordion title="Receipt minting failed">
+    - Check server wallet has ETH for gas on Sepolia
+    - Verify ERC-8004 contract is deployed
+    - Ensure Pinata JWT is valid
+    - Check IPFS upload succeeded
+  </Accordion>
+
+  <Accordion title="Settlement errors">
+    - Verify all trades have receipts minted
+    - Check follower has sufficient balance for fees
+    - Review database for trade data integrity
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="View Full Code" icon="github" href="https://github.com/Vistara-Labs/b402-sdk/tree/main/packages/zara-agents">
+    Complete Zara Agents implementation
+  </Card>
+
+  <Card title="Gasless Swaps" icon="arrow-right-arrow-left" href="/use-cases/gasless-swap">
+    Learn about the underlying swap mechanism
+  </Card>
+
+  <Card title="ERC-8004 Standard" icon="file-contract" href="https://eips.ethereum.org/EIPS/eip-8004">
+    Read about verifiable receipt NFTs
+  </Card>
+
+  <Card title="B402 API" icon="code" href="/developers/facilitator/api-reference">
+    Explore the B402 facilitator API
+  </Card>
+</CardGroup>

@@ -1,0 +1,595 @@
+---
+title: 'Custom Facilitator Configuration'
+description: 'Configure B402 SDK for different environments and facilitator endpoints'
+---
+
+## Overview
+
+The B402 SDK supports flexible facilitator configuration, allowing you to switch between production, staging, and local development environments. This guide shows you how to configure custom facilitator URLs for different use cases.
+
+## Facilitator URL Priority
+
+The SDK resolves the facilitator URL in the following priority order:
+
+<Steps>
+  <Step title="Constructor Options (Highest Priority)">
+    URL passed directly to the B402 constructor
+  </Step>
+
+  <Step title="Environment Variable">
+    `B402_FACILITATOR_URL` environment variable
+  </Step>
+
+  <Step title="Default (Lowest Priority)">
+    `https://facilitator.b402.ai` (production)
+  </Step>
+</Steps>
+
+## Configuration Methods
+
+### 1. Constructor Configuration
+
+Most explicit and recommended for production:
+
+```typescript
+import { B402 } from 'b402-sdk';
+
+// Production facilitator (explicit)
+const prodClient = new B402({
+  network: 'mainnet',
+  facilitatorUrl: 'https://facilitator.b402.ai'
+});
+
+// Local development facilitator
+const devClient = new B402({
+  network: 'testnet',
+  facilitatorUrl: 'http://localhost:3000'
+});
+
+// Staging facilitator
+const stagingClient = new B402({
+  network: 'testnet',
+  facilitatorUrl: 'https://staging-facilitator.b402.ai'
+});
+```
+
+### 2. Environment Variable
+
+Good for deployment configurations:
+
+```bash
+# .env
+B402_FACILITATOR_URL=http://localhost:3000
+```
+
+```typescript
+// SDK will automatically use B402_FACILITATOR_URL
+const b402 = new B402({
+  network: 'testnet'
+});
+```
+
+### 3. Default Configuration
+
+Simplest for production use:
+
+```typescript
+// Uses default production facilitator
+const b402 = new B402({
+  network: 'mainnet'
+  // No facilitatorUrl needed - uses https://facilitator.b402.ai
+});
+```
+
+## Environment-Specific Setup
+
+### Production Environment
+
+```typescript
+import { B402 } from 'b402-sdk';
+import { Wallet } from 'ethers';
+
+const wallet = new Wallet(process.env.PRIVATE_KEY);
+
+const b402 = new B402({
+  network: 'mainnet'
+  // Uses default production facilitator
+});
+
+const result = await b402.pay(wallet, {
+  amount: '10',
+  token: 'USDT',
+  recipient: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb'
+});
+```
+
+### Local Development
+
+```typescript
+import { B402 } from 'b402-sdk';
+import { Wallet } from 'ethers';
+
+const wallet = new Wallet(process.env.PRIVATE_KEY);
+
+// Point to local facilitator
+const b402 = new B402({
+  network: 'testnet',
+  facilitatorUrl: 'http://localhost:3000'
+});
+
+const result = await b402.pay(wallet, {
+  amount: '1',
+  token: 'USDT',
+  recipient: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb'
+});
+```
+
+### Staging/Testing
+
+```typescript
+import { B402 } from 'b402-sdk';
+import { Wallet } from 'ethers';
+
+const wallet = new Wallet(process.env.PRIVATE_KEY);
+
+const b402 = new B402({
+  network: 'testnet',
+  facilitatorUrl: 'https://staging-facilitator.b402.ai'
+});
+
+const result = await b402.pay(wallet, {
+  amount: '1',
+  token: 'USDT',
+  recipient: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb'
+});
+```
+
+## Multi-Environment Configuration
+
+### Using Configuration Factory
+
+```typescript
+interface B402Config {
+  network: 'mainnet' | 'testnet';
+  facilitatorUrl?: string;
+}
+
+class B402ConfigFactory {
+  static getConfig(env: string): B402Config {
+    switch (env) {
+      case 'production':
+        return {
+          network: 'mainnet',
+          facilitatorUrl: 'https://facilitator.b402.ai'
+        };
+
+      case 'staging':
+        return {
+          network: 'testnet',
+          facilitatorUrl: 'https://staging-facilitator.b402.ai'
+        };
+
+      case 'development':
+        return {
+          network: 'testnet',
+          facilitatorUrl: 'http://localhost:3000'
+        };
+
+      default:
+        throw new Error(`Unknown environment: ${env}`);
+    }
+  }
+}
+
+// Usage
+const config = B402ConfigFactory.getConfig(process.env.NODE_ENV || 'development');
+const b402 = new B402(config);
+```
+
+### Using Multiple Clients
+
+```typescript
+import { B402 } from 'b402-sdk';
+
+// Create separate clients for different environments
+class B402Manager {
+  private prodClient: B402;
+  private stagingClient: B402;
+  private devClient: B402;
+
+  constructor() {
+    this.prodClient = new B402({
+      network: 'mainnet',
+      facilitatorUrl: 'https://facilitator.b402.ai'
+    });
+
+    this.stagingClient = new B402({
+      network: 'testnet',
+      facilitatorUrl: 'https://staging-facilitator.b402.ai'
+    });
+
+    this.devClient = new B402({
+      network: 'testnet',
+      facilitatorUrl: 'http://localhost:3000'
+    });
+  }
+
+  getClient(env: 'production' | 'staging' | 'development'): B402 {
+    switch (env) {
+      case 'production':
+        return this.prodClient;
+      case 'staging':
+        return this.stagingClient;
+      case 'development':
+        return this.devClient;
+    }
+  }
+
+  // Get supported tokens for current environment
+  getSupportedTokens(env: string): string[] {
+    return this.getClient(env as any).getSupportedTokens();
+  }
+}
+
+// Usage
+const manager = new B402Manager();
+const client = manager.getClient(process.env.NODE_ENV as any || 'development');
+
+await client.pay(wallet, {
+  amount: '10',
+  token: 'USDT',
+  recipient: '0x...'
+});
+```
+
+## Environment Variables Setup
+
+### For Node.js Applications
+
+```bash
+# .env.production
+B402_FACILITATOR_URL=https://facilitator.b402.ai
+NETWORK=mainnet
+
+# .env.staging
+B402_FACILITATOR_URL=https://staging-facilitator.b402.ai
+NETWORK=testnet
+
+# .env.development
+B402_FACILITATOR_URL=http://localhost:3000
+NETWORK=testnet
+```
+
+Load environment-specific config:
+
+```typescript
+import dotenv from 'dotenv';
+
+// Load environment-specific .env file
+dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
+
+const b402 = new B402({
+  network: process.env.NETWORK as 'mainnet' | 'testnet',
+  facilitatorUrl: process.env.B402_FACILITATOR_URL
+});
+```
+
+### For Frontend Applications
+
+```typescript
+// vite.config.ts or next.config.js
+export default {
+  define: {
+    'process.env.B402_FACILITATOR_URL': JSON.stringify(
+      process.env.B402_FACILITATOR_URL
+    ),
+    'process.env.NETWORK': JSON.stringify(process.env.NETWORK)
+  }
+};
+
+// Usage in React/Vue/etc
+const b402 = new B402({
+  network: import.meta.env.VITE_NETWORK || 'testnet',
+  facilitatorUrl: import.meta.env.VITE_B402_FACILITATOR_URL
+});
+```
+
+## Testing Facilitator Connectivity
+
+```typescript
+async function testFacilitatorConnection(facilitatorUrl: string) {
+  try {
+    const response = await fetch(`${facilitatorUrl}/health`);
+
+    if (response.ok) {
+      const data = await response.json();
+      console.log(`✅ Facilitator connected: ${facilitatorUrl}`);
+      console.log(`   Status: ${data.status}`);
+      return true;
+    } else {
+      console.error(`❌ Facilitator unhealthy: ${response.status}`);
+      return false;
+    }
+  } catch (error) {
+    console.error(`❌ Failed to connect: ${error.message}`);
+    return false;
+  }
+}
+
+// Test before initializing SDK
+await testFacilitatorConnection('http://localhost:3000');
+```
+
+## Running Local Facilitator
+
+### Start Local Facilitator Server
+
+```bash
+# Clone B402 facilitator repo
+git clone https://github.com/Vistara-Labs/b402-facilitator
+cd b402-facilitator
+
+# Install dependencies
+npm install
+
+# Configure environment
+cp .env.example .env
+# Edit .env with your settings
+
+# Start server
+npm run dev
+# Server runs on http://localhost:3000
+```
+
+### Point SDK to Local Server
+
+```typescript
+const b402 = new B402({
+  network: 'testnet',
+  facilitatorUrl: 'http://localhost:3000'
+});
+
+console.log('Using local facilitator for development');
+```
+
+## Use Cases
+
+### Development Workflow
+
+<Steps>
+  <Step title="Local Testing">
+    ```typescript
+    const devB402 = new B402({
+      network: 'testnet',
+      facilitatorUrl: 'http://localhost:3000'
+    });
+    ```
+  </Step>
+
+  <Step title="Staging Deployment">
+    ```typescript
+    const stagingB402 = new B402({
+      network: 'testnet',
+      facilitatorUrl: 'https://staging-facilitator.b402.ai'
+    });
+    ```
+  </Step>
+
+  <Step title="Production Release">
+    ```typescript
+    const prodB402 = new B402({
+      network: 'mainnet'
+      // Uses default production facilitator
+    });
+    ```
+  </Step>
+</Steps>
+
+### Multi-Tenant Applications
+
+```typescript
+class TenantB402Manager {
+  private clients: Map<string, B402> = new Map();
+
+  getClientForTenant(tenantId: string): B402 {
+    if (!this.clients.has(tenantId)) {
+      const config = this.getTenantConfig(tenantId);
+      this.clients.set(tenantId, new B402(config));
+    }
+    return this.clients.get(tenantId)!;
+  }
+
+  private getTenantConfig(tenantId: string): {
+    network: 'mainnet' | 'testnet';
+    facilitatorUrl?: string;
+  } {
+    // Fetch tenant-specific configuration from database
+    const tenant = db.tenants.findById(tenantId);
+
+    return {
+      network: tenant.network,
+      facilitatorUrl: tenant.facilitatorUrl
+    };
+  }
+}
+```
+
+### API Gateway Pattern
+
+```typescript
+// API endpoint that routes to different facilitators based on request
+app.post('/api/pay', async (req, res) => {
+  const { environment, amount, token, recipient } = req.body;
+
+  let facilitatorUrl: string;
+  switch (environment) {
+    case 'production':
+      facilitatorUrl = 'https://facilitator.b402.ai';
+      break;
+    case 'staging':
+      facilitatorUrl = 'https://staging-facilitator.b402.ai';
+      break;
+    default:
+      facilitatorUrl = 'http://localhost:3000';
+  }
+
+  const b402 = new B402({
+    network: environment === 'production' ? 'mainnet' : 'testnet',
+    facilitatorUrl
+  });
+
+  const result = await b402.pay(wallet, {
+    amount,
+    token,
+    recipient
+  });
+
+  res.json(result);
+});
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Connection refused to localhost:3000">
+    - Ensure local facilitator is running: `npm run dev`
+    - Check if port 3000 is available: `lsof -i :3000`
+    - Verify firewall settings allow localhost connections
+  </Accordion>
+
+  <Accordion title="Network errors with custom URL">
+    - Test facilitator health endpoint: `curl https://your-facilitator/health`
+    - Check DNS resolution for custom domain
+    - Verify SSL certificate is valid
+    - Ensure facilitator is accessible from your network
+  </Accordion>
+
+  <Accordion title="Wrong facilitator being used">
+    Check priority order:
+    1. Constructor option (highest)
+    2. Environment variable
+    3. Default (lowest)
+
+    Debug by checking the URL you passed to the constructor or set in B402_FACILITATOR_URL
+  </Accordion>
+
+  <Accordion title="Environment variables not loading">
+    - Verify .env file is in project root
+    - Check if dotenv is configured: `require('dotenv').config()`
+    - For frontend apps, ensure env vars are prefixed correctly (VITE_, REACT_APP_, etc)
+  </Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Explicit Configuration" icon="sliders">
+    Use constructor options for clarity and testability
+  </Card>
+
+  <Card title="Environment-Specific Configs" icon="layer-group">
+    Maintain separate .env files per environment
+  </Card>
+
+  <Card title="Health Checks" icon="heart-pulse">
+    Test facilitator connectivity before making payments
+  </Card>
+
+  <Card title="Fallback Handling" icon="shield-halved">
+    Implement fallback to default if custom URL fails
+  </Card>
+</CardGroup>
+
+## Example Implementation
+
+Full working example with all configuration methods:
+
+```typescript
+import { B402 } from 'b402-sdk';
+import { Wallet } from 'ethers';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
+
+async function main() {
+  const wallet = new Wallet(process.env.PRIVATE_KEY!);
+
+  // Example 1: Default production facilitator
+  console.log('\n=== Using Default Facilitator ===');
+  const b402Default = new B402({
+    network: 'mainnet'
+  });
+  console.log('Configured with default facilitator');
+
+  // Example 2: Custom facilitator URL (local development)
+  console.log('\n=== Using Local Facilitator ===');
+  const b402Local = new B402({
+    network: 'testnet',
+    facilitatorUrl: 'http://localhost:3000'
+  });
+  console.log('Configured with local facilitator: http://localhost:3000');
+
+  // Example 3: Environment variable
+  console.log('\n=== Using Environment Variable ===');
+  const b402Env = new B402({
+    network: 'mainnet'
+    // Will use B402_FACILITATOR_URL env var if set
+  });
+  console.log('Configured with env var or default');
+
+  // Example 4: Staging facilitator
+  console.log('\n=== Using Staging Facilitator ===');
+  const b402Staging = new B402({
+    network: 'testnet',
+    facilitatorUrl: 'https://staging-facilitator.b402.ai'
+  });
+  console.log('Configured with staging facilitator');
+
+  // Example 5: Send payment with selected facilitator
+  console.log('\n=== Sending Payment ===');
+
+  const facilitatorUrl = process.env.B402_FACILITATOR_URL || 'http://localhost:3000';
+  const b402 = new B402({
+    network: 'testnet',
+    facilitatorUrl
+  });
+
+  console.log(`Using facilitator: ${facilitatorUrl}`);
+
+  const result = await b402.pay(wallet, {
+    amount: '1',
+    token: 'USDT',
+    recipient: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb'
+  });
+
+  if (result.success) {
+    console.log('\n✅ Payment successful!');
+    console.log('TX:', result.txHash);
+  } else {
+    console.log('\n❌ Payment failed:', result.error);
+  }
+}
+
+main().catch(console.error);
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Simple Payment" icon="money-bill-wave" href="/use-cases/simple-payment">
+    Basic payment implementation
+  </Card>
+
+  <Card title="Gasless Swaps" icon="arrow-right-arrow-left" href="/use-cases/gasless-swap">
+    Configure swap service endpoints
+  </Card>
+
+  <Card title="API Reference" icon="code" href="/developers/facilitator/api-reference">
+    Facilitator API documentation
+  </Card>
+
+  <Card title="Example Code" icon="github" href="https://github.com/Vistara-Labs/b402-sdk/blob/main/examples/custom-facilitator.ts">
+    View complete example on GitHub
+  </Card>
+</CardGroup>

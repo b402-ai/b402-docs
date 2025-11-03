@@ -1,0 +1,529 @@
+---
+title: 'Telegram Trading Bot'
+description: 'Build a gasless crypto trading bot for Telegram using B402'
+---
+
+## Overview
+
+Create a Telegram bot that lets users trade crypto directly from their chat with zero gas fees. Perfect for community engagement, automated trading strategies, or providing easy access to DeFi for non-technical users.
+
+## What You'll Build
+
+A Telegram bot that:
+- Enables gasless PancakeSwap trades from Telegram
+- Provides real-time price quotes
+- Manages user wallets securely
+- Shows portfolio balances
+- Requires zero BNB from users
+
+## Features
+
+<CardGroup cols={2}>
+  <Card title="Gasless Trading" icon="gas-pump">
+    Users pay $0 in gas - server handles all transaction costs
+  </Card>
+
+  <Card title="Simple Commands" icon="terminal">
+    Intuitive slash commands like `/swap 100 USDT WBNB`
+  </Card>
+
+  <Card title="Real-Time Quotes" icon="chart-line">
+    Get instant price quotes before executing trades
+  </Card>
+
+  <Card title="Wallet Management" icon="wallet">
+    Secure wallet creation and balance checking
+  </Card>
+</CardGroup>
+
+## Bot Commands
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `/start` | Create wallet & welcome message | `/start` |
+| `/quote` | Get swap quote | `/quote 100 USDT WBNB` |
+| `/swap` | Execute gasless swap | `/swap 10 USDT WBNB` |
+| `/balance` | Check wallet balances | `/balance` |
+
+## Prerequisites
+
+<Steps>
+  <Step title="Create Telegram Bot">
+    1. Message [@BotFather](https://t.me/BotFather) on Telegram
+    2. Use `/newbot` command
+    3. Follow prompts to create your bot
+    4. Save the bot token
+  </Step>
+
+  <Step title="Install Dependencies">
+    ```bash
+    npm install telegraf b402-sdk ethers@6
+    ```
+  </Step>
+
+  <Step title="Set Up Environment">
+    ```bash
+    # .env
+    TELEGRAM_BOT_TOKEN=your_bot_token_from_botfather
+    SWAP_SERVER_URL=https://swap-server-production-b8a3.up.railway.app
+    SWAP_FACILITATOR_ADDRESS=0xE1C2830d5DDd6B49E9c46EbE03a98Cb44CD8eA5a
+    ```
+  </Step>
+</Steps>
+
+## Implementation
+
+### 1. Initialize Bot and Swap Client
+
+```typescript
+import { Telegraf } from 'telegraf';
+import { ethers } from 'ethers';
+import { B402Swap } from 'b402-sdk';
+
+// Token addresses on BSC
+const TOKENS: Record<string, string> = {
+  WBNB: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
+  USDT: '0x55d398326f99059fF775485246999027B3197955',
+  USDC: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d',
+  CAKE: '0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82',
+  BUSD: '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56',
+};
+
+// In-memory user wallet storage (use database in production)
+const userWallets = new Map<string, ethers.Wallet>();
+
+// Initialize swap client
+const swapper = new B402Swap({
+  url: process.env.SWAP_SERVER_URL || 'https://swap.b402.ai',
+  facilitatorAddress: process.env.SWAP_FACILITATOR_ADDRESS || '',
+});
+
+// Initialize Telegram bot
+const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN!);
+```
+
+### 2. Implement /start Command
+
+```typescript
+bot.command('start', async (ctx) => {
+  const chatId = ctx.chat.id.toString();
+
+  // Create wallet for user if first time
+  let wallet = userWallets.get(chatId);
+  if (!wallet) {
+    wallet = ethers.Wallet.createRandom();
+    userWallets.set(chatId, wallet);
+  }
+
+  await ctx.reply(
+    `🌴 Welcome to B402 Gasless Swap Bot!
+
+Your wallet: \`${wallet.address}\`
+
+Commands:
+/quote <amount> <from> <to> - Get swap quote
+/swap <amount> <from> <to> - Execute swap
+/balance - Check balances
+
+Example: /swap 100 USDT WBNB
+
+💡 All swaps are gasless! You pay ZERO gas fees.`,
+    { parse_mode: 'Markdown' }
+  );
+});
+```
+
+### 3. Implement /quote Command
+
+```typescript
+bot.command('quote', async (ctx) => {
+  const args = ctx.message.text.split(' ').slice(1);
+
+  if (args.length !== 3) {
+    return ctx.reply('Usage: /quote <amount> <from> <to>\nExample: /quote 100 USDT WBNB');
+  }
+
+  const [amount, fromToken, toToken] = args;
+
+  try {
+    // Validate tokens
+    const tokenInAddress = TOKENS[fromToken.toUpperCase()];
+    const tokenOutAddress = TOKENS[toToken.toUpperCase()];
+
+    if (!tokenInAddress || !tokenOutAddress) {
+      return ctx.reply(
+        `❌ Invalid token. Supported: ${Object.keys(TOKENS).join(', ')}`
+      );
+    }
+
+    await ctx.reply('⏳ Getting quote...');
+
+    // Get quote
+    const amountIn = ethers.parseUnits(amount, 18).toString();
+    const quote = await swapper.getQuote({
+      tokenIn: tokenInAddress,
+      tokenOut: tokenOutAddress,
+      amountIn,
+      slippageBps: 50, // 0.5%
+    });
+
+    const outputAmount = ethers.formatUnits(quote.amountOut, 18);
+    const minOutput = ethers.formatUnits(quote.minAmountOut, 18);
+
+    await ctx.reply(
+      `📊 Quote: ${amount} ${fromToken.toUpperCase()} → ${toToken.toUpperCase()}
+
+💱 Output: ${parseFloat(outputAmount).toFixed(6)} ${toToken.toUpperCase()}
+📉 Min output: ${parseFloat(minOutput).toFixed(6)} ${toToken.toUpperCase()}
+💥 Price impact: ${quote.priceImpact}%
+🛣️ Route: ${fromToken.toUpperCase()} → ${toToken.toUpperCase()}
+
+To execute: /swap ${amount} ${fromToken} ${toToken}`,
+      { parse_mode: 'Markdown' }
+    );
+  } catch (error) {
+    await ctx.reply(
+      `❌ Failed to get quote: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
+  }
+});
+```
+
+### 4. Implement /swap Command
+
+```typescript
+bot.command('swap', async (ctx) => {
+  const chatId = ctx.chat.id.toString();
+  const args = ctx.message.text.split(' ').slice(1);
+
+  if (args.length !== 3) {
+    return ctx.reply('Usage: /swap <amount> <from> <to>\nExample: /swap 10 USDT WBNB');
+  }
+
+  const [amount, fromToken, toToken] = args;
+
+  try {
+    // Get user wallet
+    const wallet = userWallets.get(chatId);
+    if (!wallet) {
+      return ctx.reply('❌ Please start bot first: /start');
+    }
+
+    // Validate tokens
+    const tokenInAddress = TOKENS[fromToken.toUpperCase()];
+    const tokenOutAddress = TOKENS[toToken.toUpperCase()];
+
+    if (!tokenInAddress || !tokenOutAddress) {
+      return ctx.reply(
+        `❌ Invalid token. Supported: ${Object.keys(TOKENS).join(', ')}`
+      );
+    }
+
+    await ctx.reply(
+      `🚀 Executing gasless swap...
+${amount} ${fromToken.toUpperCase()} → ${toToken.toUpperCase()}
+
+⏳ This will take ~10 seconds...`
+    );
+
+    // Execute swap
+    const amountIn = ethers.parseUnits(amount, 18).toString();
+    const result = await swapper.swap(wallet, {
+      tokenIn: tokenInAddress,
+      tokenOut: tokenOutAddress,
+      amountIn,
+      slippageBps: 50,
+    });
+
+    if (result.success) {
+      const outputAmount = result.amountOut
+        ? ethers.formatUnits(result.amountOut, 18)
+        : '?';
+
+      await ctx.reply(
+        `✅ Swap successful!
+
+📤 Sent: ${amount} ${fromToken.toUpperCase()}
+📥 Received: ${parseFloat(outputAmount).toFixed(6)} ${toToken.toUpperCase()}
+
+🔗 Transaction: [View on BSCScan](${result.explorerUrl})
+
+🎉 You paid ZERO gas fees!`,
+        { parse_mode: 'Markdown' }
+      );
+    } else {
+      await ctx.reply(`❌ Swap failed: ${result.error}`);
+    }
+  } catch (error) {
+    await ctx.reply(
+      `❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
+  }
+});
+```
+
+### 5. Implement /balance Command
+
+```typescript
+bot.command('balance', async (ctx) => {
+  const chatId = ctx.chat.id.toString();
+
+  try {
+    const wallet = userWallets.get(chatId);
+    if (!wallet) {
+      return ctx.reply('❌ Please start bot first: /start');
+    }
+
+    await ctx.reply('⏳ Checking balances...');
+
+    const provider = new ethers.JsonRpcProvider('https://bsc-dataseed.binance.org');
+
+    // Check BNB balance
+    const bnbBalance = await provider.getBalance(wallet.address);
+
+    // Check token balances
+    const erc20Abi = ['function balanceOf(address) view returns (uint256)'];
+    const balances: string[] = [];
+
+    balances.push(`BNB: ${ethers.formatEther(bnbBalance)}`);
+
+    for (const [symbol, address] of Object.entries(TOKENS)) {
+      const contract = new ethers.Contract(address, erc20Abi, provider);
+      const balance = await contract.balanceOf(wallet.address);
+      if (balance > 0n) {
+        balances.push(`${symbol}: ${ethers.formatUnits(balance, 18)}`);
+      }
+    }
+
+    await ctx.reply(
+      `💰 Your Balances:
+
+${balances.join('\n')}
+
+Wallet: \`${wallet.address}\``,
+      { parse_mode: 'Markdown' }
+    );
+  } catch (error) {
+    await ctx.reply(
+      `❌ Failed to check balance: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
+  }
+});
+```
+
+### 6. Launch Bot
+
+```typescript
+// Enable graceful stop
+process.once('SIGINT', () => bot.stop('SIGINT'));
+process.once('SIGTERM', () => bot.stop('SIGTERM'));
+
+// Start bot
+bot.launch();
+console.log('🤖 Telegram Swap Bot is running!');
+```
+
+## Example Conversation
+
+```
+User: /start
+Bot: 🌴 Welcome to B402 Gasless Swap Bot!
+     Your wallet: 0xa23B...
+     Commands:
+     /quote <amount> <from> <to> - Get swap quote
+     /swap <amount> <from> <to> - Execute swap
+     /balance - Check balances
+
+User: /quote 100 USDT WBNB
+Bot: 📊 Quote: 100 USDT → WBNB
+     💱 Output: 0.918248 WBNB
+     📉 Min output: 0.913826 WBNB
+     💥 Price impact: 0.05%
+     To execute: /swap 100 USDT WBNB
+
+User: /swap 10 USDT WBNB
+Bot: 🚀 Executing gasless swap...
+     10 USDT → WBNB
+     ⏳ This will take ~10 seconds...
+
+Bot: ✅ Swap successful!
+     📤 Sent: 10 USDT
+     📥 Received: 0.091825 WBNB
+     🔗 Transaction: View on BSCScan
+     🎉 You paid ZERO gas fees!
+
+User: /balance
+Bot: 💰 Your Balances:
+     BNB: 0.0000
+     USDT: 90.0
+     WBNB: 0.091825
+     Wallet: 0xa23B...
+```
+
+## Security Best Practices
+
+<Warning>
+  **Production Security**: This example stores wallets in memory. For production, use:
+  - Encrypted database storage for private keys
+  - HSM (Hardware Security Module) for key management
+  - User authentication before wallet access
+  - Rate limiting on commands
+  - Transaction amount limits
+</Warning>
+
+### Recommended Improvements
+
+<Steps>
+  <Step title="Database Integration">
+    Store user wallets in encrypted database (PostgreSQL, MongoDB)
+  </Step>
+
+  <Step title="Authentication">
+    Add user verification before executing trades
+  </Step>
+
+  <Step title="Rate Limiting">
+    Prevent spam and abuse with command rate limits
+  </Step>
+
+  <Step title="Monitoring">
+    Add logging and alerting for failed transactions
+  </Step>
+</Steps>
+
+## Advanced Features
+
+### Add Price Alerts
+
+```typescript
+bot.command('alert', async (ctx) => {
+  const args = ctx.message.text.split(' ').slice(1);
+  // Set price alert: /alert WBNB 250
+  // Notify user when WBNB hits $250
+});
+```
+
+### Add Limit Orders
+
+```typescript
+bot.command('limit', async (ctx) => {
+  const args = ctx.message.text.split(' ').slice(1);
+  // Create limit order: /limit 100 USDT WBNB 0.0092
+  // Execute when price reaches target
+});
+```
+
+### Add Portfolio Tracking
+
+```typescript
+bot.command('portfolio', async (ctx) => {
+  // Show portfolio value in USD
+  // Calculate P&L since wallet creation
+  // Display pie chart of holdings
+});
+```
+
+## Deployment
+
+### Deploy to Cloud
+
+<Tabs>
+  <Tab title="Railway">
+    ```bash
+    railway login
+    railway init
+    railway add
+    railway up
+    ```
+  </Tab>
+
+  <Tab title="Render">
+    1. Connect GitHub repository
+    2. Set build command: `npm install && npm run build`
+    3. Set start command: `npm start`
+    4. Add environment variables
+  </Tab>
+
+  <Tab title="Heroku">
+    ```bash
+    heroku create
+    heroku config:set TELEGRAM_BOT_TOKEN=xxx
+    git push heroku main
+    ```
+  </Tab>
+</Tabs>
+
+### Environment Variables
+
+Ensure these are set in your deployment:
+
+```bash
+TELEGRAM_BOT_TOKEN=your_bot_token
+SWAP_SERVER_URL=https://swap.b402.ai
+SWAP_FACILITATOR_ADDRESS=0xE1C2830d5DDd6B49E9c46EbE03a98Cb44CD8eA5a
+DATABASE_URL=postgresql://... # For wallet storage
+```
+
+## Use Cases
+
+<CardGroup cols={2}>
+  <Card title="Trading Communities" icon="users">
+    Enable gasless trading for your community members
+  </Card>
+
+  <Card title="Automated Strategies" icon="robot">
+    Build bots that execute strategies on user commands
+  </Card>
+
+  <Card title="DeFi Education" icon="graduation-cap">
+    Teach DeFi without gas fee barriers
+  </Card>
+
+  <Card title="Portfolio Management" icon="chart-pie">
+    Let users rebalance portfolios via chat
+  </Card>
+</CardGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Bot doesn't respond">
+    - Check if bot is running: `ps aux | grep node`
+    - Verify bot token is correct
+    - Check network connectivity
+    - Review logs for errors
+  </Accordion>
+
+  <Accordion title="Swaps fail silently">
+    - Ensure user has sufficient token balance
+    - Check if Permit2 approval is needed
+    - Verify swap server is accessible
+    - Check for slippage issues
+  </Accordion>
+
+  <Accordion title="Balance command times out">
+    - RPC endpoint may be slow
+    - Use multiple RPC endpoints for fallback
+    - Cache balances with TTL
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Copy Trading Bot" icon="users" href="/use-cases/copy-trading">
+    Build a copy trading platform with Zara Agents
+  </Card>
+
+  <Card title="Gasless Swap API" icon="code" href="/use-cases/gasless-swap">
+    Learn more about the swap API
+  </Card>
+
+  <Card title="Full Example Code" icon="github" href="https://github.com/Vistara-Labs/b402-sdk/blob/main/examples/telegram-swap-bot.ts">
+    View complete code on GitHub
+  </Card>
+
+  <Card title="Telegraf Documentation" icon="book" href="https://telegraf.js.org">
+    Learn more about building Telegram bots
+  </Card>
+</CardGroup>
