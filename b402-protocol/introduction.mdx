@@ -1,10 +1,10 @@
 ---
 title: Introduction
-description: 'The foundation of the BNB Chain open payment standard'
+description: 'The foundation of the b402 open payment standard'
 icon: cubes-stacked
 ---
 
-The **b402 Protocol** is an open standard for internet-native payments on the [BNB Chain](https://www.bnbchain.org/en).
+The **b402 Protocol** is an open standard for internet-native payments on modern EVM chains, starting with the [BNB Chain](https://www.bnbchain.org/en) and [Base](https://base.org).
 
 It serves as the foundational layer of the broader b402 infrastructure and ecosystem, enabling seamless, programmable, and gasless payment experiences for users, developers, autonomous AI agents alike.
 
@@ -24,9 +24,9 @@ In simple terms, it allows users to authorize a payment off-chain with a signatu
 
 ## Why it matters
 
-Most BEP-20 tokens, including major ones like BNB, USDT, or USD1 on the BNB Chain, do not implement EIP-3009, meaning they can’t natively process signed “transfer with authorization” operations.
+Most standard tokens on today’s major EVM networks (such as BNB Chain and Base), including assets like BNB, USDT, or USD1, do not implement EIP-3009, meaning they can’t natively process signed “transfer with authorization” operations.
 
-The B402 Relayer solves this by acting as a trusted middle layer that simulates EIP-3009 behavior using standard BEP-20 functions.
+The B402 Relayer solves this by acting as a trusted middle layer that simulates EIP-3009 behavior using standard ERC-20 / BEP-20-style functions.
 
 This enables:
 1. Gasless payments: users sign a message; the relayer pays gas.

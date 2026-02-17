@@ -1,10 +1,10 @@
 ---
 title: Buyer Guide
-description: 'Send payments to sellers on the BNB Chain'
+description: 'Send payments to sellers'
 icon: 'cart-shopping'
 ---
 
-The b402 protocol enables users to make gasless payments in BEP-20 tokens such as USD1 and USDT on the BNB Chain.
+The b402 protocol enables users to make gasless payments in EVM-compatible tokens such as USD1 and USDT on supported chains like BNB Chain and Base.
 
 This guide shows how to send a payment to a seller using the b402 TypeScript SDK.
 
@@ -21,7 +21,7 @@ Payments typically finalize in under 3 seconds.
 Before running the example, make sure you have:
 
 1. Node.js 18+
-2. A BNB Chain wallet with USD1 tokens
+2. A wallet on a supported chain (e.g., BNB Chain or Base) with USD1 tokens
 3. A valid private key exported as an environment variable
 
 ```ts .env
@@ -38,6 +38,8 @@ npm install ethers b402-sdk
 
 ## Example
 The following example demonstrates how to send a USD1 payment to a seller service that supports the b402 protocol.
+
+This walkthrough uses **BNB Chain mainnet** as the concrete example. To use another supported chain (such as Base), swap in the appropriate RPC endpoint, token address, relayer address, and block explorer URLs.
 
 This walkthrough shows the complete flow from connecting your wallet to confirming the on-chain transaction.
 

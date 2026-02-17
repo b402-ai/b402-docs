@@ -1,10 +1,10 @@
 ---
 title: Seller Guide
-description: 'Accept payments from buyers on the BNB Chain'
+description: 'Accept payments from buyers'
 icon: 'coin-vertical'
 ---
 
-The **b402 protocol** enables you to monetize your APIs or web services with **gasless BEP-20 token payments** on the BNB Chain.
+The **b402 protocol** enables you to monetize your APIs or web services with **gasless EVM-compatible token payments** on supported chains like BNB Chain and Base.
 
 This guide walks you through integrating the `b402-express` middleware to create paid API routes that require crypto payments before access.
 
@@ -34,7 +34,7 @@ const { b402 } = require('b402-express');
 const app = express();
 
 app.use(b402(
-  { payTo: '0x...' }, // your BNB Chain wallet address
+  { payTo: '0x...' }, // your wallet address on a supported chain (e.g., BNB Chain or Base)
   {
     'GET /premium': { price: '0.01', token: 'USD1' },
     'GET /basic': { price: '0.001', token: 'USDT' },
@@ -58,13 +58,13 @@ When a protected endpoint is accessed without payment, the middleware returns a 
 - Token contract address
 - Your receiving wallet (payTo)
 - Required amount
-- Relayer contract address (0xE1C2830d5DDd6B49E9c46EbE03a98Cb44CD8eA5a)
+- Relayer contract address (e.g., 0xE1C2830d5DDd6B49E9c46EbE03a98Cb44CD8eA5a on BNB Chain)
 - Description of the payment
 
 After payment, verified details become available in the request object:
 
 ``` ts lines
-req.b402.txHash  // transaction hash on the BNB Chain
+req.b402.txHash  // transaction hash on the configured chain (e.g., BNB Chain or Base)
 req.b402.payer   // payer’s wallet address
 ```
 
