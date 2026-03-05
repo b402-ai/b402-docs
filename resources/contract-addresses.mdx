@@ -30,6 +30,28 @@ icon: file-contract
 | USD Coin | USDC | `0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d` | 18 |
 | WLFI USD | USD1 | `0x8d0d000ee44948fc98c9b98a4fa4921476f08b0d` | 18 |
 
+## Base Mainnet (Chain ID: 8453)
+
+### RAILGUN Contracts
+
+| Contract | Address | Verified |
+|----------|---------|----------|
+| Railgun Proxy | `0x26111e2379E5fC0A7Cd8728fe52c7b84CA4fbE85` | Yes |
+| RailgunSmartWallet Impl | `0x92Ab00D5DCBcf3bC2af010c6eA94fe57a9A3331D` | Yes |
+| PoseidonT3 | `0xB407837aD487EF6DD1044CcEEF13f111A334503A` | No (circomlib bytecode) |
+| PoseidonT4 | `0x9dB0eDC77C9047a06Fd6dE82c892630DAa5eF601` | No (circomlib bytecode) |
+| Delegator | `0xa5F50a2670dfc3b41616DEC18Db7335B8235404D` | Yes |
+| ProxyAdmin | `0x3BD317f5032a2Ae809a4640F3CEC7868b04d759A` | Yes |
+| Treasury Impl | `0x22eb6c6f31fCaDD62eF4C6E64fCC6Fe39F699F51` | Yes |
+| Treasury Proxy | `0x56F75ed712d7e26602Db9cD3664Da3CA75d4Ad26` | Yes |
+| RelayAdapt | `0xB0BC6d50098519c2a030661338F82a8792b85404` | Yes |
+
+### Supported Tokens
+
+| Token | Symbol | Address | Decimals |
+|-------|--------|---------|----------|
+| USD Coin | USDC | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` | 6 |
+
 ## BNB Chain Testnet (Chain ID: 97)
 
 ### Supported Tokens
@@ -51,10 +73,11 @@ icon: file-contract
 | Network | Explorer | URL |
 |---------|----------|-----|
 | BSC Mainnet | BscScan | `https://bscscan.com` |
+| Base Mainnet | BaseScan | `https://basescan.org` |
 | BSC Testnet | BscScan Testnet | `https://testnet.bscscan.com` |
 
 ## Notes
 
-- **All tokens use 18 decimals** on BNB Chain. Amounts in API calls are in wei (1 USDT = `1000000000000000000`).
+- **Token decimals vary by chain.** BNB Chain tokens use 18 decimals. Base USDC uses 6 decimals. Always check decimals for the target chain.
 - **Token whitelisting** — Only tokens whitelisted on the Relayer contract can be used for payments.
 - See [Network & Token Support](/concepts/network-token-support) for detailed token and chain information.

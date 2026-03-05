@@ -1,6 +1,6 @@
 # b402 Developer Documentation
 
-> b402 is a gasless crypto payment protocol on BNB Chain that extends HTTP 402 for machine-to-machine payments. Buyers sign payment payloads off-chain; the Facilitator handles gas and on-chain settlement.
+> b402 is a gasless crypto payment protocol across EVM chains that extends HTTP 402 for machine-to-machine payments. Buyers sign payment payloads off-chain; the Facilitator handles gas and on-chain settlement.
 
 ## Overview
 - [Introduction](https://docs.b402.ai/introduction): What b402 is, how it works, quick code examples
@@ -12,7 +12,7 @@
 - [Facilitator](https://docs.b402.ai/concepts/facilitator): Off-chain service for verify/settle
 - [Relayer](https://docs.b402.ai/concepts/relayer): On-chain contract for transferWithAuthorization
 - [Wallet](https://docs.b402.ai/concepts/wallet): EOA vs Smart Wallet (ERC-7579 Nexus)
-- [Network & Token Support](https://docs.b402.ai/concepts/network-token-support): BNB Chain, USDT/USDC/USD1, contract addresses
+- [Network & Token Support](https://docs.b402.ai/concepts/network-token-support): BNB Chain, Base, USDT/USDC/USD1, contract addresses
 - [Privacy (Incognito)](https://docs.b402.ai/concepts/privacy-incognito): RAILGUN integration for shielded payments
 - [Agent Identity](https://docs.b402.ai/concepts/agent-identity): ERC-8004 on-chain identity for AI agents
 
@@ -59,15 +59,12 @@
 - [Transactions](https://docs.b402.ai/developers/backend/transactions): GET /transactions
 
 ## SDK Reference
-- [b402-sdk](https://docs.b402.ai/sdks/b402-sdk): TypeScript SDK for payments
-- [b402-express](https://docs.b402.ai/sdks/b402-express): Express.js middleware
 - [EIP-712 Signature Guide](https://docs.b402.ai/sdks/eip712-signature-guide): Manual signature construction
 
 ## Guides
 - [Smart Wallet Deep Dive](https://docs.b402.ai/guides/smart-wallet-deep-dive): ERC-7579, UserOps, paymaster
 - [Privacy Deep Dive](https://docs.b402.ai/guides/privacy-incognito-deep-dive): RAILGUN, commitments, Merkle trees
 - [Self-Hosting](https://docs.b402.ai/guides/self-hosting): Run your own facilitator
-- [Chapter 0 Campaign](https://docs.b402.ai/guides/chapter-0-campaign): Rewards program
 
 ## b402 Services
 - [Facilitator](https://docs.b402.ai/b402-services/b402-facilitator): Hosted facilitator service

@@ -205,8 +205,6 @@
                     {
                         "group": "SDK Reference",
                         "pages": [
-                            "sdks/b402-sdk",
-                            "sdks/b402-express",
                             "sdks/eip712-signature-guide"
                         ]
                     }

@@ -16,8 +16,11 @@ GET /swap/health
 | Field | Type | Description |
 |-------|------|-------------|
 | `status` | `string` | Service status (`"ok"`) |
+| `serverWallet` | `string` | Address of the swap server wallet |
+| `bnbBalance` | `string` | BNB balance of the server wallet |
+| `chainId` | `number` | Chain ID the swap service is connected to |
 | `router` | `string` | DEX router in use (`"PancakeSwap V3"`) |
-| `pairs` | `number` | Number of available trading pairs |
+| `version` | `string` | Swap service version |
 
 ## Examples
 
@@ -33,9 +36,10 @@ curl https://facilitator.b402.ai/swap/health
 const response = await fetch('https://facilitator.b402.ai/swap/health');
 const health = await response.json();
 
-console.log('Status:', health.status);   // "ok"
-console.log('Router:', health.router);   // "PancakeSwap V3"
-console.log('Pairs:', health.pairs);
+console.log('Status:', health.status);       // "ok"
+console.log('Router:', health.router);       // "PancakeSwap V3"
+console.log('Chain ID:', health.chainId);    // 56
+console.log('Version:', health.version);
 ```
 
 ## Notes

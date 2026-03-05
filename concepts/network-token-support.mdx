@@ -11,6 +11,7 @@ b402 operates across EVM-compatible chains with support for multiple stablecoins
 | Network | Chain ID | Status | RPC Endpoint |
 |---------|----------|--------|-------------|
 | BNB Chain Mainnet | 56 | Live | `https://bsc-dataseed1.binance.org` |
+| Base Mainnet | 8453 | Live | `https://mainnet.base.org` |
 | BNB Chain Testnet | 97 | Live | `https://bsc-testnet-dataseed.bnbchain.org` |
 
 ## Supported Tokens
@@ -22,6 +23,12 @@ b402 operates across EVM-compatible chains with support for multiple stablecoins
 | Tether USD | USDT | `0x55d398326f99059fF775485246999027B3197955` | 18 |
 | USD Coin | USDC | `0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d` | 18 |
 | WLFI USD | USD1 | `0x8d0d000ee44948fc98c9b98a4fa4921476f08b0d` | 18 |
+
+### Base Mainnet
+
+| Token | Symbol | Address | Decimals |
+|-------|--------|---------|----------|
+| USD Coin | USDC | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` | 6 |
 
 ### BNB Chain Testnet
 
@@ -42,6 +49,20 @@ b402 operates across EVM-compatible chains with support for multiple stablecoins
 | K1 Validator | (see env config) | ECDSA signature validation module |
 | EntryPoint (v0.7) | `0x0000000071727De22E5E9d8BAf0edAc6f37da032` | ERC-4337 UserOp execution |
 
+### Base Mainnet
+
+| Contract | Address | Purpose |
+|----------|---------|---------|
+| Railgun Proxy | `0x26111e2379E5fC0A7Cd8728fe52c7b84CA4fbE85` | RAILGUN privacy proxy |
+| RailgunSmartWallet Impl | `0x92Ab00D5DCBcf3bC2af010c6eA94fe57a9A3331D` | RAILGUN smart wallet implementation |
+| PoseidonT3 | `0xB407837aD487EF6DD1044CcEEF13f111A334503A` | ZK-friendly hash (3 inputs) |
+| PoseidonT4 | `0x9dB0eDC77C9047a06Fd6dE82c892630DAa5eF601` | ZK-friendly hash (4 inputs) |
+| Delegator | `0xa5F50a2670dfc3b41616DEC18Db7335B8235404D` | Delegation contract |
+| ProxyAdmin | `0x3BD317f5032a2Ae809a4640F3CEC7868b04d759A` | Proxy administration |
+| Treasury Impl | `0x22eb6c6f31fCaDD62eF4C6E64fCC6Fe39F699F51` | Treasury implementation |
+| Treasury Proxy | `0x56F75ed712d7e26602Db9cD3664Da3CA75d4Ad26` | Treasury proxy |
+| RelayAdapt | `0xB0BC6d50098519c2a030661338F82a8792b85404` | Relay adapter |
+
 ## Facilitator Endpoints
 
 | Service | URL | Description |
@@ -54,11 +75,12 @@ b402 operates across EVM-compatible chains with support for multiple stablecoins
 | Network | Explorer | URL |
 |---------|----------|-----|
 | BSC Mainnet | BscScan | `https://bscscan.com` |
+| Base Mainnet | BaseScan | `https://basescan.org` |
 | BSC Testnet | BscScan Testnet | `https://testnet.bscscan.com` |
 
 ## Token Notes
 
-**All tokens use 18 decimals** on BNB Chain. When specifying amounts in API calls, values are in the smallest unit (wei). For example, 1 USDT = `1000000000000000000` (1e18).
+**Token decimals vary by chain.** On BNB Chain, all tokens use 18 decimals (1 USDT = `1000000000000000000`). On Base, USDC uses 6 decimals (1 USDC = `1000000`). Always check the token's decimals for the target chain.
 
 **Token whitelisting.** Only tokens whitelisted on the Relayer contract can be used for payments. The tokens listed above are currently whitelisted.
 

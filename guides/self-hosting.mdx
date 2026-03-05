@@ -4,13 +4,13 @@ description: 'Run your own b402 facilitator and backend with full environment co
 icon: server
 ---
 
-This guide covers everything you need to self-host the b402 facilitator and backend services. The facilitator handles payment verification, UserOp construction, and on-chain settlement. The backend provides analytics, privacy indexing, and the Chapter 0 campaign API.
+This guide covers everything you need to self-host the b402 facilitator and backend services. The facilitator handles payment verification, UserOp construction, and on-chain settlement. The backend provides analytics and privacy indexing.
 
 ## Prerequisites
 
 - **Node.js 18+** with npm or yarn
 - **MongoDB** for the facilitator (wallet deployment records, transaction state)
-- **PostgreSQL 15+** for the backend (Prisma ORM, privacy indexing, Chapter 0)
+- **PostgreSQL 15+** for the backend (Prisma ORM, privacy indexing)
 - **A funded wallet** with BNB for gas (the relayer wallet)
 - **An ERC-4337 bundler** endpoint (Biconomy, Pimlico, Stackup, or self-hosted)
 - **Docker** (recommended for production)
@@ -92,22 +92,13 @@ The backend uses PostgreSQL via Prisma and has its own set of variables.
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `DATABASE_URL` | **Yes** | PostgreSQL connection string (e.g., `postgresql://user:pass@localhost:5432/b402`) |
-| `ADMIN_API_SECRET` | **Yes** | Required for protected endpoints (`/users/chapter0-stats`, `/privacy/unshield`) |
+| `ADMIN_API_SECRET` | **Yes** | Required for protected endpoints (`/privacy/unshield`) |
 
 ### Privacy (RAILGUN)
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `RAILGUN_IMPL` | `official` | RAILGUN implementation: `official` or `custom`. Determines which Relay contract address is used. |
-
-### Chapter 0 Campaign
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `CHAPTER_0_WEEKLY_EMISSION` | `10000000` | Total points emitted per week across all participants |
-| `CHAPTER_0_OWN_WEIGHT` | `0.70` | Weight applied to a user's own deposits (70%) |
-| `CHAPTER_0_REFERRAL_WEIGHT` | `0.30` | Weight applied to referral deposits (30%) |
-| `CHAPTER_0_CAMPAIGN_START_DATE` | Today | Campaign start date in ISO format (e.g., `2026-01-01`) |
 
 ## Minimal .env Files
 
@@ -151,11 +142,6 @@ ADMIN_API_SECRET=your-secret-key-here
 # Privacy
 RAILGUN_IMPL=official
 
-# Chapter 0
-CHAPTER_0_WEEKLY_EMISSION=10000000
-CHAPTER_0_OWN_WEIGHT=0.70
-CHAPTER_0_REFERRAL_WEIGHT=0.30
-CHAPTER_0_CAMPAIGN_START_DATE=2026-01-01
 ```
 
 <Warning>
@@ -210,8 +196,6 @@ Key tables created by the migration:
 | `Commitments` | Merkle tree leaf nodes (commitment hashes) |
 | `MerkleTreeNodes` | Full Merkle tree structure (all levels, Poseidon hashes) |
 | `PendingUnshield` | Queued unshield requests with scheduled broadcast times |
-| `WalletDailyDeposits` | Chapter 0 per-wallet daily deposit totals |
-| `GlobalDailyTotals` | Chapter 0 protocol-wide daily totals |
 
 ## Docker Deployment
 
@@ -407,7 +391,7 @@ The backend includes built-in rate limiting:
 ### Admin Secret
 
 - Set a strong, random `ADMIN_API_SECRET` (at least 32 characters)
-- This secret protects `/users/chapter0-stats` and `/privacy/unshield` endpoints
+- This secret protects the `/privacy/unshield` endpoint
 - Share it only with trusted services (e.g., the auth service that calls the backend)
 
 ### Monitoring Checklist
