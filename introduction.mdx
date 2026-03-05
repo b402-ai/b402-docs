@@ -8,11 +8,11 @@ b402 is a multichain payment protocol for AI agents and web services. It extends
 
 ## Architecture
 
-Rather than depending on token-level signature standards like EIP-3009, b402 introduces its own execution layer — the Relayer contract — that works with any whitelisted token on any deployed chain. An agent signs an EIP-712 authorization off-chain (zero cost), the Facilitator settles on-chain, and the agent never needs native tokens for gas.
-
 <Frame>
   <img src="/public/images/diagrams/b402-architecture-hero.svg" alt="b402 three-layer architecture: Protocol, Service, and Developer layers" />
 </Frame>
+
+Rather than depending on token-level signature standards like EIP-3009, b402 introduces its own execution layer — the Relayer contract — that works with any whitelisted token on any deployed chain. An agent signs an EIP-712 authorization off-chain (zero cost), the Facilitator settles on-chain, and the agent never needs native tokens for gas.
 
 b402 is organized in three layers:
 
