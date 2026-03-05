@@ -72,7 +72,7 @@
   <text x="645" y="356" text-anchor="middle" font-size="14" fill="#fff" font-weight="600">RAILGUN</text>
   <text x="645" y="374" text-anchor="middle" font-size="9" fill="#777">Shield · Transact · Unshield · zk-SNARKs</text>
 
-  <!-- BNB CHAIN FOOTER -->
+  <!-- CHAIN FOOTER -->
   <rect x="80" y="428" width="640" height="20" rx="4" fill="#F4B526" opacity="0.06"/>
-  <text x="400" y="442" text-anchor="middle" font-size="10" fill="#F4B526" font-weight="600" letter-spacing="1.5" opacity="0.7">BNB CHAIN   ·   USDT   ·   USDC   ·   USD1   ·   GASLESS FOR BUYERS</text>
+  <text x="400" y="442" text-anchor="middle" font-size="10" fill="#F4B526" font-weight="600" letter-spacing="1.5" opacity="0.7">BNB CHAIN   ·   BASE   ·   USDT   ·   USDC   ·   USD1   ·   GASLESS FOR BUYERS</text>
 </svg>
