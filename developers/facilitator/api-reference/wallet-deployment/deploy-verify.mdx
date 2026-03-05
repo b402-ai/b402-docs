@@ -1,0 +1,251 @@
+---
+title: 'Deploy Wallet (Verify)'
+description: 'Compute deterministic wallet addresses and deployment fees before on-chain deployment'
+---
+
+Computes deterministic wallet addresses, calculates deployment and funding fees, and validates the payment payload. Call this before `/deploy/settle` to confirm addresses and costs.
+
+Two flows are available depending on how the payer signs the transaction.
+
+## EOA Deploy Verify
+
+```
+POST /deploy/verify
+```
+
+The payer signs EIP-712 `TransferWithAuthorization` payloads covering the deployment fee and optional funding amounts.
+
+### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `paymentPayload` | `PaymentPayload[]` | Yes | Array of signed payments: 1 fee payload + up to 10 funding payloads |
+| `paymentRequirements` | `object` | Yes | Network and deployment configuration |
+| `paymentRequirements.network` | `string` | Yes | Target network (`bsc`) |
+| `paymentRequirements.relayerContract` | `string` | Yes | b402 Relayer contract address |
+| `paymentRequirements.deployment` | `object` | Yes | Deployment parameters |
+| `paymentRequirements.deployment.ownerAddress` | `string` | Yes | Owner of the wallets to deploy |
+| `paymentRequirements.deployment.salts` | `string[]` | Yes | 1-10 salts for deterministic address computation |
+| `paymentRequirements.deployment.fundingRequested` | `boolean` | Yes | Whether to fund wallets after deployment |
+| `paymentRequirements.deployment.token` | `string` | Yes | ERC-20 token contract address for fees and funding |
+
+### Response (200)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `isValid` | `boolean` | Whether the deployment can proceed |
+| `payer` | `string` | Recovered signer address |
+| `wallets` | `object[]` | Computed wallet details |
+| `wallets[].address` | `string` | Deterministic wallet address |
+| `wallets[].salt` | `string` | Salt used for this wallet |
+| `wallets[].owner` | `string` | Owner address |
+| `wallets[].fundingAmount` | `string` | Amount to fund this wallet (wei), `"0"` if funding not requested |
+| `deploymentFee` | `string` | Fee for deploying all wallets (wei) |
+| `fundingFees` | `string` | Total funding amount across all wallets (wei) |
+| `totalFees` | `string` | `deploymentFee + fundingFees` (wei) |
+| `invalidReason` | `string \| null` | Reason for failure if `isValid` is `false` |
+
+### cURL
+
+```bash
+curl -X POST https://facilitator.b402.ai/deploy/verify \
+  -H "Content-Type: application/json" \
+  -d '{
+    "paymentPayload": [
+      {
+        "token": "0x55d398326f99059fF775485246999027B3197955",
+        "payload": {
+          "authorization": {
+            "from": "0xAbC1234567890aBcDeF1234567890AbCdEf123456",
+            "to": "0x590162bf4b50F6576a459B75309eE21D92178A10",
+            "value": "500000000000000000",
+            "validAfter": 1709251200,
+            "validBefore": 1709254800,
+            "nonce": "0xaaa...fee_nonce"
+          },
+          "signature": "0x...fee_signature"
+        }
+      },
+      {
+        "token": "0x55d398326f99059fF775485246999027B3197955",
+        "payload": {
+          "authorization": {
+            "from": "0xAbC1234567890aBcDeF1234567890AbCdEf123456",
+            "to": "0x590162bf4b50F6576a459B75309eE21D92178A10",
+            "value": "1000000000000000000",
+            "validAfter": 1709251200,
+            "validBefore": 1709254800,
+            "nonce": "0xbbb...funding_nonce"
+          },
+          "signature": "0x...funding_signature"
+        }
+      }
+    ],
+    "paymentRequirements": {
+      "network": "bsc",
+      "relayerContract": "0x590162bf4b50F6576a459B75309eE21D92178A10",
+      "deployment": {
+        "ownerAddress": "0xAbC1234567890aBcDeF1234567890AbCdEf123456",
+        "salts": ["0x1234...master_salt"],
+        "fundingRequested": true,
+        "token": "0x55d398326f99059fF775485246999027B3197955"
+      }
+    }
+  }'
+```
+
+### TypeScript
+
+```typescript
+const response = await fetch("https://facilitator.b402.ai/deploy/verify", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    paymentPayload: [feePayload, ...fundingPayloads],
+    paymentRequirements: {
+      network: "bsc",
+      relayerContract: "0x590162bf4b50F6576a459B75309eE21D92178A10",
+      deployment: {
+        ownerAddress: wallet.address,
+        salts: [masterSalt],
+        fundingRequested: true,
+        token: "0x55d398326f99059fF775485246999027B3197955",
+      },
+    },
+  }),
+});
+
+const result = await response.json();
+
+if (result.isValid) {
+  console.log("Wallets to deploy:", result.wallets);
+  console.log("Total fees:", result.totalFees);
+  // Proceed to /deploy/settle
+} else {
+  console.error("Verification failed:", result.invalidReason);
+}
+```
+
+---
+
+## Smart Wallet Deploy Verify
+
+```
+POST /deploy/wallet/verify
+```
+
+For smart wallet payers, the facilitator builds an unsigned UserOp instead of requiring pre-signed EIP-712 payloads. No `paymentPayload` is needed in the request.
+
+### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `paymentRequirements` | `object` | Yes | Network and deployment configuration |
+| `paymentRequirements.network` | `string` | Yes | Target network (`bsc`) |
+| `paymentRequirements.deployment` | `object` | Yes | Deployment parameters |
+| `paymentRequirements.deployment.ownerAddress` | `string` | Yes | Owner of the wallets to deploy |
+| `paymentRequirements.deployment.salts` | `string[]` | Yes | 1-10 salts for deterministic address computation |
+| `paymentRequirements.deployment.token` | `string` | Yes | ERC-20 token contract address for fees and funding |
+| `paymentRequirements.deployment.payerAddress` | `string` | Yes | Smart wallet address paying for deployment |
+
+### Response (200)
+
+Returns the same fields as the EOA response, plus:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `userOp` | `object` | Unsigned ERC-4337 UserOperation for the client to sign |
+| `userOpHash` | `string` | Hash of the UserOp that the client must sign |
+
+All other fields (`isValid`, `payer`, `wallets`, `deploymentFee`, `fundingFees`, `totalFees`, `invalidReason`) are identical to the EOA response.
+
+### cURL
+
+```bash
+curl -X POST https://facilitator.b402.ai/deploy/wallet/verify \
+  -H "Content-Type: application/json" \
+  -d '{
+    "paymentRequirements": {
+      "network": "bsc",
+      "deployment": {
+        "ownerAddress": "0xAbC1234567890aBcDeF1234567890AbCdEf123456",
+        "salts": ["0x1234...master_salt"],
+        "token": "0x55d398326f99059fF775485246999027B3197955",
+        "payerAddress": "0x...nexus_smart_wallet"
+      }
+    }
+  }'
+```
+
+### TypeScript
+
+```typescript
+const response = await fetch("https://facilitator.b402.ai/deploy/wallet/verify", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    paymentRequirements: {
+      network: "bsc",
+      deployment: {
+        ownerAddress: ownerAddress,
+        salts: [masterSalt],
+        token: "0x55d398326f99059fF775485246999027B3197955",
+        payerAddress: smartWalletAddress,
+      },
+    },
+  }),
+});
+
+const result = await response.json();
+
+if (result.isValid) {
+  console.log("UserOp hash to sign:", result.userOpHash);
+  console.log("Wallets to deploy:", result.wallets);
+  // Sign userOpHash, then call /deploy/wallet/settle
+} else {
+  console.error("Verification failed:", result.invalidReason);
+}
+```
+
+---
+
+## Deterministic Address Computation
+
+Wallet addresses are computed deterministically using `CREATE2`. Given the same owner, salt, and factory contract, the address is always the same, even before deployment.
+
+### Master Wallet Salt
+
+The master wallet salt is derived from the owner address:
+
+```
+masterSalt = keccak256("b402-" + reversed(normalizedOwnerAddress))
+```
+
+Where `normalizedOwnerAddress` is the checksummed owner address with the `0x` prefix removed, reversed as a string.
+
+<Info>
+The master wallet is a special wallet that serves as the primary wallet for an owner. Each owner has exactly one deterministic master wallet. Sub-wallets use arbitrary salts.
+</Info>
+
+### Deployment Fee
+
+A flat deployment fee is charged per wallet deployed. The fee is denominated in the token specified in `paymentRequirements.deployment.token`. The verify response includes the exact `deploymentFee` so you can confirm the cost before settling.
+
+### Optional Funding
+
+When `fundingRequested` is `true` (EOA flow), the facilitator will fund each deployed wallet with the amounts specified in the funding payment payloads. Each funding payload corresponds to one wallet in the `salts` array, in order.
+
+## Error Codes
+
+| Code | HTTP Status | Description |
+|------|-------------|-------------|
+| `validation_error` | 400 | Missing required fields, invalid salt format, or too many salts (max 10) |
+| `signature_error` | 400 | EIP-712 signature is malformed or recovery failed |
+| `payment_verification_error` | 400 | Insufficient balance, allowance too low, or token not whitelisted |
+| `blockchain_error` | 500 | Failed to compute addresses or read on-chain state |
+
+## Related
+
+- [Deploy Wallet (Settle)](/developers/facilitator/api-reference/wallet-deployment/deploy-settle) - Execute deployment after verification
+- [Get Master Wallet](/developers/facilitator/api-reference/wallet-deployment/get-master-wallet) - Look up an owner's master wallet
+- [List Wallets](/developers/facilitator/api-reference/wallet-deployment/list-wallets) - List all wallets for an owner

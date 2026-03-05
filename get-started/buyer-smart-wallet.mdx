@@ -1,0 +1,249 @@
+---
+title: Buyer Guide (Smart Wallet)
+description: 'Gasless smart wallet payments for AI agents'
+icon: robot
+---
+
+This guide shows how to send a gasless payment using a b402 smart wallet. Smart wallets are ideal for AI agents: no gas tokens needed, no separate approval step, and fully programmable.
+
+<Tip>
+For standard wallet payments with EIP-712 signatures, see the [Buyer Guide (EOA)](/get-started/buyer).
+</Tip>
+
+## Why Smart Wallets?
+
+| Feature | EOA | Smart Wallet |
+|---------|-----|-------------|
+| Gas tokens (BNB) needed | Yes (for initial approval) | Never |
+| Token approval step | One-time per token | Automatic (batched) |
+| Agent-friendly | Requires gas management | Fully gasless |
+| Batch payments | No | Up to 20 recipients |
+
+Smart wallets use ERC-4337 (Account Abstraction) with a paymaster that sponsors gas. The paymaster deducts its cost from the payment token, so the agent only needs stablecoin balance.
+
+## Prerequisites
+
+1. **Node.js 18+**
+2. **A private key** (the "owner" key that controls the smart wallet)
+3. **Tokens funded to your smart wallet address** (USDT, USDC, or USD1)
+
+```bash
+export PRIVATE_KEY=your_owner_private_key_here
+```
+
+## Step 1. Compute Your Smart Wallet Address
+
+Every owner has a deterministic master wallet address, computed before deployment:
+
+```ts
+import { Wallet, keccak256, toUtf8Bytes, getAddress } from 'ethers';
+
+const owner = new Wallet(process.env.PRIVATE_KEY!);
+
+// Compute the master wallet salt
+const normalized = getAddress(owner.address).slice(2); // remove 0x
+const reversed = normalized.split('').reverse().join('');
+const masterSalt = keccak256(toUtf8Bytes(`b402-${reversed}`));
+
+console.log('Owner address:', owner.address);
+console.log('Master salt:', masterSalt);
+```
+
+To get the actual smart wallet address, call the Facilitator:
+
+```ts
+const res = await fetch(
+  `https://facilitator.b402.ai/wallet/${owner.address}/master`
+);
+const { walletAddress, deploymentCompleted } = await res.json();
+
+console.log('Smart wallet address:', walletAddress);
+console.log('Deployed:', deploymentCompleted);
+```
+
+<Warning>
+If the wallet is not yet deployed, you must deploy it first. See [Wallet Deployment](#wallet-deployment) below.
+</Warning>
+
+## Step 2. Fund the Smart Wallet
+
+Transfer tokens (USDT, USDC, or USD1) to the smart wallet address. The address is deterministic, so you can fund it even before deployment.
+
+You can send tokens from any exchange or wallet. The smart wallet address is a standard BNB Chain address.
+
+## Step 3. Verify the Payment
+
+Call `POST /wallet/verify` with the payment details. The Facilitator builds an unsigned UserOperation, injects the fee, estimates gas, and returns it for signing.
+
+```ts
+const USDT = '0x55d398326f99059fF775485246999027B3197955';
+
+const verifyRes = await fetch('https://facilitator.b402.ai/wallet/verify', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    walletAddress: walletAddress,
+    transactions: [
+      {
+        to: '0x...recipient_address',
+        amount: '10000000000000000', // 0.01 USDT in wei
+        token: USDT,
+      },
+    ],
+    paymentRequirements: {
+      network: 'bsc',
+    },
+  }),
+});
+
+const { userOp, userOpHash, feeAmount, totalAmount } = await verifyRes.json();
+
+console.log('Fee:', feeAmount);
+console.log('Total (amount + fee):', totalAmount);
+```
+
+## Step 4. Sign the UserOp Hash
+
+Sign the `userOpHash` with the owner's private key. This authorizes the smart wallet to execute the payment.
+
+```ts
+const signature = await owner.signMessage(
+  Buffer.from(userOpHash.slice(2), 'hex')
+);
+```
+
+## Step 5. Settle the Payment
+
+Submit the signed UserOp to `POST /wallet/settle`. The Facilitator forwards it to the ERC-4337 bundler for on-chain execution.
+
+```ts
+const settleRes = await fetch('https://facilitator.b402.ai/wallet/settle', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    userOp: { ...userOp, signature },
+    signature,
+  }),
+});
+
+const result = await settleRes.json();
+
+if (result.success) {
+  console.log('Payment successful');
+  console.log('TX:', result.txHash);
+  console.log(`View: https://bscscan.com/tx/${result.txHash}`);
+} else {
+  console.error('Payment failed:', result);
+}
+```
+
+## Complete Example
+
+```ts
+import { Wallet, keccak256, toUtf8Bytes, getAddress } from 'ethers';
+
+const USDT = '0x55d398326f99059fF775485246999027B3197955';
+const FACILITATOR = 'https://facilitator.b402.ai';
+
+async function main() {
+  if (!process.env.PRIVATE_KEY) {
+    console.error('Set PRIVATE_KEY environment variable');
+    process.exit(1);
+  }
+
+  // 1. Set up owner wallet
+  const owner = new Wallet(process.env.PRIVATE_KEY);
+  console.log('Owner:', owner.address);
+
+  // 2. Get smart wallet address
+  const walletRes = await fetch(
+    `${FACILITATOR}/wallet/${owner.address}/master`
+  );
+  const { walletAddress, deploymentCompleted } = await walletRes.json();
+  console.log('Smart wallet:', walletAddress);
+
+  if (!deploymentCompleted) {
+    console.error('Wallet not deployed. Deploy first via /deploy/wallet/verify');
+    process.exit(1);
+  }
+
+  // 3. Verify payment (get unsigned UserOp)
+  const verifyRes = await fetch(`${FACILITATOR}/wallet/verify`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      walletAddress,
+      transactions: [
+        {
+          to: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
+          amount: '10000000000000000', // 0.01 USDT
+          token: USDT,
+        },
+      ],
+      paymentRequirements: { network: 'bsc' },
+    }),
+  });
+
+  const { userOp, userOpHash, totalAmount } = await verifyRes.json();
+  console.log('Total amount (incl. fee):', totalAmount);
+
+  // 4. Sign the UserOp hash
+  const signature = await owner.signMessage(
+    Buffer.from(userOpHash.slice(2), 'hex')
+  );
+
+  // 5. Settle payment
+  const settleRes = await fetch(`${FACILITATOR}/wallet/settle`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      userOp: { ...userOp, signature },
+      signature,
+    }),
+  });
+
+  const result = await settleRes.json();
+
+  if (result.success) {
+    console.log('Payment successful');
+    console.log('TX:', result.txHash);
+    console.log(`View: https://bscscan.com/tx/${result.txHash}`);
+  } else {
+    console.error('Payment failed:', result);
+  }
+}
+
+main();
+```
+
+## Wallet Deployment
+
+If your smart wallet has not been deployed yet, deploy it before making payments:
+
+1. Compute your master salt (see Step 1)
+2. Call `POST /deploy/wallet/verify` with your owner address and salt
+3. Sign the returned `userOpHash`
+4. Call `POST /deploy/wallet/settle` with the signed UserOp
+
+The deployment fee is deducted from the payment token in your funding wallet. After deployment, the smart wallet is ready to send payments.
+
+See [Deploy Wallet (Verify)](/developers/facilitator/api-reference/wallet-deployment/deploy-verify) for the full API reference.
+
+## Error Recovery
+
+If settlement fails, the safe recovery path is always to restart from Step 3 (verify):
+
+| Error | Cause | Fix |
+|-------|-------|-----|
+| `userop_error` (nonce) | UserOp was already submitted | Re-call `/wallet/verify` for a fresh UserOp |
+| `userop_error` (paymaster) | Paymaster data expired | Re-call `/wallet/verify` for new paymaster data |
+| `validation_error` (balance) | Balance changed between verify and settle | Fund the wallet and retry |
+| `blockchain_error` | Network issue | Wait and retry from `/wallet/verify` |
+
+## Next Steps
+
+- [Agent Cookbook](/get-started/agent-cookbook) - Copy-paste recipes for common agent scenarios
+- [Smart Wallet Verify API](/developers/facilitator/api-reference/smart-wallet/verify) - Full API reference
+- [Smart Wallet Settle API](/developers/facilitator/api-reference/smart-wallet/settle) - Settlement API reference
+- [Wallet Concepts](/concepts/wallet) - EOA vs Smart Wallet comparison
+- [Privacy (Incognito)](/concepts/privacy-incognito) - Private payments with RAILGUN

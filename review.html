@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>b402 Docs Review</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #0D0D0D; color: #F5F5F5; display: flex; height: 100vh; }
+
+  /* Sidebar */
+  .sidebar { width: 320px; min-width: 320px; background: #111; border-right: 1px solid #232323; overflow-y: auto; padding: 16px 0; }
+  .sidebar-header { padding: 12px 20px 20px; border-bottom: 1px solid #232323; margin-bottom: 12px; }
+  .sidebar-header h1 { font-size: 18px; color: #F4B526; font-weight: 600; }
+  .sidebar-header .stats { font-size: 12px; color: #8C8C8C; margin-top: 6px; }
+  .sidebar-header .progress-bar { height: 4px; background: #232323; border-radius: 2px; margin-top: 8px; }
+  .sidebar-header .progress-fill { height: 100%; background: #F4B526; border-radius: 2px; transition: width 0.3s; }
+
+  .group-label { font-size: 11px; font-weight: 600; color: #F4B526; text-transform: uppercase; letter-spacing: 0.08em; padding: 16px 20px 6px; }
+  .nav-item { padding: 6px 20px; cursor: pointer; font-size: 13px; color: #D4D4D4; display: flex; align-items: center; gap: 8px; transition: background 0.15s; }
+  .nav-item:hover { background: #1a1a1a; }
+  .nav-item.active { background: #1a1a1a; color: #F4B526; }
+  .nav-item .badge { font-size: 9px; padding: 2px 6px; border-radius: 3px; font-weight: 600; text-transform: uppercase; flex-shrink: 0; }
+  .badge.draft { background: #F4B52620; color: #F4B526; }
+  .badge.ready { background: #22c55e20; color: #22c55e; }
+  .badge.placeholder { background: #71717a20; color: #71717a; }
+
+  /* Content */
+  .content { flex: 1; overflow-y: auto; padding: 40px 60px; max-width: 900px; }
+  .content h1 { font-size: 32px; font-weight: 700; margin-bottom: 8px; color: #F5F5F5; }
+  .content h2 { font-size: 24px; font-weight: 600; margin-top: 32px; margin-bottom: 12px; color: #F5F5F5; border-bottom: 1px solid #232323; padding-bottom: 8px; }
+  .content h3 { font-size: 18px; font-weight: 600; margin-top: 24px; margin-bottom: 8px; color: #D4D4D4; }
+  .content p { line-height: 1.7; margin-bottom: 12px; color: #D4D4D4; }
+  .content ul, .content ol { padding-left: 24px; margin-bottom: 12px; }
+  .content li { line-height: 1.7; color: #D4D4D4; margin-bottom: 4px; }
+  .content a { color: #F4B526; text-decoration: none; }
+  .content a:hover { text-decoration: underline; }
+  .content code { background: #1a1a1a; padding: 2px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #F4B526; }
+  .content pre { background: #111; border: 1px solid #232323; border-radius: 8px; padding: 16px; margin: 12px 0; overflow-x: auto; }
+  .content pre code { background: none; padding: 0; color: #D4D4D4; }
+  .content table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+  .content th { text-align: left; padding: 8px 12px; border-bottom: 2px solid #F4B526; color: #F4B526; font-size: 13px; }
+  .content td { padding: 8px 12px; border-bottom: 1px solid #232323; font-size: 13px; }
+  .content blockquote { border-left: 3px solid #F4B526; padding-left: 16px; margin: 12px 0; color: #8C8C8C; }
+  .content img { max-width: 100%; border-radius: 8px; }
+  .content hr { border: none; border-top: 1px solid #232323; margin: 24px 0; }
+
+  .meta-bar { display: flex; gap: 12px; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #232323; }
+  .meta-bar .file-path { font-size: 12px; color: #8C8C8C; font-family: 'JetBrains Mono', monospace; }
+
+  .empty-state { text-align: center; padding: 120px 40px; color: #8C8C8C; }
+  .empty-state h2 { color: #F4B526; margin-bottom: 12px; }
+
+  /* Mintlify component stubs */
+  .content .mintlify-stub { background: #1a1a1a; border: 1px dashed #F4B52640; border-radius: 8px; padding: 12px 16px; margin: 8px 0; font-size: 13px; color: #8C8C8C; }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h1>b402 Docs Review</h1>
+    <div class="stats" id="stats">Loading...</div>
+    <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+  </div>
+  <div id="nav"></div>
+</div>
+
+<div class="content" id="content">
+  <div class="empty-state">
+    <h2>b402 Documentation Review</h2>
+    <p>Select a page from the sidebar to preview.</p>
+    <p style="margin-top:12px;font-size:13px;">Serve this file with: <code>python -m http.server 8000</code></p>
+  </div>
+</div>
+
+<script>
+// Documentation structure matching docs.json navigation
+const DOCS = [
+  { group: "Overview", pages: [
+    { path: "introduction.mdx", title: "Introduction" },
+    { path: "architecture.mdx", title: "Architecture Overview" },
+    { path: "community.mdx", title: "Community" },
+  ]},
+  { group: "Concepts", pages: [
+    { path: "concepts/http-402.mdx", title: "HTTP 402" },
+    { path: "concepts/client-server.mdx", title: "Client & Server" },
+    { path: "concepts/facilitator.mdx", title: "Facilitator" },
+    { path: "concepts/relayer.mdx", title: "b402 Relayer" },
+    { path: "concepts/wallet.mdx", title: "Wallet (EOA & Smart Wallet)" },
+    { path: "concepts/privacy-incognito.mdx", title: "Privacy & Incognito" },
+    { path: "concepts/agent-identity.mdx", title: "Agent Identity (ERC-8004)" },
+    { path: "concepts/network-token-support.mdx", title: "Network & Token Support" },
+  ]},
+  { group: "Get Started", pages: [
+    { path: "get-started/quickstart.mdx", title: "Quickstart" },
+    { path: "get-started/buyer.mdx", title: "Buyer Guide (EOA)" },
+    { path: "get-started/buyer-smart-wallet.mdx", title: "Buyer Guide (Smart Wallet)" },
+    { path: "get-started/seller.mdx", title: "Seller Guide" },
+    { path: "get-started/agent-cookbook.mdx", title: "Agent Cookbook" },
+  ]},
+  { group: "Facilitator API", pages: [
+    { path: "developers/facilitator/overview.mdx", title: "API Overview" },
+    { path: "developers/facilitator/authentication.mdx", title: "Authentication" },
+    { path: "developers/facilitator/api-reference/facilitator/health-check.mdx", title: "Health Check" },
+  ]},
+  { group: "EOA Payments", pages: [
+    { path: "developers/facilitator/api-reference/eoa-payments/verify.mdx", title: "Verify Payment" },
+    { path: "developers/facilitator/api-reference/eoa-payments/settle.mdx", title: "Settle Payment" },
+  ]},
+  { group: "Smart Wallet Payments", pages: [
+    { path: "developers/facilitator/api-reference/smart-wallet/verify.mdx", title: "Verify (Smart Wallet)" },
+    { path: "developers/facilitator/api-reference/smart-wallet/settle.mdx", title: "Settle (Smart Wallet)" },
+  ]},
+  { group: "Wallet Deployment", pages: [
+    { path: "developers/facilitator/api-reference/wallet-deployment/deploy-verify.mdx", title: "Deploy Verify" },
+    { path: "developers/facilitator/api-reference/wallet-deployment/deploy-settle.mdx", title: "Deploy Settle" },
+    { path: "developers/facilitator/api-reference/wallet-deployment/list-wallets.mdx", title: "List Wallets" },
+    { path: "developers/facilitator/api-reference/wallet-deployment/get-master-wallet.mdx", title: "Get Master Wallet" },
+    { path: "developers/facilitator/api-reference/wallet-deployment/claim.mdx", title: "Claim Pending" },
+  ]},
+  { group: "Incognito", pages: [
+    { path: "developers/facilitator/api-reference/incognito/verify.mdx", title: "Verify Incognito" },
+    { path: "developers/facilitator/api-reference/incognito/settle.mdx", title: "Settle Incognito" },
+  ]},
+  { group: "Swap", pages: [
+    { path: "developers/facilitator/api-reference/swap/quote.mdx", title: "Get Quote" },
+    { path: "developers/facilitator/api-reference/swap/health.mdx", title: "Swap Health" },
+    { path: "developers/facilitator/api-reference/swap/execute.mdx", title: "Execute Swap" },
+    { path: "developers/facilitator/api-reference/swap/payment-intent.mdx", title: "Payment Intent" },
+    { path: "developers/facilitator/api-reference/swap/gasless-approve.mdx", title: "Gasless Approve" },
+    { path: "developers/facilitator/api-reference/swap/wallet-verify.mdx", title: "Verify Wallet Swap" },
+    { path: "developers/facilitator/api-reference/swap/wallet-settle.mdx", title: "Settle Wallet Swap" },
+  ]},
+  { group: "Backend API", pages: [
+    { path: "developers/backend/overview.mdx", title: "Backend Overview" },
+  ]},
+  { group: "Privacy", pages: [
+    { path: "developers/backend/privacy/commitments.mdx", title: "Get Commitments" },
+    { path: "developers/backend/privacy/nullifiers.mdx", title: "Check Nullifiers" },
+    { path: "developers/backend/privacy/merkle-proof.mdx", title: "Get Merkle Proof" },
+    { path: "developers/backend/privacy/unshield.mdx", title: "Request Unshield" },
+    { path: "developers/backend/privacy/unshield-status.mdx", title: "Unshield Status" },
+  ]},
+  { group: "Metrics", pages: [
+    { path: "developers/backend/metrics/global.mdx", title: "Global Metrics" },
+    { path: "developers/backend/metrics/buyers.mdx", title: "Buyer Metrics" },
+    { path: "developers/backend/metrics/sellers.mdx", title: "Seller Metrics" },
+  ]},
+  { group: "Transactions", pages: [
+    { path: "developers/backend/transactions.mdx", title: "Transactions" },
+  ]},
+  { group: "SDKs", pages: [
+    { path: "sdks/b402-sdk.mdx", title: "b402-sdk" },
+    { path: "sdks/b402-express.mdx", title: "b402-express" },
+    { path: "sdks/eip712-signature-guide.mdx", title: "EIP-712 Signature Guide" },
+  ]},
+  { group: "Guides", pages: [
+    { path: "guides/smart-wallet-deep-dive.mdx", title: "Smart Wallet Deep Dive" },
+    { path: "guides/privacy-incognito-deep-dive.mdx", title: "Privacy Deep Dive" },
+    { path: "guides/self-hosting.mdx", title: "Self-Hosting" },
+    { path: "guides/chapter-0-campaign.mdx", title: "Chapter 0 Campaign" },
+  ]},
+  { group: "b402 Services", pages: [
+    { path: "b402-services/b402-facilitator.mdx", title: "b402 Facilitator" },
+    { path: "b402-services/b402scan.mdx", title: "b402scan" },
+    { path: "b402-services/community.mdx", title: "Community" },
+  ]},
+  { group: "Resources", pages: [
+    { path: "resources/faq.mdx", title: "FAQ" },
+    { path: "resources/glossary.mdx", title: "Glossary" },
+    { path: "resources/contract-addresses.mdx", title: "Contract Addresses" },
+    { path: "resources/changelog.mdx", title: "Changelog" },
+  ]},
+];
+
+const PLACEHOLDER_MARKER = "under construction";
+let pageStatuses = {};
+
+// Strip MDX frontmatter and convert Mintlify components to readable stubs
+function processMdx(raw) {
+  let content = raw.replace(/^---[\s\S]*?---\n?/, '');
+  // Convert Mintlify components to readable HTML
+  content = content.replace(/<Info>([\s\S]*?)<\/Info>/g, '<blockquote>$1</blockquote>');
+  content = content.replace(/<Warning>([\s\S]*?)<\/Warning>/g, '<blockquote><strong>Warning:</strong> $1</blockquote>');
+  content = content.replace(/<Note>([\s\S]*?)<\/Note>/g, '<blockquote><strong>Note:</strong> $1</blockquote>');
+  content = content.replace(/<Tip>([\s\S]*?)<\/Tip>/g, '<blockquote><strong>Tip:</strong> $1</blockquote>');
+  content = content.replace(/<Card\s+title=['"]([^'"]+)['"]\s*[^>]*>([\s\S]*?)<\/Card>/g, '<div class="mintlify-stub"><strong>$1</strong> $2</div>');
+  content = content.replace(/<CardGroup[^>]*>([\s\S]*?)<\/CardGroup>/g, '$1');
+  content = content.replace(/<Frame>([\s\S]*?)<\/Frame>/g, '$1');
+  content = content.replace(/<Tabs>([\s\S]*?)<\/Tabs>/g, '$1');
+  content = content.replace(/<Tab\s+title=['"]([^'"]+)['"]>([\s\S]*?)<\/Tab>/g, '\n**$1**\n$2\n');
+  content = content.replace(/<CodeGroup>([\s\S]*?)<\/CodeGroup>/g, '$1');
+  content = content.replace(/<Accordion\s+title=['"]([^'"]+)['"]>([\s\S]*?)<\/Accordion>/g, '\n**$1**\n$2\n');
+  // Strip remaining JSX tags
+  content = content.replace(/<[A-Z][^>]*\/>/g, '');
+  return content;
+}
+
+function getStatus(raw) {
+  if (raw.toLowerCase().includes(PLACEHOLDER_MARKER)) return 'placeholder';
+  // If content beyond frontmatter is substantial (>200 chars), mark as draft
+  const body = raw.replace(/^---[\s\S]*?---\n?/, '').trim();
+  if (body.length > 200) return 'draft';
+  return 'placeholder';
+}
+
+async function loadPage(path, title) {
+  const contentEl = document.getElementById('content');
+  try {
+    const resp = await fetch(path);
+    if (!resp.ok) throw new Error(`${resp.status}`);
+    const raw = await resp.text();
+    const status = getStatus(raw);
+    pageStatuses[path] = status;
+    const md = processMdx(raw);
+    const html = marked.parse(md);
+    contentEl.innerHTML = `
+      <div class="meta-bar">
+        <span class="badge ${status}">${status}</span>
+        <span class="file-path">${path}</span>
+      </div>
+      <h1>${title}</h1>
+      ${html}
+    `;
+    // Update active state in nav
+    document.querySelectorAll('.nav-item').forEach(el => {
+      el.classList.toggle('active', el.dataset.path === path);
+    });
+    updateStats();
+  } catch (e) {
+    contentEl.innerHTML = `<div class="empty-state"><h2>Error</h2><p>Could not load ${path}: ${e.message}</p></div>`;
+  }
+}
+
+async function buildNav() {
+  const nav = document.getElementById('nav');
+  let totalPages = 0;
+
+  for (const group of DOCS) {
+    const label = document.createElement('div');
+    label.className = 'group-label';
+    label.textContent = group.group;
+    nav.appendChild(label);
+
+    for (const page of group.pages) {
+      totalPages++;
+      const item = document.createElement('div');
+      item.className = 'nav-item';
+      item.dataset.path = page.path;
+      item.innerHTML = `<span style="flex:1">${page.title}</span><span class="badge placeholder" id="badge-${page.path.replace(/[\/\.]/g, '-')}">...</span>`;
+      item.addEventListener('click', () => loadPage(page.path, page.title));
+      nav.appendChild(item);
+
+      // Pre-check status
+      fetch(page.path).then(r => r.ok ? r.text() : '').then(raw => {
+        const status = raw ? getStatus(raw) : 'placeholder';
+        pageStatuses[page.path] = status;
+        const badge = document.getElementById('badge-' + page.path.replace(/[\/\.]/g, '-'));
+        if (badge) { badge.className = 'badge ' + status; badge.textContent = status; }
+        updateStats();
+      }).catch(() => {});
+    }
+  }
+}
+
+function updateStats() {
+  const total = Object.keys(pageStatuses).length;
+  const ready = Object.values(pageStatuses).filter(s => s === 'ready').length;
+  const draft = Object.values(pageStatuses).filter(s => s === 'draft').length;
+  const placeholder = Object.values(pageStatuses).filter(s => s === 'placeholder').length;
+  const pct = total > 0 ? Math.round(((ready + draft) / total) * 100) : 0;
+  document.getElementById('stats').textContent = `${ready} ready / ${draft} draft / ${placeholder} placeholder (${total} total)`;
+  document.getElementById('progress').style.width = pct + '%';
+}
+
+buildNav();
+</script>
+</body>
+</html>

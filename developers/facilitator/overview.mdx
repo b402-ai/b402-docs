@@ -1,0 +1,86 @@
+---
+title: 'Facilitator API Overview'
+description: 'Base URL, endpoint groups, request format, and rate limits for the b402 Facilitator API'
+icon: 'server'
+---
+
+The Facilitator API handles payment verification and on-chain settlement for the b402 protocol. It supports two payment models, wallet deployment, privacy operations, and token swaps.
+
+## Base URL
+
+```
+https://facilitator.b402.ai
+```
+
+All endpoints are prefixed with `/api/v1`.
+
+## Payment Models
+
+The Facilitator supports two distinct payment flows:
+
+**EOA Payments** use EIP-712 typed signatures. The buyer signs a `TransferWithAuthorization` message off-chain, and the Facilitator verifies the signature then submits the on-chain transaction.
+
+```
+POST /api/v1/verify   → Verify EIP-712 signature
+POST /api/v1/settle   → Execute on-chain settlement
+```
+
+**Smart Wallet Payments** use ERC-4337 UserOperations. The Facilitator constructs a UserOp with fee injection, the buyer signs it, and the Facilitator submits it to a bundler for execution.
+
+```
+POST /api/v1/wallet/verify   → Build unsigned UserOp
+POST /api/v1/wallet/settle   → Submit signed UserOp
+```
+
+## Endpoint Groups
+
+| Group | Endpoints | Description |
+|-------|-----------|-------------|
+| **EOA Payments** | `POST /verify`, `POST /settle` | EIP-712 signature-based payments for EOA wallets |
+| **Smart Wallet Payments** | `POST /wallet/verify`, `POST /wallet/settle` | UserOp-based payments for ERC-7579 smart wallets |
+| **Wallet Deployment** | `POST /deploy/verify`, `POST /deploy/settle`, `POST /deploy/wallet/verify`, `POST /deploy/wallet/settle`, `GET /wallet/:owner`, `GET /wallet/:owner/master`, `POST /wallet/claim` | Deploy and manage smart wallets |
+| **Incognito** | `POST /wallet/incognito/verify`, `POST /wallet/incognito/settle` | Privacy-preserving payments via RAILGUN |
+| **Swap** | `GET /swap/quote`, `GET /swap/health`, `POST /swap`, `POST /swap/payment-intent`, `POST /swap/gasless-approve`, `POST /swap/wallet/verify`, `POST /swap/wallet/settle` | Token swaps via PancakeSwap V3 |
+| **Utility** | `GET /health` | Service health and status |
+
+<Note>All endpoint paths above are relative to `/api/v1`.</Note>
+
+## Request Format
+
+All requests with a body use JSON. Set the `Content-Type` header accordingly.
+
+```bash
+Content-Type: application/json
+```
+
+## Error Format
+
+All errors follow a consistent envelope:
+
+```json
+{
+  "error": {
+    "code": "bad_request",
+    "message": "Invalid payment payload: missing token address",
+    "doc_url": "https://b402.ai#bad_request"
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `code` | `string` | Machine-readable error code |
+| `message` | `string` | Human-readable description |
+| `doc_url` | `string` | Link to relevant documentation |
+
+See the [Errors](/developers/errors) page for a full list of error codes.
+
+## Rate Limiting
+
+All endpoints are rate-limited to **100 requests per 15 minutes per IP address**. Exceeding the limit returns a `429` status with the `rate_limit_exceeded` error code.
+
+## Authentication
+
+Most endpoints are **public** and require no authentication. Standard buyer/seller payment flows (verify, settle, wallet operations) work without API keys.
+
+Admin endpoints (internal deployment operations) require the `x-admin-api-key` header. See [Authentication](/developers/facilitator/authentication) for details.

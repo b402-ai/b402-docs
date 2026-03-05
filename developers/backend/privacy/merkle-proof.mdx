@@ -1,0 +1,88 @@
+---
+title: 'Get Merkle Proof'
+description: 'Get merkle proof for a tree position'
+---
+
+`GET /privacy/merkle-proof` returns a Merkle inclusion proof for a commitment at a given tree position. Used to construct ZK proofs for private transactions. No authentication required.
+
+```
+GET /privacy/merkle-proof
+```
+
+## Query Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `treeNumber` | `string` | Yes | Merkle tree index (e.g., `"0"`) |
+| `position` | `string` | Yes | Leaf position within the tree |
+| `commitmentHash` | `string` | No | If provided, validates this hash matches the leaf at the given position |
+
+## Response
+
+### 200 - Merkle Proof
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `proof` | `string[]` | Sibling hashes from leaf to root (16 elements) |
+| `root` | `string` | Current Merkle root |
+| `leafIndex` | `number` | Position of the leaf in the tree |
+| `pathIndices` | `number[]` | Binary path direction at each level (`0` = left, `1` = right) |
+| `treeDepth` | `number` | Tree depth (always `16`) |
+| `leaf` | `string` | The commitment hash at this position |
+
+### Error Responses
+
+| Status | Code | Description |
+|--------|------|-------------|
+| 400 | `validation_error` | Missing or invalid query parameters |
+| 404 | `not_found` | No commitment exists at the specified tree and position |
+
+## Examples
+
+### cURL
+
+```bash
+curl -G https://backend.b402.ai/privacy/merkle-proof \
+  --data-urlencode "treeNumber=0" \
+  --data-urlencode "position=42" \
+  --data-urlencode "commitmentHash=0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
+```
+
+### TypeScript
+
+```typescript
+const params = new URLSearchParams({
+  treeNumber: '0',
+  position: '42',
+  commitmentHash: '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
+});
+
+const response = await fetch(
+  `https://backend.b402.ai/privacy/merkle-proof?${params}`
+);
+
+if (!response.ok) {
+  throw new Error(`Merkle proof not found: ${response.status}`);
+}
+
+const merkleProof = await response.json();
+
+console.log('Root:', merkleProof.root);
+console.log('Leaf:', merkleProof.leaf);
+console.log('Depth:', merkleProof.treeDepth);
+console.log('Proof elements:', merkleProof.proof.length);
+console.log('Path indices:', merkleProof.pathIndices);
+```
+
+## Notes
+
+- The tree uses Poseidon hashing with a fixed depth of 16 levels, producing a `proof` array of 16 sibling hashes.
+- Responses are cached for 2 minutes. The Merkle root may update as new commitments are added to the tree.
+- When `commitmentHash` is provided, the server validates it matches the leaf at that position and returns an error if they don't match. Recommended for safety.
+- Use `pathIndices` together with `proof` to reconstruct the root in your ZK circuit.
+
+## Related
+
+- [Get Commitments](/developers/backend/privacy/commitments) - Find commitment positions to generate proofs for
+- [Check Nullifiers](/developers/backend/privacy/nullifiers) - Verify a commitment hasn't been spent before proving
+- [Backend API Overview](/developers/backend/overview) - Authentication, rate limits, error format

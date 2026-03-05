@@ -1,0 +1,348 @@
+---
+title: 'b402-express'
+description: 'Express.js middleware for accepting gasless crypto payments on your API routes'
+icon: 'server'
+---
+
+The `b402-express` package is an Express.js middleware that adds the HTTP 402 payment flow to your API. It intercepts requests to priced routes, returns payment requirements to the client, verifies payment signatures, and settles transactions on-chain via the b402 Facilitator, all without writing any payment logic yourself.
+
+## Installation
+
+```bash
+npm install b402-express express
+```
+
+Requires Node.js 18+ and Express 4.x or 5.x.
+
+## Quick Start
+
+```typescript
+import express from 'express';
+import { b402 } from 'b402-express';
+
+const app = express();
+
+// Add b402 payment middleware
+app.use(b402(
+  { payTo: '0xYourWalletAddress' },
+  {
+    'GET /premium': { price: '0.01', token: 'USD1' },
+  }
+));
+
+// This route requires payment
+app.get('/premium', (req, res) => {
+  res.json({ data: 'premium content', paidBy: req.b402.payer });
+});
+
+// This route is free (not listed in middleware config)
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
+app.listen(3000);
+```
+
+---
+
+## `b402(config, routes)` Middleware
+
+The default export is a middleware factory function that returns Express middleware.
+
+```typescript
+import { b402 } from 'b402-express';
+
+app.use(b402(config, routes));
+```
+
+### `config` Object
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `payTo` | `string` | Yes | - | Your wallet address on the target chain. All payments are sent to this address. |
+| `facilitatorUrl` | `string` | No | `'https://facilitator.b402.ai'` | URL of the b402 Facilitator API. Override for self-hosted or testnet facilitators. |
+| `network` | `'mainnet' \| 'testnet'` | No | `'mainnet'` | Target network. Determines chain ID, relayer address, and token addresses. |
+
+```typescript
+// Minimal config
+{ payTo: '0xYourWalletAddress' }
+
+// Full config with overrides
+{
+  payTo: '0xYourWalletAddress',
+  facilitatorUrl: 'https://facilitator.b402.ai',
+  network: 'mainnet',
+}
+```
+
+### `routes` Object
+
+A map of route patterns to pricing definitions. Keys use the format `'METHOD /path'`.
+
+```typescript
+{
+  'GET /premium':      { price: '0.01',  token: 'USD1' },
+  'POST /generate':    { price: '0.05',  token: 'USDT', description: 'AI text generation' },
+  'GET /report/:id':   { price: '0.10',  token: 'USDC', description: 'Detailed report' },
+}
+```
+
+**Route Pricing Fields**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `price` | `string` | Yes | Payment amount in human-readable token units (e.g., `'0.01'` = 0.01 USDT). |
+| `token` | `'USDT' \| 'USDC' \| 'USD1'` | Yes | Token symbol for payment. |
+| `description` | `string` | No | Human-readable description of what the buyer is paying for. Included in the 402 response. |
+
+<Note>
+  Routes not listed in the configuration are free and pass through the middleware without any payment check.
+</Note>
+
+---
+
+## How the 402 Payment Flow Works
+
+The middleware handles the entire payment negotiation automatically:
+
+<Steps>
+  <Step title="Client sends a request">
+    A client sends a normal HTTP request to a priced route (e.g., `GET /premium`).
+  </Step>
+  <Step title="Middleware returns HTTP 402">
+    If the request does not include a valid payment header, the middleware responds with HTTP 402 (Payment Required) and a JSON body containing payment details:
+
+    ```json
+    {
+      "paymentRequirements": {
+        "network": "mainnet",
+        "relayerContract": "0x590162bf4b50F6576a459B75309eE21D92178A10"
+      },
+      "paymentDetails": {
+        "token": "0x8d0d000ee44948fc98c9b98a4fa4921476f08b0d",
+        "amount": "10000000000000000",
+        "recipient": "0xYourWalletAddress",
+        "description": "Premium data access"
+      }
+    }
+    ```
+  </Step>
+  <Step title="Client signs and submits payment">
+    The client (using `b402-sdk` or manually) constructs an EIP-712 signature authorizing the token transfer and sends the payment payload back to the same route with the `X-PAYMENT` header.
+  </Step>
+  <Step title="Middleware verifies and settles">
+    The middleware sends the payment to the Facilitator API for verification (`POST /api/v1/verify`) and settlement (`POST /api/v1/settle`). If settlement succeeds, the request continues to your route handler.
+  </Step>
+  <Step title="Route handler executes">
+    Your route handler runs with `req.b402` populated with payment details.
+  </Step>
+</Steps>
+
+### Client-Side cURL Example
+
+First, hit the priced endpoint to get payment requirements:
+
+```bash
+curl -i https://your-api.com/premium
+# HTTP/1.1 402 Payment Required
+# Returns JSON with token address, amount, recipient, and relayer contract
+```
+
+After signing the payment (using `b402-sdk` or manual EIP-712), send the payment header:
+
+```bash
+curl -X GET https://your-api.com/premium \
+  -H "X-PAYMENT: <base64-encoded-payment-payload>"
+```
+
+The `X-PAYMENT` header contains a base64-encoded JSON object with `paymentPayload` and `paymentRequirements` matching the Facilitator API schema.
+
+---
+
+## `req.b402` Object
+
+After a successful payment, the middleware attaches a `b402` object to the Express request. This is available in your route handler.
+
+```typescript
+app.get('/premium', (req, res) => {
+  const { payer, txHash, amount, token } = req.b402;
+
+  console.log(`Payment of ${amount} ${token} from ${payer}`);
+  console.log(`TX: https://bscscan.com/tx/${txHash}`);
+
+  res.json({ data: 'premium content' });
+});
+```
+
+**`req.b402` Fields**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `payer` | `string` | The wallet address that signed the payment. |
+| `txHash` | `string` | The on-chain transaction hash of the settled payment. |
+| `amount` | `string` | The payment amount in human-readable token units. |
+| `token` | `string` | The token symbol used for payment (e.g., `'USD1'`). |
+
+---
+
+## TypeScript Support
+
+For TypeScript projects, extend the Express `Request` type to get autocomplete on `req.b402`:
+
+```typescript
+declare global {
+  namespace Express {
+    interface Request {
+      b402?: {
+        payer: string;
+        txHash: string;
+        amount: string;
+        token: string;
+      };
+    }
+  }
+}
+```
+
+---
+
+## Advanced Configuration
+
+### Custom Facilitator URL
+
+For self-hosted facilitators or development environments:
+
+```typescript
+app.use(b402(
+  {
+    payTo: '0xYourWalletAddress',
+    facilitatorUrl: 'http://localhost:8080',
+    network: 'testnet',
+  },
+  {
+    'GET /premium': { price: '0.01', token: 'USDT' },
+  }
+));
+```
+
+### Testnet Mode
+
+Use testnet for development and testing without real tokens:
+
+```typescript
+app.use(b402(
+  {
+    payTo: '0xYourWalletAddress',
+    network: 'testnet',
+  },
+  {
+    'GET /premium': { price: '0.01', token: 'USDT' },
+  }
+));
+```
+
+---
+
+## Full Working Example
+
+A complete Express server with multiple priced routes, a free health check, and payment logging:
+
+```typescript
+import express from 'express';
+import { b402 } from 'b402-express';
+
+const app = express();
+app.use(express.json());
+
+// Configure b402 middleware
+app.use(b402(
+  { payTo: '0xYourWalletAddress' },
+  {
+    'GET /api/premium-data':  { price: '0.01',  token: 'USD1',  description: 'Premium dataset' },
+    'GET /api/analytics':     { price: '0.005', token: 'USDT',  description: 'Analytics report' },
+    'POST /api/generate':     { price: '0.05',  token: 'USD1',  description: 'AI content generation' },
+    'GET /api/report/:id':    { price: '0.10',  token: 'USDC',  description: 'Detailed report by ID' },
+  }
+));
+
+// Paid route: Premium data
+app.get('/api/premium-data', (req, res) => {
+  console.log(`Paid by ${req.b402.payer} - TX: ${req.b402.txHash}`);
+  res.json({
+    data: [
+      { metric: 'revenue', value: 1250000 },
+      { metric: 'users', value: 85000 },
+    ],
+    accessedBy: req.b402.payer,
+  });
+});
+
+// Paid route: Analytics
+app.get('/api/analytics', (req, res) => {
+  res.json({
+    report: 'Monthly analytics summary',
+    generatedFor: req.b402.payer,
+  });
+});
+
+// Paid route: AI generation
+app.post('/api/generate', (req, res) => {
+  const { prompt } = req.body;
+  res.json({
+    result: `Generated content for: ${prompt}`,
+    payment: {
+      amount: req.b402.amount,
+      token: req.b402.token,
+      tx: req.b402.txHash,
+    },
+  });
+});
+
+// Paid route: Parameterized report
+app.get('/api/report/:id', (req, res) => {
+  res.json({
+    reportId: req.params.id,
+    content: 'Full report data...',
+  });
+});
+
+// Free route: Health check (not listed in b402 config)
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: Date.now() });
+});
+
+// Free route: Pricing info (not listed in b402 config)
+app.get('/pricing', (req, res) => {
+  res.json({
+    endpoints: [
+      { path: 'GET /api/premium-data', price: '0.01 USD1' },
+      { path: 'GET /api/analytics', price: '0.005 USDT' },
+      { path: 'POST /api/generate', price: '0.05 USD1' },
+      { path: 'GET /api/report/:id', price: '0.10 USDC' },
+    ],
+  });
+});
+
+app.listen(3000, () => {
+  console.log('b402 API server running on http://localhost:3000');
+});
+```
+
+Test it with cURL:
+
+```bash
+# Free route - works without payment
+curl http://localhost:3000/health
+
+# Priced route - returns 402 with payment requirements
+curl -i http://localhost:3000/api/premium-data
+```
+
+---
+
+## Next Steps
+
+- [b402-sdk](/sdks/b402-sdk) - Client-side SDK for sending payments
+- [EIP-712 Signature Guide](/sdks/eip712-signature-guide) - Understand the signature format
+- [Buyer Guide](/get-started/buyer) - How buyers interact with your API
+- [Facilitator API](/developers/facilitator/overview) - Direct API integration without the middleware

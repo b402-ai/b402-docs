@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 380" fill="none">
+  <defs>
+    <style>
+      text { font-family: 'Helvetica Neue', Arial, sans-serif; }
+      .label { font-size: 14px; fill: #F4B526; font-weight: 600; }
+      .step { font-size: 12px; fill: #fff; }
+      .detail { font-size: 10px; fill: #888; }
+      .arrow { stroke: #F4B526; stroke-width: 1.5; fill: none; marker-end: url(#arrowGold); }
+      .arrow-back { stroke: #666; stroke-width: 1.5; fill: none; marker-end: url(#arrowGray); stroke-dasharray: 6 3; }
+    </style>
+    <marker id="arrowGold" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="#F4B526"/>
+    </marker>
+    <marker id="arrowGray" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="#666"/>
+    </marker>
+  </defs>
+
+  <rect width="800" height="380" rx="12" fill="#0D0D0D"/>
+
+  <!-- Column headers -->
+  <rect x="75" y="20" width="130" height="36" rx="6" fill="#1a1a1a" stroke="#F4B526" stroke-width="1"/>
+  <text x="140" y="43" text-anchor="middle" class="label">User's EOA</text>
+
+  <rect x="325" y="20" width="160" height="36" rx="6" fill="#1a1a1a" stroke="#F4B526" stroke-width="1"/>
+  <text x="405" y="43" text-anchor="middle" class="label">RAILGUN Contract</text>
+
+  <rect x="595" y="20" width="130" height="36" rx="6" fill="#1a1a1a" stroke="#F4B526" stroke-width="1"/>
+  <text x="660" y="43" text-anchor="middle" class="label">b402 Backend</text>
+
+  <!-- Vertical lines -->
+  <line x1="140" y1="56" x2="140" y2="360" stroke="#333" stroke-width="1" stroke-dasharray="4 4"/>
+  <line x1="405" y1="56" x2="405" y2="360" stroke="#333" stroke-width="1" stroke-dasharray="4 4"/>
+  <line x1="660" y1="56" x2="660" y2="360" stroke="#333" stroke-width="1" stroke-dasharray="4 4"/>
+
+  <!-- Step 1: Approve -->
+  <line x1="140" y1="95" x2="405" y2="95" class="arrow"/>
+  <text x="272" y="88" text-anchor="middle" class="step">approve(railgunContract, amount)</text>
+
+  <!-- Step 2: Shield -->
+  <line x1="140" y1="150" x2="405" y2="150" class="arrow"/>
+  <text x="272" y="143" text-anchor="middle" class="step">shield(token, amount, npk)</text>
+
+  <!-- Step 3: Contract processes -->
+  <rect x="340" y="175" width="130" height="60" rx="4" fill="#111" stroke="#333" stroke-width="0.5"/>
+  <text x="405" y="193" text-anchor="middle" class="detail">Emit Shield event</text>
+  <text x="405" y="207" text-anchor="middle" class="detail">Create commitment</text>
+  <text x="405" y="221" text-anchor="middle" class="detail">Insert leaf into tree</text>
+
+  <!-- Step 4: Index -->
+  <line x1="405" y1="255" x2="660" y2="255" class="arrow"/>
+  <text x="532" y="248" text-anchor="middle" class="step">Shield event emitted</text>
+
+  <!-- Step 5: Backend processes -->
+  <rect x="595" y="275" width="130" height="55" rx="4" fill="#111" stroke="#333" stroke-width="0.5"/>
+  <text x="660" y="293" text-anchor="middle" class="detail">Index shield event</text>
+  <text x="660" y="307" text-anchor="middle" class="detail">Store commitment</text>
+  <text x="660" y="321" text-anchor="middle" class="detail">Update Merkle tree</text>
+</svg>

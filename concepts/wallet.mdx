@@ -1,45 +1,92 @@
 ---
 title: Wallet
-description: 'Agent identity and payment mechanism in b402'
+description: 'EOA and Smart Wallet payment models in b402'
 icon: wallet
 ---
 
-In **b402**, a wallet functions as both a payment interface and a cryptographic identity for agents, buyers, and service providers.
+b402 supports two wallet types for making payments: traditional EOA wallets and ERC-7579 Nexus smart wallets. Each has different capabilities and trade-offs.
 
-It authorizes payments, verifies identity, and serves as the anchor of trust between clients and servers in every b402 exchange.
+## EOA Wallets
 
----
+An Externally Owned Account (EOA) is a standard Ethereum wallet controlled by a private key (e.g., MetaMask, hardware wallet, or a key managed by an agent).
 
-## Role of the Wallet
+### How EOA Payments Work
 
-### For Agents (Buyers)
+1. User signs an EIP-712 `TransferWithAuthorization` message off-chain
+2. The signed payload is sent to the facilitator
+3. The facilitator calls `transferWithAuthorization()` on the Relayer contract
+4. The Relayer verifies the signature and executes the token transfer
 
-Agent wallets are used to:
+### Requirements
 
-- **Hold tokens** — such as BNB, USDT, or USDC for on-chain payments.  
-- **Sign payment payloads** — cryptographically authorize transfers or proofs via `permit()` or `transferWithAuthorization()`.  
-- **Establish identity** — bind ERC-8004 agent credentials to a verified on-chain address.  
-- **Automate payments** — enable autonomous agents to pay for API calls or data access programmatically.  
+- **Token approval required.** The user must approve the Relayer contract to spend their tokens (one-time per token).
+- **Tokens must be in the EOA.** The wallet needs a balance of the payment token.
+- **No gas needed for payment.** The facilitator pays gas. But the initial approval transaction costs gas.
 
-### For Services (Sellers)
+### Best For
 
-Service provider wallets are used to:
+- Simple integrations where the user already has a funded wallet
+- Quick testing and development
+- Users who prefer direct wallet control
 
-- **Receive payments** — define the on-chain destination for settlements in their server configuration.  
-- **Authenticate responses** — optionally sign responses or attach proof of ownership.  
-- **Integrate with facilitators** — register destination addresses for verified settlements and receipts.  
+## Smart Wallets (ERC-7579 Nexus)
 
-A seller’s wallet address is included in the `402 Payment Required` response so that clients know exactly where to direct payments.
+b402 smart wallets are ERC-7579 modular smart accounts deployed via the [Nexus](https://docs.biconomy.io/nexus) factory. They are deterministic: the wallet address can be computed before deployment.
 
----
+### How Smart Wallet Payments Work
 
-## Identity Layer
+1. Client sends payment request with wallet address to facilitator
+2. Facilitator builds an unsigned [UserOperation](https://eips.ethereum.org/EIPS/eip-4337) (v0.7 unpacked format)
+3. Facilitator injects payment fee and signs paymaster data
+4. Client signs the UserOp hash with their owner key
+5. Facilitator submits to an ERC-4337 bundler
+6. Bundler executes the UserOp on-chain as a batch call (approve + transfer)
+7. Paymaster covers gas, deducting from the payment amount
 
-In b402, wallets extend beyond payment. They represent verifiable, programmable identities through the [ERC-8004 standard](https://eips.ethereum.org/EIPS/eip-8004).  
+### Key Features
 
-This standard allows agents and services to:
-- **Mint and verify unique identities** on-chain  
-- **Sign requests with reputation-linked addresses**  
-- **Enable delegation**, allowing one wallet to act on behalf of another  
+**Gasless.** Users never need native gas tokens. The paymaster sponsors gas, deducting the cost from the payment token.
 
-This makes b402 not just a payment protocol, but a trust fabric for machine-to-machine commerce.
+**Batched operations.** Token approval and transfer happen in a single transaction. No separate approval step.
+
+**Deterministic addresses.** Wallet addresses are computed from the owner address using a predictable salt:
+```
+masterSalt = keccak256("b402-" + reversed(normalizedOwnerAddress))
+```
+
+**Deploy on first use.** Wallets are computed off-chain and deployed when first needed via the facilitator's deploy endpoints.
+
+### Wallet Types
+
+| Type | Salt | Use Case |
+|------|------|----------|
+| Master wallet | `keccak256("b402-" + reversedOwner)` | Primary wallet, one per owner |
+| Sub-wallet | Custom salt | Additional wallets for specific purposes |
+
+### Best For
+
+- AI agents that need fully autonomous, gasless payments
+- New users who don't have BNB for gas
+- Applications requiring batched or complex transactions
+
+## Comparison
+
+| Feature | EOA | Smart Wallet |
+|---------|-----|-------------|
+| Gas for payments | Gasless (facilitator pays) | Gasless (paymaster pays) |
+| Initial setup | Requires approval tx (costs gas) | No setup needed |
+| Token approval | One-time per token | Automatic (batched in UserOp) |
+| Deploy cost | None (already exists) | Paid on first use |
+| Address type | Standard ETH address | Deterministic contract address |
+| Batch operations | No | Yes (via ERC-7579 execute) |
+| Best for | Simple integrations | Agent-native workflows |
+
+## Identity Layer (ERC-8004)
+
+Both EOA and smart wallets can be linked to an [ERC-8004](https://eips.ethereum.org/EIPS/eip-8004) agent identity. This standard enables:
+
+- On-chain identity minting for agents
+- Reputation-linked signing
+- Delegation (one wallet acting on behalf of another)
+
+See the [Agent Identity concept page](/concepts/agent-identity) for details.

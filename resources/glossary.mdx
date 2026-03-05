@@ -1,0 +1,79 @@
+---
+title: Glossary
+description: 'Key terms and definitions used throughout the b402 documentation'
+icon: spell-check
+---
+
+## Protocol Terms
+
+| Term | Definition |
+|------|-----------|
+| **b402** | A multichain payment protocol extending HTTP 402 for gasless, confidential crypto payments across EVM chains |
+| **x402** | The base HTTP 402 payment protocol specification that b402 extends |
+| **HTTP 402** | The `402 Payment Required` HTTP status code, used to signal that a resource requires payment |
+| **Facilitator** | Off-chain service that verifies payment signatures and submits on-chain settlements |
+| **Relayer** | On-chain smart contract (`B402Relayer`) that executes `transferWithAuthorization()` for verified payments |
+| **Settlement** | The on-chain execution of a verified payment transaction |
+
+## Wallet Terms
+
+| Term | Definition |
+|------|-----------|
+| **EOA** | Externally Owned Account — a standard Ethereum wallet controlled by a private key |
+| **Smart Wallet** | An ERC-7579 Nexus modular smart account with batched operations and paymaster support |
+| **ERC-7579** | Standard for modular smart accounts with pluggable validator/executor modules |
+| **Nexus** | Biconomy's ERC-7579 smart account implementation used by b402 |
+| **K1 Validator** | ECDSA signature validation module installed on Nexus smart wallets |
+| **Master Wallet** | The primary smart wallet for an owner, derived with a deterministic salt |
+| **Sub-wallet** | Additional smart wallets created with custom salts for specific purposes |
+
+## Transaction Terms
+
+| Term | Definition |
+|------|-----------|
+| **EIP-712** | Ethereum standard for typed structured data signing, used for EOA payment authorization |
+| **TransferWithAuthorization** | The EIP-712 message type that authorizes the Relayer to transfer tokens on the signer's behalf |
+| **UserOperation (UserOp)** | An ERC-4337 pseudo-transaction that encodes a smart wallet action for bundler execution |
+| **Bundler** | An ERC-4337 service that packages UserOperations into on-chain transactions |
+| **Paymaster** | An ERC-4337 contract that sponsors gas fees, deducting costs from the payment token |
+| **EntryPoint** | The ERC-4337 singleton contract (v0.7) that validates and executes UserOperations |
+| **Nonce** | A unique value preventing transaction replay; generated per-payment for EIP-712 signatures |
+
+## Privacy Terms
+
+| Term | Definition |
+|------|-----------|
+| **Incognito** | b402's privacy mode powered by RAILGUN integration |
+| **RAILGUN** | A privacy protocol enabling shielded on-chain transactions using zero-knowledge proofs |
+| **Shield** | Depositing tokens into the RAILGUN privacy pool, creating a commitment |
+| **Unshield** | Withdrawing tokens from the RAILGUN privacy pool back to a public address |
+| **Commitment** | A Poseidon hash representing a shielded token deposit in the Merkle tree |
+| **Nullifier** | A value published when spending a commitment, preventing double-spending |
+| **Merkle Proof** | A cryptographic proof that a commitment exists in the privacy pool's Merkle tree |
+| **Poseidon Hash** | A ZK-friendly hash function used to create commitments and nullifiers |
+
+## Identity Terms
+
+| Term | Definition |
+|------|-----------|
+| **ERC-8004** | Ethereum standard for on-chain agent identity (identity NFTs, reputation, delegation) |
+| **Agent Identity** | An on-chain NFT representing an AI agent's identity, linked to a wallet |
+| **Delegation** | One wallet acting on behalf of another via ERC-8004 identity linking |
+
+## API Terms
+
+| Term | Definition |
+|------|-----------|
+| **Verify** | The first step in payment settlement — validates the signed payload and returns confirmation data |
+| **Settle** | The second step — submits the verified payment for on-chain execution |
+| **X-PAYMENT** | HTTP header containing the signed payment payload, sent by the buyer with the resource request |
+| **X-Admin-Secret** | Authentication header for admin-protected endpoints on the Backend API |
+
+## Network Terms
+
+| Term | Definition |
+|------|-----------|
+| **BNB Chain** | An EVM-compatible blockchain supported by b402 (Chain ID: 56) |
+| **Base** | An EVM-compatible L2 blockchain supported by b402 (Chain ID: 8453) |
+| **BSC** | Binance Smart Chain — the legacy name for BNB Chain |
+| **PancakeSwap V3** | Decentralized exchange used for b402 token swaps on BNB Chain |

@@ -1,0 +1,110 @@
+---
+title: Backend API Overview
+description: 'Data layer API for analytics, privacy, and transactions'
+icon: database
+---
+
+The b402 Backend API provides read access to protocol data including transaction history, privacy operations (RAILGUN), and ecosystem metrics.
+
+## Base URL
+
+The Backend API is deployed privately. Contact the b402 team for access.
+
+## Authentication
+
+Most endpoints are **public** (no authentication required).
+
+Admin-protected endpoints require the `X-Admin-Secret` header:
+
+| Endpoint | Auth Required |
+|----------|--------------|
+| `GET /privacy/commitments` | No |
+| `POST /privacy/nullifiers` | No |
+| `GET /privacy/merkle-proof` | No |
+| `POST /privacy/unshield` | Yes (`X-Admin-Secret`) |
+| `GET /privacy/unshield/:id` | Yes (`X-Admin-Secret`) |
+| `GET /metrics` | No |
+| `GET /metrics/buyers` | No |
+| `GET /metrics/sellers` | No |
+| `GET /metrics/buyers/:address` | No |
+| `GET /metrics/sellers/:address` | No |
+| `GET /transactions` | No |
+| `POST /users/chapter0-stats` | Yes (`X-Admin-Secret`) |
+
+## Rate Limiting
+
+**30 requests per minute per IP.** Requests with a valid `X-Admin-Secret` header bypass rate limiting.
+
+## Endpoint Groups
+
+### Privacy API
+
+RAILGUN integration endpoints for shielded transactions:
+
+- **Commitments** - Retrieve shield deposits for an address
+- **Nullifiers** - Batch check spent commitments
+- **Merkle Proofs** - Generate proofs for ZK verification
+- **Unshield** - Request withdrawals from the privacy pool
+
+### Metrics API
+
+Protocol-wide analytics (cached for performance):
+
+- **Global Metrics** - Total transactions, volume, unique buyers/sellers
+- **Buyer Metrics** - Leaderboard and individual buyer stats
+- **Seller Metrics** - Leaderboard and individual seller stats
+
+### Transactions API
+
+Paginated transaction history with filtering by address, token, date range, and transaction hash.
+
+## Pagination
+
+Paginated endpoints accept:
+
+| Parameter | Type | Default | Max | Description |
+|-----------|------|---------|-----|-------------|
+| `skip` | string | "0" | - | Number of records to skip |
+| `take` | string | "12" | 1000 | Number of records to return |
+
+Paginated responses include a `meta` object:
+
+```json
+{
+  "data": [...],
+  "meta": {
+    "total": 1234,
+    "skip": 0,
+    "take": 12
+  }
+}
+```
+
+## Caching
+
+| Endpoint | Cache Duration |
+|----------|---------------|
+| `GET /metrics` | 1 hour |
+| `GET /metrics/buyers/:address` | 1 hour |
+| `GET /metrics/sellers/:address` | 1 hour |
+| `GET /metrics/buyers` | 2 minutes |
+| `GET /metrics/sellers` | 2 minutes |
+| `GET /privacy/merkle-proof` | 2 minutes |
+| `GET /transactions` | 2 minutes |
+| Privacy write endpoints | No cache |
+
+## Error Format
+
+Same error envelope as the Facilitator API:
+
+```json
+{
+  "error": {
+    "code": "bad_request",
+    "message": "Invalid input",
+    "doc_url": "https://b402.ai#bad_request"
+  }
+}
+```
+
+See the [Error Reference](/developers/errors) for all error codes.

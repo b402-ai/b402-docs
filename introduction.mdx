@@ -1,88 +1,89 @@
 ---
 title: Welcome to b402
-description: 'Unified agentic payments rails'
+description: 'Gasless, confidential, multi-token agent payments across EVM chains'
 icon: star
 ---
 
-b402 is a complete internet-native payment infrastructure built for modern EVM chains, starting with the [BNB Chain](https://www.bnbchain.org/en) and [Base](https://base.org), inspired by the `HTTP 402` standard and [x402](https://x402.org) protocol.
+b402 is a multichain payment protocol for AI agents and web services. It extends the [HTTP 402](https://datatracker.ietf.org/doc/html/rfc7231#section-6.5.2) standard and [x402](https://x402.org) protocol with gasless execution, compliant confidentiality, and multi-token support across EVM-compatible chains.
 
-It enables HTTP-native payment requests that support multi-token transactions, bringing frictionless payment capabilities to the BNB and Base ecosystems.
+## Architecture
 
-## b402 Architecture
+Rather than depending on token-level signature standards like EIP-3009, b402 introduces its own execution layer — the Relayer contract — that works with any whitelisted token on any deployed chain. An agent signs an EIP-712 authorization off-chain (zero cost), the Facilitator settles on-chain, and the agent never needs native tokens for gas.
 
 <Frame>
-  <img src="public/images/b402-architecture.png" alt="b402 architecture" />
+  <img src="/public/images/diagrams/b402-architecture-hero.svg" alt="b402 three-layer architecture: Protocol, Service, and Developer layers" />
 </Frame>
 
-The b402 ecosystem integrates three key layers:
+b402 is organized in three layers:
 
-1. **Protocol Layer (b402 Protocol)**: the open payment protocol.
-2. **Service Layer (Facilitator & b402scan)**: the operational backbone enabling settlement and onboarding.
-3. **Developer Experience Layer (SDKs)**: the usability interface driving adoption.
+1. **Protocol Layer** — The b402 Relayer smart contract handles EIP-712 signature verification and on-chain token transfers. Deployed on BNB Chain and Base, with more chains to follow.
+2. **Service Layer** — The Facilitator verifies payment payloads, settles transactions, deploys smart wallets, and executes swaps. b402scan provides transaction discovery.
+3. **Developer Layer** — `b402-sdk` (TypeScript) and `b402-express` (middleware) let you integrate in minutes.
 
-## Why Use b402?
+## What Makes b402 Different
 
-b402 addresses the friction between today’s web protocols and tomorrow’s autonomous systems:
+Compared to standard x402 implementations:
 
-* **Agent-to-agent (a2a) payments** made seamless with native crypto primitives
-* **Low-fee micropayments** and usage-based monetization without custodians
-* **Integrated identity** through ERC-8004 for verified agent transactions
-* **EVM-native deployment** with first-class support for BNB Chain and Base
-
-## Who Is b402 For?
-
-**Agents & Developers (Buyers):**
-AI agents, bots, and scripts that need to autonomously pay for or charge for data, compute, or APIs.
-
-**Service Providers (Sellers):**
-Developers and businesses who want to monetize APIs or digital content directly over HTTP, without centralized gateways.
-
-Both sellers and buyers interact directly through HTTP requests, with payment handled transparently through the protocol.
-
-## What Can You Build?
-
-b402 unlocks a new category of agent-native applications on EVM chains like BNB Chain and Base:
-
-* **Autonomous API trading bots** that pay per query
-* **AI agents** that purchase verified data feeds or inference time
-* **Usage-based paywalls** for analytics, content, or utilities
-* **Proxy or relay services** that resell API capabilities
-* **Identity-gated endpoints** requiring ERC-8004 verification
-
+| Feature | x402 (Coinbase) | b402 |
+|---------|-----------------|------|
+| Tokens | USDC only | USDT, USDC, USD1, any whitelisted ERC-20 |
+| Privacy | None | RAILGUN integration (shield, transact, unshield) |
+| Wallets | EOA only | EOA + Smart Wallets (ERC-7579 Nexus) |
+| Gas | Buyer pays | Gasless for buyers (facilitator covers gas) |
+| Swaps | None | Integrated DEX swaps |
+| Identity | None | ERC-8004 agent identity |
+| Chains | Base (USDC only) | Multichain — BNB Chain, Base, more planned |
 
 ## How It Works
 
-The flow is simple and transparent:
+```
+1. Agent sends GET /premium-data to a b402-enabled server
+2. Server responds: 402 Payment Required + payment instructions
+3. Agent signs EIP-712 payment payload (no gas needed)
+4. Agent resends request with X-PAYMENT header
+5. Server calls facilitator /verify then /settle
+6. Facilitator executes on-chain transfer
+7. Server returns the data
+```
 
-1. A buyer (agent) requests a resource from a b402-enabled service.
-2. If payment is required, the service responds with `402 Payment Required` and b402-formatted payment instructions.
-3. The buyer sends a **payment payload** to the b402 facilitator for settlement.
-4. The server verifies the transaction through `/verify` and `/settle` endpoints.
-5. Once verified, the server releases the requested resource.
+## Who Is b402 For?
 
+**Agents and Developers (Buyers)**
+AI agents, bots, and scripts that need to autonomously pay for APIs, data, or compute. Smart wallet support means agents can operate with gasless, batched transactions across multiple chains.
 
-## Get Started with b402
+**Service Providers (Sellers)**
+Developers who want to monetize APIs with crypto payments. Add `b402-express` middleware to your Express app and start charging per-request, no payment gateway needed.
+
+## What Can You Build?
+
+- **Autonomous API trading bots** that pay per query
+- **AI agents** purchasing verified data feeds or inference time
+- **Usage-based paywalls** for analytics, content, or compute
+- **Private payments** where transaction details are shielded via RAILGUN
+- **Cross-chain agent workflows** that transact wherever liquidity exists
+
+## Get Started
+
 <CardGroup cols={2}>
-
-<Card title='Concepts' icon='book-open-cover' href='/concepts'>
-    
-</Card>
-
-<Card title='Get Started' icon='play' href='/get-started'>
-</Card>
-
+  <Card title="Quickstart" icon="rocket" href="/get-started/quickstart">
+    Send your first payment in under 2 minutes
+  </Card>
+  <Card title="Concepts" icon="book-open-cover" href="/concepts/http-402">
+    Understand how the protocol works
+  </Card>
+  <Card title="Facilitator API" icon="webhook" href="/developers/facilitator/overview">
+    Full API reference for all endpoints
+  </Card>
+  <Card title="SDKs" icon="code" href="/sdks/b402-sdk">
+    TypeScript SDK and Express middleware
+  </Card>
 </CardGroup>
 
-
-## Contribute & Give Feedback
-
-We love seeing new ideas, improvements, and documentation contributions flow back into b402.  
-If you’ve spotted a bug, have a suggestion, or want to improve the docs, open a PR or issue.
+## Links
 
 <CardGroup cols={2}>
-<Card title='b402 GitHub' icon='github' href='https://github.com/Vistara-Labs/b402'>
-</Card>
-
-<Card title='b402 Discord' icon='discord' href='https://discord.gg/JpCB9SbK'>
-</Card>
+  <Card title="GitHub" icon="github" href="https://github.com/b402-ai">
+  </Card>
+  <Card title="Discord" icon="discord" href="https://discord.gg/JpCB9SbK">
+  </Card>
 </CardGroup>

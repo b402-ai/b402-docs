@@ -1,0 +1,112 @@
+---
+title: 'Get Master Wallet'
+description: 'Get the deterministic master wallet for an owner address'
+---
+
+Returns the master wallet for an owner. Every owner has exactly one deterministic master wallet, derived from their address.
+
+```
+GET /wallet/:owner/master
+```
+
+## Path Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `owner` | `string` | Owner wallet address |
+
+## Response (200)
+
+Returns a single wallet object with the same shape as items in the [List Wallets](/developers/facilitator/api-reference/wallet-deployment/list-wallets) response.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `ownerAddress` | `string` | Owner EOA address |
+| `walletAddress` | `string` | Master wallet address |
+| `salt` | `string` | Deterministic master salt |
+| `payerAddress` | `string` | Address that paid for deployment |
+| `paymentTxHash` | `string` | Transaction hash for the deployment fee payment |
+| `deploymentTxHash` | `string` | Transaction hash for the wallet deployment |
+| `paymentCompleted` | `boolean` | Whether the fee payment settled |
+| `deploymentCompleted` | `boolean` | Whether the wallet is deployed on-chain |
+| `fundingRequested` | `boolean` | Whether funding was requested |
+| `fundingCompleted` | `boolean` | Whether funding was transferred |
+| `fundingAmount` | `string` | Funding amount in wei |
+| `fundingTxHash` | `string \| null` | Transaction hash for funding, `null` if not funded |
+| `createdAt` | `string` | ISO 8601 timestamp of record creation |
+| `updatedAt` | `string` | ISO 8601 timestamp of last update |
+
+## Master Salt Derivation
+
+The master wallet salt is deterministic:
+
+```
+masterSalt = keccak256("b402-" + reversed(normalizedOwnerAddress))
+```
+
+Where `normalizedOwnerAddress` is the checksummed address with `0x` stripped, then reversed as a string. This guarantees a single, predictable master wallet per owner.
+
+```typescript
+import { keccak256, toUtf8Bytes, getAddress } from "ethers";
+
+function getMasterSalt(ownerAddress: string): string {
+  const normalized = getAddress(ownerAddress).slice(2); // remove 0x
+  const reversed = normalized.split("").reverse().join("");
+  return keccak256(toUtf8Bytes(`b402-${reversed}`));
+}
+```
+
+## Examples
+
+### cURL
+
+```bash
+curl https://facilitator.b402.ai/wallet/0xAbC1234567890aBcDeF1234567890AbCdEf123456/master
+```
+
+### TypeScript
+
+```typescript
+const owner = "0xAbC1234567890aBcDeF1234567890AbCdEf123456";
+const response = await fetch(
+  `https://facilitator.b402.ai/wallet/${owner}/master`
+);
+const masterWallet = await response.json();
+
+console.log("Master wallet:", masterWallet.walletAddress);
+console.log("Deployed:", masterWallet.deploymentCompleted);
+console.log("Funded:", masterWallet.fundingCompleted);
+```
+
+### Example Response
+
+```json
+{
+  "ownerAddress": "0xAbC1234567890aBcDeF1234567890AbCdEf123456",
+  "walletAddress": "0x...deterministic_master_address",
+  "salt": "0x...master_salt",
+  "payerAddress": "0xAbC1234567890aBcDeF1234567890AbCdEf123456",
+  "paymentTxHash": "0x...tx_hash",
+  "deploymentTxHash": "0x...tx_hash",
+  "paymentCompleted": true,
+  "deploymentCompleted": true,
+  "fundingRequested": true,
+  "fundingCompleted": true,
+  "fundingAmount": "1000000000000000000",
+  "fundingTxHash": "0x...tx_hash",
+  "createdAt": "2025-03-01T12:00:00.000Z",
+  "updatedAt": "2025-03-01T12:00:05.000Z"
+}
+```
+
+## Error Codes
+
+| Code | HTTP Status | Description |
+|------|-------------|-------------|
+| `validation_error` | 400 | Invalid owner address format |
+| `not_found` | 404 | No master wallet found for this owner |
+
+## Related
+
+- [List Wallets](/developers/facilitator/api-reference/wallet-deployment/list-wallets) - List all wallets (master + sub)
+- [Deploy Wallet (Verify)](/developers/facilitator/api-reference/wallet-deployment/deploy-verify) - Deploy a master wallet

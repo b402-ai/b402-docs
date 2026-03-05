@@ -1,0 +1,368 @@
+---
+title: Privacy (Incognito) Deep Dive
+description: 'RAILGUN integration, shielding, zero-knowledge proofs, Merkle trees, and the unshield flow'
+icon: user-secret
+---
+
+b402 integrates [RAILGUN](https://railgun.org) to provide on-chain privacy for payments. When using incognito mode, tokens are moved into a private pool where transfers happen without revealing sender, recipient, or amount on-chain. This guide covers the cryptographic foundations and API surface.
+
+## RAILGUN Protocol Overview
+
+RAILGUN is an on-chain privacy system that uses zero-knowledge proofs to shield token balances. Once tokens are inside the RAILGUN smart contract, they can be transferred privately and withdrawn to any address, breaking the on-chain link between sender and recipient.
+
+The system has three operations:
+
+| Operation | Direction | What Happens |
+|-----------|-----------|-------------|
+| **Shield** | Public to private | Deposit tokens into the privacy pool |
+| **Transact** | Private to private | Transfer tokens within the pool (ZK proof) |
+| **Unshield** | Private to public | Withdraw tokens from the pool to any address |
+
+All three operations interact with the b402 Relayer contract on BNB Chain, which forwards calls to the RAILGUN privacy pool:
+
+| RAILGUN_IMPL | b402 Relayer Address |
+|-------------|---------------------|
+| `official` (default) | `0x590162bf4b50F6576a459B75309eE21D92178A10` |
+| `custom` | `0x9dB0eDC77C9047a06Fd6dE82c892630DAa5eF601` |
+
+The implementation is configured via the `RAILGUN_IMPL` environment variable. See [Self-Hosting](/guides/self-hosting) for configuration.
+
+## Commitment Structure
+
+Every shielded balance is represented as a **commitment** stored in the RAILGUN contract. A commitment is a Poseidon hash of:
+
+```
+commitment = Poseidon(npk, token, value, random)
+```
+
+| Field | Description |
+|-------|-------------|
+| `npk` | Nullifier public key (derived from the recipient's viewing key) |
+| `token` | Token address, type, and sub-ID packed together |
+| `value` | Amount of tokens being shielded |
+| `random` | Random blinding factor for privacy |
+
+The Poseidon hash function is used instead of Keccak256 because it is efficient inside ZK circuits, making proof generation practical.
+
+### Commitment Fields in the Database
+
+When a shield event is indexed, the following fields are stored:
+
+```typescript
+{
+  transactionHash: string   // On-chain tx that created the commitment
+  commitmentHash: string    // The Poseidon hash (leaf of the Merkle tree)
+  treeNumber: string        // Which Merkle tree this commitment lives in
+  position: string          // Leaf position within the tree
+  tokenAddress: string      // ERC-20 token address
+  tokenType: string         // Token standard (ERC-20, ERC-721, etc.)
+  tokenSubID: string        // Sub-ID for ERC-1155 tokens (0 for ERC-20)
+  amount: string            // Raw token amount (wei)
+  fee: string               // Shield fee deducted by RAILGUN
+  npk: string               // Nullifier public key
+  encryptedBundle0: string  // Encrypted note data (for recipient's wallet)
+  encryptedBundle1: string  // Encrypted note data
+  encryptedBundle2: string  // Encrypted note data
+  shieldKey: string         // Encryption key for the bundle
+}
+```
+
+## Nullifier Generation
+
+Nullifiers prevent double-spending. When a commitment is consumed (via transact or unshield), a **nullifier** is published on-chain. The nullifier is derived deterministically from the commitment but cannot be linked back to it without the private key.
+
+```
+nullifier = Poseidon(commitment, pathIndices, spendingKey)
+```
+
+The on-chain contract maintains a set of all spent nullifiers. Before accepting a new transaction, the contract checks that the nullifier has not been seen before.
+
+### Nullifier States
+
+| State | Meaning |
+|-------|---------|
+| **Unused** | Commitment has not been spent, balance is available |
+| **Used (TRANSACT)** | Commitment was consumed in a private transfer, producing new output commitments |
+| **Used (UNSHIELD)** | Commitment was consumed in a withdrawal to a public address |
+
+## Merkle Tree Structure
+
+RAILGUN organizes commitments in a binary Merkle tree using Poseidon hashing. The tree has:
+
+- **Depth**: 16 levels
+- **Capacity**: 2^16 = 65,536 leaves per tree
+- **Hash function**: Poseidon (ZK-friendly)
+- **Zero value**: `keccak256("Railgun") % SNARK_SCALAR_FIELD`
+
+When a tree fills up, a new tree is created (incrementing `treeNumber`).
+
+### Tree Construction
+
+<Frame>
+  <img src="/public/images/diagrams/merkle-tree.svg" alt="RAILGUN Merkle tree: 16 levels deep, 65,536 leaves, Poseidon hashing" />
+</Frame>
+
+Each non-leaf node is the Poseidon hash of its two children:
+
+```
+node = Poseidon(leftChild, rightChild)
+```
+
+Empty leaves use the **zero value**, and empty subtrees use precomputed zero hashes:
+
+```typescript
+ZERO_HASHES[0] = ZERO_VALUE  // keccak256("Railgun") % SNARK_SCALAR_FIELD
+ZERO_HASHES[1] = Poseidon(ZERO_HASHES[0], ZERO_HASHES[0])
+ZERO_HASHES[2] = Poseidon(ZERO_HASHES[1], ZERO_HASHES[1])
+// ... up to level 16
+```
+
+### Merkle Proof
+
+To spend a commitment, the user must prove it exists in the tree by providing a **Merkle proof**: the sibling hashes along the path from the leaf to the root.
+
+```typescript
+interface MerkleProof {
+  proof: string[]      // 16 sibling hashes, one per level
+  root: string         // Current tree root
+  leafIndex: string    // Position of the commitment in the tree
+  pathIndices: number[] // 0 = left child, 1 = right child at each level
+  treeDepth: 16
+  leaf: string         // The commitment hash being proven
+}
+```
+
+Verification walks from the leaf to the root:
+
+```typescript
+function verifyMerkleProof(
+  leaf: string,
+  proof: string[],
+  pathIndices: number[],
+  root: string
+): boolean {
+  let currentHash = leaf
+
+  for (let i = 0; i < proof.length; i++) {
+    const sibling = proof[i]
+    const isRightNode = pathIndices[i] === 1
+    currentHash = isRightNode
+      ? poseidon([sibling, currentHash])
+      : poseidon([currentHash, sibling])
+  }
+
+  return currentHash === root
+}
+```
+
+## Shield Flow in b402
+
+Shielding is the process of depositing tokens from a public address into the RAILGUN privacy pool.
+
+<Frame>
+  <img src="/public/images/diagrams/shield-flow.svg" alt="Shield flow: User approves, shields tokens, RAILGUN creates commitment, backend indexes" />
+</Frame>
+
+After shielding, the commitment is stored in the database and the Merkle tree is updated. The user's wallet SDK can then scan for their commitments using the encrypted bundle data.
+
+## Unshield Flow
+
+Unshielding withdraws tokens from the privacy pool to any public address. This is the most complex operation because it requires generating a zero-knowledge proof.
+
+### Step 1: Generate the ZK Proof
+
+The user's wallet generates a proof that:
+- They own a valid commitment in the Merkle tree
+- The nullifier has not been spent
+- The output amounts are correct (recipient amount + fee)
+
+The proof is encoded as transaction data targeting the RAILGUN Relay contract.
+
+### Step 2: Submit to b402 Backend
+
+```typescript
+const response = await fetch("https://backend.b402.ai/privacy/unshield", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "X-Admin-Secret": "your-admin-secret"
+  },
+  body: JSON.stringify({
+    txidVersion: "v2",
+    transactionTo: "0x590162bf4b50F6576a459B75309eE21D92178A10", // RAILGUN Relay
+    transactionData: "0x...", // Encoded ZK proof + calldata
+    chain: { type: 0, id: 56 },
+    nullifierHash: "0x...",
+    recipientOwnerAddress: "0xRecipient...", // Optional
+    recipientSalt: "0x..."                   // Optional
+  })
+})
+```
+
+### Step 3: Delayed Broadcast
+
+For privacy, unshields are not broadcast immediately. The backend schedules them with a **random delay of 1-3 hours**. This prevents timing correlation attacks where an observer could link the unshield request to the on-chain transaction.
+
+```typescript
+// Backend calculates a random delay
+const minDelayMs = 60 * 60 * 1000  // 1 hour
+const maxDelayMs = 3 * 60 * 60 * 1000 // 3 hours
+const randomDelay = minDelayMs + Math.random() * (maxDelayMs - minDelayMs)
+const scheduledTime = new Date(Date.now() + randomDelay)
+```
+
+### Step 4: Check Status
+
+```typescript
+const status = await fetch(
+  `https://backend.b402.ai/privacy/unshield/${unshieldId}`,
+  {
+    headers: { "X-Admin-Secret": "your-admin-secret" }
+  }
+)
+
+// Response:
+{
+  scheduledUnshieldTime: "2026-03-05T14:30:00.000Z",
+  broadcasterTxHash: "0x..." // null until broadcast
+}
+```
+
+## Backend API Endpoints
+
+All privacy endpoints are served from the backend API (not the facilitator).
+
+### GET /privacy/commitments
+
+Retrieve all shield commitments for an EOA address.
+
+```
+GET /privacy/commitments?eoa=0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb
+```
+
+**Response**: Array of shield records ordered by block number.
+
+### POST /privacy/nullifiers
+
+Check which nullifiers have been spent. Accepts up to 1,000 nullifiers per request.
+
+```typescript
+// Request
+{
+  nullifiers: ["0xabc...", "0xdef..."]
+}
+
+// Response
+{
+  used: [
+    {
+      nullifier: "0xabc...",
+      transactionHash: "0x...",
+      blockNumber: "12345678",
+      blockTime: "2026-03-05T10:00:00.000Z",
+      type: "TRANSACT",
+      outputCommitments: [
+        {
+          commitmentHash: "0x...",
+          position: "42",
+          ciphertext: {
+            ciphertext0: "0x...",
+            ciphertext1: "0x...",
+            ciphertext2: "0x...",
+            ciphertext3: "0x...",
+            blindedSenderViewingKey: "0x...",
+            blindedReceiverViewingKey: "0x...",
+            annotationData: "0x...",
+            memo: "0x..."
+          }
+        }
+      ]
+    }
+  ],
+  unused: ["0xdef..."]
+}
+```
+
+For nullifiers used in an unshield operation, the response includes `unshieldData` instead of `outputCommitments`:
+
+```typescript
+{
+  type: "UNSHIELD",
+  unshieldData: {
+    recipientAddress: "0x...",
+    tokenAddress: "0x...",
+    tokenType: "0",
+    tokenSubID: "0",
+    amount: "1000000000000000000",
+    fee: "2500000000000000"
+  }
+}
+```
+
+### GET /privacy/merkle-proof
+
+Generate a Merkle proof for a specific commitment. Results are cached for 120 seconds.
+
+```
+GET /privacy/merkle-proof?treeNumber=0&position=42&commitmentHash=0x...
+```
+
+**Parameters**:
+- `treeNumber` (required) - The tree number (numeric string)
+- `position` (required) - Leaf position in the tree (numeric string)
+- `commitmentHash` (optional) - If provided, validates against the stored hash
+
+**Response**:
+
+```typescript
+{
+  proof: ["0x...", "0x...", /* 16 sibling hashes */],
+  root: "0x...",
+  leafIndex: "42",
+  pathIndices: [0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  treeDepth: 16,
+  leaf: "0x..."
+}
+```
+
+### POST /privacy/unshield
+
+Submit an unshield request. Requires admin authentication.
+
+### GET /privacy/unshield/:id
+
+Check the status of a pending unshield. Requires admin authentication.
+
+## Security Considerations
+
+### Proof Validation
+
+- Transaction data size is validated (must be under 100KB) to reject junk submissions
+- The `transactionTo` field must match the configured RAILGUN Relay contract address
+- Nullifiers are checked against the on-chain database to prevent double-spend attempts
+- Merkle proofs are verified server-side before being returned to clients
+
+### Timing Privacy
+
+- Unshield broadcasts are delayed by 1-3 hours with randomized timing
+- This prevents timing analysis that could link deposit and withdrawal events
+- Status endpoints allow clients to poll for completion without compromising privacy
+
+### Access Control
+
+- The `/privacy/unshield` and `/privacy/unshield/:id` endpoints require the `X-Admin-Secret` header
+- The `/privacy/commitments` and `/privacy/nullifiers` endpoints are publicly accessible (read-only data)
+- The `/privacy/merkle-proof` endpoint is publicly accessible and cached
+
+### Data Integrity
+
+- Merkle proofs are verified before being returned (the backend recomputes the root from the proof path)
+- If a proof fails verification, an internal server error is returned indicating database inconsistency
+- Nullifier records must always have an associated transact or unshield record; orphaned nullifiers trigger an error
+
+## Further Reading
+
+- [Smart Wallet Deep Dive](/guides/smart-wallet-deep-dive) - How smart wallets can execute privacy operations
+- [Self-Hosting](/guides/self-hosting) - Running your own backend with privacy support
+- [RAILGUN Documentation](https://docs.railgun.org) - Official RAILGUN protocol docs
+- [Poseidon Hash](https://www.poseidon-hash.info/) - The ZK-friendly hash function used in Merkle trees

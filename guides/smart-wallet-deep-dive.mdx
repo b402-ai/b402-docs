@@ -1,0 +1,369 @@
+---
+title: Smart Wallet Deep Dive
+description: 'ERC-7579 modular smart accounts, deterministic deployment, UserOperation anatomy, and the paymaster flow'
+icon: microchip
+---
+
+b402 smart wallets are [ERC-7579](https://eips.ethereum.org/EIPS/eip-7579) modular smart accounts deployed through the [Biconomy Nexus](https://docs.biconomy.io/nexus) factory. They enable fully gasless, batched payments settled via [ERC-4337](https://eips.ethereum.org/EIPS/eip-4337) UserOperations.
+
+This guide walks through every layer of the stack: module architecture, address derivation, UserOp construction, paymaster sponsorship, and batch execution.
+
+## ERC-7579 Modular Smart Accounts
+
+ERC-7579 defines a standard interface for modular smart accounts. Instead of shipping monolithic wallet logic, the account is a thin shell that delegates behavior to pluggable **modules**.
+
+### Module Types
+
+| Type | Purpose | Example |
+|------|---------|---------|
+| Validator | Verifies signatures on UserOps | K1Validator (ECDSA secp256k1) |
+| Executor | Executes arbitrary calls on behalf of the account | Session keys, automation |
+| Fallback | Handles calls that don't match any selector | Compatibility layers |
+| Hook | Pre/post execution logic | Spend limits, logging |
+
+### How b402 Uses K1Validator
+
+Every b402 smart wallet is initialized with the **K1Validator** module. This module validates that UserOperation signatures come from the wallet's owner EOA using standard ECDSA (secp256k1) signature verification, the same signing scheme as MetaMask and hardware wallets.
+
+When the EntryPoint calls `validateUserOp()` on the smart account, the account delegates to K1Validator, which:
+
+1. Extracts the signer from the UserOp signature
+2. Compares it against the registered owner address
+3. Returns a validation result to the EntryPoint
+
+No other modules are installed by default. Smart Sessions and other modules can be added later via `installModule()`.
+
+## Nexus Account Factory
+
+The Nexus Account Factory deploys smart wallets deterministically using `CREATE2`. This means the wallet address can be computed off-chain before deployment.
+
+### Deterministic Address Derivation
+
+Every b402 wallet address is derived from three inputs:
+
+1. **Factory address** - the Nexus Account Factory contract
+2. **Implementation** - the Nexus account bytecode
+3. **Salt** - a unique value per wallet
+
+For the **master wallet** (one per owner), the salt is computed as:
+
+```
+masterSalt = keccak256("b402-" + reversed(normalizedOwnerAddress))
+```
+
+Where `normalizedOwnerAddress` is the checksummed owner address (via `getAddress()`) with the `0x` prefix stripped, and `reversed` means the hex string is reversed character-by-character. This scheme ensures a unique, deterministic mapping from owner to wallet.
+
+### Sub-Wallets
+
+Each owner can create additional wallets by providing a **custom salt**. These sub-wallets share the same owner key but have distinct addresses.
+
+| Wallet Type | Salt | Typical Use |
+|-------------|------|-------------|
+| Master | `keccak256("b402-" + reversed(owner))` | Primary wallet, auto-computed |
+| Sub-wallet | Any custom `bytes32` value | Ring-fenced budgets, per-project wallets |
+
+Up to 10 sub-wallets can be deployed in a single request.
+
+### Bootstrap Initialization
+
+When a wallet is deployed, it is initialized through the **Bootstrap** contract, which:
+
+1. Installs the K1Validator module with the owner address
+2. Sets the wallet to a ready state
+3. Returns control to the factory
+
+The bootstrap is a one-time operation baked into the `factoryData` field of the first UserOp.
+
+## Contract Addresses
+
+| Contract | Address | Purpose |
+|----------|---------|---------|
+| EntryPoint v0.7 | `0x0000000071727De22E5E9d8BAf0edAc6f37da032` | ERC-4337 singleton, executes UserOps |
+| Nexus Account Factory | `0x0000006648ED9B2B842552BE63Af870bC74af837` | Deploys smart wallets via CREATE2 |
+| Nexus Bootstrap | `0x0000003eDf18913c01cBc482C978bBD3D6E8ffA3` | Initializes wallet modules on deploy |
+| K1 Validator | Configured via `K1_VALIDATOR_ADDRESS` env | ECDSA signature validation module |
+
+## UserOperation v0.7 Format
+
+b402 uses the [ERC-4337 v0.7 **unpacked** format](https://eips.ethereum.org/EIPS/eip-4337). Every field is a separate top-level property (as opposed to the packed format where paymaster fields are concatenated).
+
+### Field Reference
+
+```typescript
+interface UserOperation {
+  // Core fields
+  sender: string              // Smart wallet address
+  nonce: string               // Anti-replay, from EntryPoint.getNonce()
+  callData: string            // Encoded batch call (approve + transfer)
+
+  // Gas fields
+  callGasLimit: string        // Gas for the main execution
+  verificationGasLimit: string // Gas for signature validation
+  preVerificationGas: string  // Gas for bundler overhead
+
+  // Fee fields
+  maxFeePerGas: string        // EIP-1559 max fee
+  maxPriorityFeePerGas: string // EIP-1559 priority fee
+
+  // Factory fields (only on first UserOp, deploys the wallet)
+  factory?: string            // Nexus Account Factory address
+  factoryData?: string        // Encoded bootstrap + salt + owner
+
+  // Paymaster fields (sponsoring gas)
+  paymaster?: string          // Paymaster contract address
+  paymasterVerificationGasLimit?: string
+  paymasterPostOpGasLimit?: string
+  paymasterData?: string      // Signed paymaster authorization
+
+  // Signature
+  signature: string           // Owner's ECDSA signature over the UserOp hash
+}
+```
+
+### Key Points
+
+- **`sender`** is the smart wallet address, not the owner EOA.
+- **`nonce`** is managed by the EntryPoint contract, not the wallet itself. It includes a key + sequence pair for parallel nonce channels.
+- **`factory` and `factoryData`** are only present on the first UserOp when the wallet has not been deployed yet. The EntryPoint calls the factory to deploy the wallet before executing the UserOp.
+- **`signature`** is initially set to a dummy value (`0x`) by the facilitator. The client signs the `userOpHash` and replaces it before settlement.
+
+## How the Facilitator Builds a UserOp
+
+When a client sends a payment request to `/wallet/verify`, the facilitator constructs the unsigned UserOp through these steps:
+
+### Step 1: Validate the Request
+
+```typescript
+// Client sends:
+const request: VerifyWalletRequest = {
+  walletAddress: "0x...",      // Smart wallet address
+  transactions: [
+    {
+      to: "0xRecipient...",    // Payment recipient
+      amount: "1000000000000000000", // 1 USDT (18 decimals)
+      token: "0x55d398326f99059fF775485246999027B3197955" // USDT on BSC
+    }
+  ]
+}
+```
+
+### Step 2: Check Wallet State
+
+The facilitator checks:
+- Whether the wallet is deployed (determines if `factory`/`factoryData` are needed)
+- The wallet's current nonce from the EntryPoint
+- The wallet's token balance
+
+### Step 3: Inject Protocol Fee
+
+The facilitator adds its fee to the transaction list. The fee is configured via `WALLET_PAYMENT_FEE` (percentage) and sent to `WALLET_FEE_RECIPIENT`.
+
+### Step 4: Encode Batch callData
+
+The `callData` encodes a batch execution with two operations:
+
+1. **Approve** - approve the token for transfer
+2. **Transfer** - send tokens to the recipient (and fee to the fee recipient)
+
+```typescript
+// Pseudocode for batch encoding
+const calls: BatchCall[] = [
+  { target: tokenAddress, value: 0n, data: encodeApprove(recipient, amount) },
+  { target: tokenAddress, value: 0n, data: encodeTransfer(recipient, amount) },
+  { target: tokenAddress, value: 0n, data: encodeTransfer(feeRecipient, feeAmount) }
+]
+
+const callData = encodeExecuteBatch(calls)
+```
+
+### Step 5: Sign Paymaster Data
+
+The facilitator's paymaster signs the UserOp to authorize gas sponsorship. The paymaster signature proves the facilitator agrees to cover gas costs.
+
+### Step 6: Compute UserOp Hash
+
+The `userOpHash` is computed following the ERC-4337 spec:
+```
+userOpHash = keccak256(abi.encode(
+  keccak256(pack(userOp)),
+  entryPointAddress,
+  chainId
+))
+```
+
+### Step 7: Return to Client
+
+```typescript
+// Facilitator responds:
+const response: VerifyWalletResponse = {
+  isValid: true,
+  payer: "0xWalletAddress...",
+  userOp: { /* unsigned UserOp with dummy signature */ },
+  userOpHash: "0x...",         // Hash the client must sign
+  feeAmount: "10000000000000000", // Protocol fee in wei
+  totalAmount: "1010000000000000000" // Payment + fee
+}
+```
+
+## The Full Payment Flow
+
+<Frame>
+  <img src="/public/images/diagrams/smart-wallet-flow.svg" alt="Smart wallet payment flow: Client, Facilitator, and Bundler/Chain with UserOp lifecycle" />
+</Frame>
+
+## Paymaster Flow
+
+The paymaster enables gasless transactions by sponsoring the gas cost and recovering it from the payment token.
+
+### How It Works
+
+1. The facilitator's **paymaster signer** (`PAYMASTER_SIGNER_KEY`) signs the UserOp during `/wallet/verify`
+2. The signed paymaster data is included in the `paymasterData` field
+3. When the bundler submits the UserOp, the EntryPoint calls the paymaster's `validatePaymasterUserOp()`
+4. The paymaster verifies its own signature and locks the gas deposit
+5. After execution, the paymaster's `postOp()` is called to settle the gas accounting
+6. The gas cost (in BNB) is effectively deducted from the payment token amount
+
+### Fee Structure
+
+| Fee | Env Variable | Description |
+|-----|-------------|-------------|
+| Payment fee | `WALLET_PAYMENT_FEE` | Percentage of the payment amount |
+| Deployment fee | `WALLET_DEPLOYMENT_FEE` | One-time fee for wallet deployment |
+| Fee recipient | `WALLET_FEE_RECIPIENT` | Address that receives protocol fees |
+
+## Batch Execution
+
+One of the key advantages of smart wallets is **batch execution**. Multiple operations are encoded into a single `callData` and executed atomically.
+
+### Approve + Transfer Pattern
+
+With EOA wallets, you need a separate approval transaction before the payment. Smart wallets batch both into one UserOp:
+
+```typescript
+// Single UserOp executes both:
+// 1. token.approve(relayer, amount)
+// 2. token.transfer(recipient, paymentAmount)
+// 3. token.transfer(feeRecipient, feeAmount)
+```
+
+This means:
+- No separate approval transaction
+- No gas for approval (it is part of the same UserOp)
+- Atomic execution (both succeed or both revert)
+
+## Deploy-on-First-Use
+
+Smart wallets follow a deploy-on-first-use pattern:
+
+1. The wallet address is computed off-chain using the factory, bootstrap, and salt
+2. Tokens can be sent to this address even before the wallet contract exists
+3. On the first payment, the UserOp includes `factory` and `factoryData` fields
+4. The EntryPoint deploys the wallet, then executes the payment in the same transaction
+
+```typescript
+// First UserOp includes deployment data:
+const firstUserOp: UserOperation = {
+  sender: "0xComputedWalletAddress...",
+  factory: "0x0000006648ED9B2B842552BE63Af870bC74af837",
+  factoryData: "0x...", // encoded: bootstrap address + salt + owner + modules
+  callData: "0x...",    // approve + transfer batch
+  // ... gas and paymaster fields
+}
+```
+
+After deployment, subsequent UserOps omit the `factory` and `factoryData` fields.
+
+## Code Example: Full Flow
+
+```typescript
+import { ethers } from "ethers"
+
+const FACILITATOR_URL = "https://facilitator.b402.ai"
+
+// Step 1: Request an unsigned UserOp
+const verifyRes = await fetch(`${FACILITATOR_URL}/wallet/verify`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    walletAddress: "0xYourSmartWallet...",
+    transactions: [{
+      to: "0xRecipient...",
+      amount: "1000000000000000000", // 1 USDT
+      token: "0x55d398326f99059fF775485246999027B3197955"
+    }]
+  })
+})
+
+const { userOp, userOpHash, feeAmount, totalAmount } = await verifyRes.json()
+console.log(`Fee: ${ethers.formatUnits(feeAmount, 18)} USDT`)
+console.log(`Total: ${ethers.formatUnits(totalAmount, 18)} USDT`)
+
+// Step 2: Sign the UserOp hash with the owner key
+const ownerWallet = new ethers.Wallet("0xOwnerPrivateKey...")
+const signature = await ownerWallet.signMessage(ethers.getBytes(userOpHash))
+
+// Step 3: Submit the signed UserOp
+const settleRes = await fetch(`${FACILITATOR_URL}/wallet/settle`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    userOp,
+    signature
+  })
+})
+
+const { success, txHash, payments } = await settleRes.json()
+console.log(`Transaction: https://bscscan.com/tx/${txHash}`)
+```
+
+## Getting Your Master Wallet Address
+
+You can compute or fetch the master wallet address for any owner:
+
+```typescript
+// Via API
+const res = await fetch(`${FACILITATOR_URL}/wallet/0xOwnerAddress.../master`)
+const { masterWalletAddress, salt } = await res.json()
+
+// Or compute locally
+import { keccak256, toUtf8Bytes } from "ethers"
+
+function getMasterSalt(ownerAddress: string): string {
+  const normalized = ownerAddress.toLowerCase()
+  const reversed = normalized.split("").reverse().join("")
+  return keccak256(toUtf8Bytes("b402-" + reversed))
+}
+```
+
+## Incognito Payments via Smart Wallet
+
+Smart wallets can also execute privacy (incognito) operations by wrapping RAILGUN calls in a UserOp. The `/wallet/incognito/verify` endpoint accepts raw contract calls:
+
+```typescript
+const verifyRes = await fetch(`${FACILITATOR_URL}/wallet/incognito/verify`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    ownerEOA: "0xOwner...",
+    walletAddress: "0xSmartWallet...",
+    calls: [
+      {
+        to: "0xRailgunContract...",
+        value: "0",
+        data: "0x..." // Encoded shield/transact/unshield call
+      }
+    ]
+  })
+})
+```
+
+Up to 3 calls can be batched in a single incognito UserOp.
+
+## Further Reading
+
+- [Wallet Concepts](/concepts/wallet) - High-level overview of EOA vs smart wallets
+- [Privacy Deep Dive](/guides/privacy-incognito-deep-dive) - RAILGUN integration details
+- [Self-Hosting](/guides/self-hosting) - Run your own facilitator
+- [ERC-4337 Spec](https://eips.ethereum.org/EIPS/eip-4337) - Account Abstraction specification
+- [ERC-7579 Spec](https://eips.ethereum.org/EIPS/eip-7579) - Modular smart account standard

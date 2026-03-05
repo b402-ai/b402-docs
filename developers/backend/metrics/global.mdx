@@ -1,0 +1,178 @@
+---
+title: 'Global Metrics'
+description: 'Protocol-wide transaction statistics'
+---
+
+`GET /metrics` returns protocol-wide aggregate statistics. No authentication required. Responses are cached for **1 hour**.
+
+```
+GET /metrics
+```
+
+## Response
+
+### 200 - Global Stats
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `transactions` | `number` | Total transaction count across the protocol |
+| `volume` | `number` | Aggregate USD volume |
+| `buyers` | `number` | Unique buyer addresses |
+| `sellers` | `number` | Unique seller addresses |
+
+All data is sourced from the `AuthorizationTransfers` table.
+
+```json
+{
+  "transactions": 15234,
+  "volume": 1523400.50,
+  "buyers": 342,
+  "sellers": 89
+}
+```
+
+## Examples
+
+### cURL
+
+```bash
+curl https://backend.b402.ai/metrics
+```
+
+### TypeScript
+
+```typescript
+const response = await fetch('https://backend.b402.ai/metrics');
+const metrics = await response.json();
+
+console.log('Total transactions:', metrics.transactions);
+console.log('USD volume:', metrics.volume);
+console.log('Unique buyers:', metrics.buyers);
+console.log('Unique sellers:', metrics.sellers);
+```
+
+---
+
+## Individual Buyer Metrics
+
+`GET /metrics/buyers/:address` returns stats for a single buyer. No authentication required. Cached for **1 hour**.
+
+```
+GET /metrics/buyers/:address
+```
+
+### Path Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `address` | `string` | Buyer wallet address (0x-prefixed, 40 hex characters) |
+
+### 200 - Buyer Stats
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `transactions` | `number` | Transaction count for this buyer |
+| `volume` | `number` | Aggregate USD volume |
+| `sellers` | `number` | Unique sellers transacted with |
+| `latest` | `string` | ISO 8601 timestamp of most recent transaction |
+
+```json
+{
+  "transactions": 150,
+  "volume": 15000.50,
+  "sellers": 12,
+  "latest": "2024-03-01T12:00:00.000Z"
+}
+```
+
+### Examples
+
+#### cURL
+
+```bash
+curl https://backend.b402.ai/metrics/buyers/0xAbC1234567890aBcDeF1234567890AbCdEf123456
+```
+
+#### TypeScript
+
+```typescript
+const address = '0xAbC1234567890aBcDeF1234567890AbCdEf123456';
+const response = await fetch(`https://backend.b402.ai/metrics/buyers/${address}`);
+const buyer = await response.json();
+
+console.log('Transactions:', buyer.transactions);
+console.log('Volume:', buyer.volume);
+console.log('Unique sellers:', buyer.sellers);
+console.log('Latest:', buyer.latest);
+```
+
+---
+
+## Individual Seller Metrics
+
+`GET /metrics/sellers/:address` returns stats for a single seller. No authentication required. Cached for **1 hour**.
+
+```
+GET /metrics/sellers/:address
+```
+
+### Path Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `address` | `string` | Seller wallet address (0x-prefixed, 40 hex characters) |
+
+### 200 - Seller Stats
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `transactions` | `number` | Transaction count for this seller |
+| `volume` | `number` | Aggregate USD volume |
+| `buyers` | `number` | Unique buyers transacted with |
+| `latest` | `string` | ISO 8601 timestamp of most recent transaction |
+
+```json
+{
+  "transactions": 89,
+  "volume": 8900.00,
+  "buyers": 45,
+  "latest": "2024-03-01T10:30:00.000Z"
+}
+```
+
+### Examples
+
+#### cURL
+
+```bash
+curl https://backend.b402.ai/metrics/sellers/0x9876543210FeDcBa9876543210FeDcBa98765432
+```
+
+#### TypeScript
+
+```typescript
+const address = '0x9876543210FeDcBa9876543210FeDcBa98765432';
+const response = await fetch(`https://backend.b402.ai/metrics/sellers/${address}`);
+const seller = await response.json();
+
+console.log('Transactions:', seller.transactions);
+console.log('Volume:', seller.volume);
+console.log('Unique buyers:', seller.buyers);
+console.log('Latest:', seller.latest);
+```
+
+## Address Validation
+
+Both `:address` endpoints validate that the address is 0x-prefixed with exactly 40 hexadecimal characters. Invalid addresses return a `400` with `validation_error`.
+
+## Error Codes
+
+| Code | HTTP Status | Description |
+|------|-------------|-------------|
+| `validation_error` | 400 | Invalid address format |
+
+## Related
+
+- [Buyer Leaderboard](/developers/backend/metrics/buyers) - Paginated buyer rankings
+- [Seller Leaderboard](/developers/backend/metrics/sellers) - Paginated seller rankings
+- [Transactions](/developers/backend/transactions) - Query individual transactions

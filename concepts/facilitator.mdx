@@ -1,63 +1,78 @@
 ---
 title: Facilitator
-description: 'Verification and settlement layer for b402 payments'
+description: 'Verification and settlement service for b402 payments'
 icon: circle-check
 ---
 
-In b402, the facilitator is a trust-minimized and off-chain service that handles the **verification and settlement** of payments between agents (clients) and service providers (servers).  
+The facilitator is the off-chain service that bridges HTTP requests and blockchain settlement. It verifies payment payloads, executes on-chain transactions, and returns settlement proofs.
 
-It serves as the connective tissue between **HTTP-level requests** and **on-chain execution**.
+The facilitator never holds user funds or keys. It validates signatures, pays gas, and relays transactions.
 
-## What is a Facilitator?
+## What It Does
 
-A facilitator is an independent service that:
+| Capability | Description |
+|------------|-------------|
+| **Verify payments** | Validate EIP-712 signatures against on-chain state |
+| **Settle transactions** | Execute token transfers via the Relayer contract |
+| **Smart wallet ops** | Build and submit ERC-4337 UserOperations |
+| **Deploy wallets** | Create deterministic Nexus smart wallets |
+| **Incognito payments** | Process RAILGUN shield/unshield operations |
+| **Swap execution** | PancakeSwap V3 token swaps with payment |
 
-- **Verifies** the validity of payment payloads submitted by clients.  
-- **Settles** payments or identity proofs on-chain on behalf of servers.  
+## Two Payment Models
 
-By using a facilitator, servers can accept crypto-native payments without needing direct blockchain infrastructure or custom verification logic.  
+### EOA Payments
 
-This design keeps b402 integrations light, fast, and modular.
+For standard wallets (MetaMask, private key wallets):
 
-## Facilitator Responsibilities
+1. Server sends payment requirements to client
+2. Client signs EIP-712 `TransferWithAuthorization` payload
+3. Server forwards to facilitator `/verify`
+4. Facilitator checks signature, nonce, time window, and balances
+5. Server calls `/settle`
+6. Facilitator calls `transferWithAuthorization()` on the Relayer contract and pays gas
 
-- **Verify payments:** Confirm that the client’s submitted payload satisfies the server’s declared payment terms.  
-- **Settle transactions:** Post valid transactions to the blockchain and monitor for confirmation.  
-- **Provide signed responses:** Return structured verification and settlement responses that the server can use to authorize access.  
+### Smart Wallet Payments
 
-The facilitator never holds user funds or keys. It simply verifies signatures, executes transactions, and returns proofs of settlement.
+For ERC-7579 Nexus smart wallets:
 
-## Why Use a Facilitator?
+1. Server sends payment requirements to client
+2. Client calls facilitator `/wallet/verify` with wallet address and payment details
+3. Facilitator builds unsigned UserOp with fee injection and paymaster signature
+4. Client signs the UserOp hash
+5. Client sends signed UserOp to `/wallet/settle`
+6. Facilitator submits to ERC-4337 bundler
+7. Bundler executes on-chain (batch: approve + transfer)
 
-Using a facilitator simplifies the integration process for service providers and ensures protocol-level consistency:
+Smart wallet payments are fully gasless for the user. The paymaster covers gas costs, and the fee is deducted from the payment amount.
 
-- **Reduced complexity**: No need to maintain blockchain nodes or custom verification code.  
-- **Standardized flows**: Shared verification and settlement semantics across all b402 integrations.  
-- **Faster onboarding**: Start accepting payments instantly without blockchain-specific logic.  
-- **Scalable trust model**: Facilitators can be public, private, or self-hosted, depending on your architecture.  
+## Official Facilitator
 
-While verification can be implemented locally, using a facilitator provides uniform behavior across the network and simplifies adoption.
+The hosted b402 facilitator is live at:
 
-## Live Facilitators
+**Base URL:** `https://facilitator.b402.ai`
 
-The [official b402 Facilitator](/facilitator) is currently live on BNB Chain mainnet and testnet, supporting BNB, USDT, USD1, and a growing list of BEP-20 tokens. Facilitator deployments are also extending coverage to other EVM networks such as Base. See the [Facilitator guide](/facilitator) for architecture details and integration examples.
+**Supported networks:** BNB Chain mainnet, Base mainnet, BNB Chain testnet
 
-We encourage community partners, node operators, and infrastructure teams to deploy their own facilitators to extend coverage across regions and networks.  
-Additional endpoints will be listed here as the ecosystem evolves.
+**Supported tokens:** USDT, USDC, USD1
 
+**Rate limit:** 30 requests per minute per IP
+
+See the [Facilitator API Reference](/developers/facilitator/overview) for full endpoint documentation.
+
+## Self-Hosting
+
+Facilitators can be self-hosted. You need:
+
+- A funded relayer wallet (for gas)
+- MongoDB for wallet state
+- RPC endpoint for the target chain(s)
+- Bundler RPC for smart wallet operations
+
+See the [Self-Hosting Guide](/guides/self-hosting) for setup instructions.
 
 ## Interaction Flow
 
-Below is the typical end-to-end process for verification and settlement in **b402**:
-
-1. **Client (agent)** sends an HTTP request to a b402-enabled resource server.  
-2. **Server** responds with `402 Payment Required`, including structured payment details (amount, token, recipient, scheme).  
-3. **Client** constructs a signed payment payload according to the chosen scheme.  
-4. **Client** resends the request with an `X-PAYMENT` header containing the payload.  
-5. **Server** forwards the payload and payment details to the **facilitator** via the `/verify` endpoint.  
-6. **Facilitator** validates the payload using the specified scheme and network parameters.  
-7. **Facilitator** returns a verification response (`valid` or `invalid`) to the server.  
-8. **Server**, upon valid verification, fulfills the request and optionally calls `/settle` to finalize payment.  
-9. **Facilitator** executes the on-chain settlement transaction and waits for confirmation.  
-10. **Facilitator** returns a `Payment Execution Response` containing settlement metadata.  
-11. **Server** returns `200 OK` with the requested resource and an `X-PAYMENT-RESPONSE` header containing encoded settlement data.  
+<Frame>
+  <img src="/public/images/diagrams/payment-flow.svg" alt="Facilitator interaction flow: verify, settle, and on-chain settlement" />
+</Frame>

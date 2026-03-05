@@ -1,0 +1,49 @@
+---
+title: 'Authentication'
+description: 'API authentication for the b402 Facilitator'
+icon: 'lock-open'
+---
+
+## Public Endpoints
+
+Most Facilitator endpoints require **no authentication**. The standard payment flow (verify, settle), wallet queries, swap quotes, and health checks are all publicly accessible.
+
+This means buyers, sellers, and AI agents can interact with the Facilitator without registering or obtaining API keys.
+
+**Public endpoints include:**
+- Payment verification and settlement (EOA and Smart Wallet)
+- Wallet listing and master wallet lookup
+- Swap quotes and execution
+- Incognito operations
+- Health check
+
+## Admin Endpoints
+
+A small set of endpoints used for internal operations require the `x-admin-api-key` header. These are currently limited to wallet deployment operations.
+
+```bash
+curl -X POST https://facilitator.b402.ai/api/v1/deploy/settle \
+  -H "Content-Type: application/json" \
+  -H "x-admin-api-key: your-admin-key" \
+  -d '{ ... }'
+```
+
+| Header | Value | Required For |
+|--------|-------|-------------|
+| `x-admin-api-key` | Admin API key string | Deploy operations |
+
+<Warning>
+Admin API keys are used internally by b402 services. If you are integrating as a buyer or seller, you do not need an admin key.
+</Warning>
+
+## Summary
+
+| Endpoint Type | Auth Required | Header |
+|---------------|---------------|--------|
+| Verify / Settle (EOA) | No | -- |
+| Verify / Settle (Smart Wallet) | No | -- |
+| Wallet queries | No | -- |
+| Swap operations | No | -- |
+| Incognito operations | No | -- |
+| Health check | No | -- |
+| Deploy operations | Yes | `x-admin-api-key` |

@@ -3,107 +3,25 @@
     "theme": "mint",
     "name": "b402 Docs",
     "colors": {
-        "primary": "#71717a",
-        "light": "#ffffff",
-        "dark": "#27272a"
+        "primary": "#F4B526",
+        "light": "#F4B526",
+        "dark": "#F4B526"
     },
     "favicon": "/public/fav-icon.svg",
-    "navigation": {
-        "tabs": [
-            {
-                "tab": "Documentation",
-                "groups": [
-                    {
-                        "group": "Introduction",
-                        "pages": [
-                            "introduction",
-                            "community"
-                        ]
-                    },
-                    {
-                        "group": "b402 Protocol",
-                        "pages": [
-                            "b402-protocol/introduction",
-                            "b402-protocol/supported-tokens"
-                        ]
-                    },
-                    {
-                        "group": "b402 Services",
-                        "pages": [
-                            "b402-services/b402-facilitator",
-                            "b402-services/b402scan"
-                        ]
-                    },
-                    {
-                        "group": "Getting Started",
-                        "pages": [
-                            "get-started/quickstart",
-                            "get-started/buyer",
-                            "get-started/seller"
-                        ]
-                    },
-                    {
-                        "group": "Concepts",
-                        "pages": [
-                            "concepts/http-402",
-                            "concepts/client-server",
-                            "concepts/facilitator",
-                            "concepts/relayer",
-                            "concepts/wallet",
-                            "concepts/network-token"
-                        ]
-                    },
-                    {
-                        "group": "Resources",
-                        "pages": [
-                            "resources/faq"
-                        ]
-                    }
-                ]
-            },
-            {
-                "tab": "Developers",
-                "groups": [
-                    {
-                        "group": "Introduction",
-                        "pages": [
-                            "developers/introduction",
-                            "developers/support"
-                        ]
-                    },
-                    {
-                        "group": "b402 Facilitator",
-                        "pages": [
-                            "developers/facilitator/get-started",
-                            {
-                                "group": "b402 Facilitator API",
-                                "icon": "webhook",
-                                "pages": [
-                                    "developers/facilitator/api-reference/facilitator/health-check",
-                                    "developers/facilitator/api-reference/facilitator/verify-payment-payload",
-                                    "developers/facilitator/api-reference/facilitator/settle-verified-payment"
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            }
-        ]
-    },
     "logo": {
-        "light": "/public/logo/logo-light.svg",
-        "dark": "/public/logo/logo-light.svg"
+        "light": "/public/logo/b402-full-logo.png",
+        "dark": "/public/logo/b402-full-logo.png"
     },
     "api": {
         "mdx": {
-            "server": "https://api.b402.ai"
+            "server": "https://facilitator.b402.ai"
         }
     },
     "background": {
         "decoration": "grid",
         "color": {
             "light": "#ffffff",
-            "dark": "#131419"
+            "dark": "#0D0D0D"
         }
     },
     "navbar": {
@@ -117,7 +35,184 @@
         "socials": {
             "twitter": "https://twitter.com/b402ai",
             "discord": "https://discord.com/invite/3ZVJKjcjgQ",
-            "github": "https://github.com/Vistara-Labs/b402"
+            "github": "https://github.com/b402-ai"
         }
+    },
+    "navigation": {
+        "tabs": [
+            {
+                "tab": "Documentation",
+                "groups": [
+                    {
+                        "group": "Overview",
+                        "pages": [
+                            "introduction",
+                            "architecture",
+                            "community"
+                        ]
+                    },
+                    {
+                        "group": "Concepts",
+                        "pages": [
+                            "concepts/http-402",
+                            "concepts/client-server",
+                            "concepts/facilitator",
+                            "concepts/relayer",
+                            "concepts/wallet",
+                            "concepts/privacy-incognito",
+                            "concepts/agent-identity",
+                            "concepts/network-token-support"
+                        ]
+                    },
+                    {
+                        "group": "Get Started",
+                        "pages": [
+                            "get-started/quickstart",
+                            "get-started/buyer",
+                            "get-started/buyer-smart-wallet",
+                            "get-started/seller",
+                            "get-started/agent-cookbook"
+                        ]
+                    },
+                    {
+                        "group": "Guides",
+                        "pages": [
+                            "guides/smart-wallet-deep-dive",
+                            "guides/privacy-incognito-deep-dive",
+                            "guides/self-hosting",
+                            "guides/chapter-0-campaign"
+                        ]
+                    },
+                    {
+                        "group": "b402 Services",
+                        "pages": [
+                            "b402-services/b402-facilitator",
+                            "b402-services/b402scan",
+                            "b402-services/community"
+                        ]
+                    },
+                    {
+                        "group": "Resources",
+                        "pages": [
+                            "resources/faq",
+                            "resources/glossary",
+                            "resources/contract-addresses",
+                            "resources/changelog"
+                        ]
+                    }
+                ]
+            },
+            {
+                "tab": "Facilitator API",
+                "groups": [
+                    {
+                        "group": "Overview",
+                        "pages": [
+                            "developers/facilitator/overview",
+                            "developers/facilitator/authentication",
+                            "developers/facilitator/api-reference/facilitator/health-check"
+                        ]
+                    },
+                    {
+                        "group": "EOA Payments",
+                        "pages": [
+                            "developers/facilitator/api-reference/eoa-payments/verify",
+                            "developers/facilitator/api-reference/eoa-payments/settle"
+                        ]
+                    },
+                    {
+                        "group": "Smart Wallet Payments",
+                        "pages": [
+                            "developers/facilitator/api-reference/smart-wallet/verify",
+                            "developers/facilitator/api-reference/smart-wallet/settle"
+                        ]
+                    },
+                    {
+                        "group": "Wallet Deployment",
+                        "pages": [
+                            "developers/facilitator/api-reference/wallet-deployment/deploy-verify",
+                            "developers/facilitator/api-reference/wallet-deployment/deploy-settle",
+                            "developers/facilitator/api-reference/wallet-deployment/list-wallets",
+                            "developers/facilitator/api-reference/wallet-deployment/get-master-wallet",
+                            "developers/facilitator/api-reference/wallet-deployment/claim"
+                        ]
+                    },
+                    {
+                        "group": "Incognito Operations",
+                        "pages": [
+                            "developers/facilitator/api-reference/incognito/verify",
+                            "developers/facilitator/api-reference/incognito/settle"
+                        ]
+                    },
+                    {
+                        "group": "Swap",
+                        "pages": [
+                            "developers/facilitator/api-reference/swap/quote",
+                            "developers/facilitator/api-reference/swap/health",
+                            "developers/facilitator/api-reference/swap/execute",
+                            "developers/facilitator/api-reference/swap/payment-intent",
+                            "developers/facilitator/api-reference/swap/gasless-approve",
+                            "developers/facilitator/api-reference/swap/wallet-verify",
+                            "developers/facilitator/api-reference/swap/wallet-settle"
+                        ]
+                    },
+                    {
+                        "group": "Reference",
+                        "pages": [
+                            "developers/errors",
+                            "developers/rate-limit"
+                        ]
+                    }
+                ]
+            },
+            {
+                "tab": "Backend API",
+                "groups": [
+                    {
+                        "group": "Overview",
+                        "pages": [
+                            "developers/backend/overview"
+                        ]
+                    },
+                    {
+                        "group": "Privacy",
+                        "pages": [
+                            "developers/backend/privacy/commitments",
+                            "developers/backend/privacy/nullifiers",
+                            "developers/backend/privacy/merkle-proof",
+                            "developers/backend/privacy/unshield",
+                            "developers/backend/privacy/unshield-status"
+                        ]
+                    },
+                    {
+                        "group": "Metrics",
+                        "pages": [
+                            "developers/backend/metrics/global",
+                            "developers/backend/metrics/buyers",
+                            "developers/backend/metrics/sellers"
+                        ]
+                    },
+                    {
+                        "group": "Transactions",
+                        "pages": [
+                            "developers/backend/transactions"
+                        ]
+                    }
+                ]
+            },
+            {
+                "tab": "SDKs",
+                "groups": [
+                    {
+                        "group": "SDK Reference",
+                        "pages": [
+                            "sdks/b402-sdk",
+                            "sdks/b402-express",
+                            "sdks/eip712-signature-guide"
+                        ]
+                    }
+                ]
+            }
+        ]
     }
 }

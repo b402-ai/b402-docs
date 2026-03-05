@@ -1,0 +1,454 @@
+---
+title: 'EIP-712 Signature Guide'
+description: 'Construct and verify EIP-712 payment signatures for b402 manually'
+icon: 'signature'
+---
+
+This guide explains how to construct EIP-712 typed data signatures for b402 payments. While the `b402-sdk` handles this automatically, you may need to build signatures manually when integrating from a non-TypeScript environment, building a custom client, or debugging payment issues.
+
+## What Is EIP-712?
+
+[EIP-712](https://eips.ethereum.org/EIPS/eip-712) is a standard for signing structured, typed data in Ethereum. Instead of signing an opaque hash, the signer sees a human-readable breakdown of exactly what they are authorizing. This prevents blind-signing attacks and makes wallet confirmation screens meaningful.
+
+b402 uses EIP-712 for `TransferWithAuthorization` messages. When a buyer signs one of these messages, they authorize the b402 Relayer contract to transfer a specific amount of tokens from their wallet to a specific recipient. The signature is submitted off-chain to the Facilitator, which executes the transfer on-chain and covers the gas cost.
+
+---
+
+## The b402 Domain Separator
+
+Every EIP-712 signature includes a domain separator that binds the signature to a specific protocol and chain. The b402 domain is:
+
+```typescript
+const EIP712_DOMAIN = {
+  name: 'B402',
+  version: '1',
+  chainId: 56,                    // BNB Chain mainnet (97 for testnet)
+  verifyingContract: '0x590162bf4b50F6576a459B75309eE21D92178A10', // b402 Relayer
+};
+```
+
+| Field | Value | Description |
+|-------|-------|-------------|
+| `name` | `'B402'` | Protocol name. Always `'B402'`. |
+| `version` | `'1'` | Domain version. Always `'1'`. |
+| `chainId` | `56` | BNB Chain mainnet. Use `97` for testnet. |
+| `verifyingContract` | `0x590162bf...` | The b402 Relayer contract address. This is the contract that will execute the transfer. |
+
+<Warning>
+  The `verifyingContract` must match the relayer address for the target network. Using the wrong address will cause signature verification to fail.
+</Warning>
+
+---
+
+## The `TransferWithAuthorization` Type
+
+b402 defines a single EIP-712 type for payment authorization:
+
+```typescript
+const EIP712_TYPES = {
+  TransferWithAuthorization: [
+    { name: 'token', type: 'address' },
+    { name: 'from', type: 'address' },
+    { name: 'to', type: 'address' },
+    { name: 'value', type: 'uint256' },
+    { name: 'validAfter', type: 'uint256' },
+    { name: 'validBefore', type: 'uint256' },
+    { name: 'nonce', type: 'bytes32' },
+  ],
+};
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `token` | `address` | The ERC-20 token contract address being transferred (e.g., USD1, USDT, USDC). |
+| `from` | `address` | The payer's wallet address. Must match the signer. |
+| `to` | `address` | The recipient's wallet address (the seller). |
+| `value` | `uint256` | The transfer amount in the token's smallest unit (wei). For 18-decimal tokens on BSC, `1.0` token = `1000000000000000000`. |
+| `validAfter` | `uint256` | Unix timestamp (seconds). The authorization is not valid before this time. Typically set to `0` (valid immediately). |
+| `validBefore` | `uint256` | Unix timestamp (seconds). The authorization expires after this time. Typically set to current time + 1 hour. |
+| `nonce` | `bytes32` | A unique 32-byte random value. Prevents replay attacks. Each authorization must use a unique nonce. |
+
+---
+
+## Step-by-Step Signing with ethers.js v6
+
+### Step 1. Set Up the Wallet
+
+```typescript
+import { ethers } from 'ethers';
+
+const provider = new ethers.JsonRpcProvider('https://bsc-dataseed1.binance.org');
+const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+```
+
+### Step 2. Define Constants
+
+```typescript
+// Token address (USD1 on BNB Chain)
+const TOKEN_ADDRESS = '0x8d0d000ee44948fc98c9b98a4fa4921476f08b0d';
+
+// b402 Relayer contract
+const RELAYER_ADDRESS = '0x590162bf4b50F6576a459B75309eE21D92178A10';
+
+// Seller's wallet
+const RECIPIENT = '0x0553B926D6a599CAAc56377042cA6B40dd0b7F4e';
+```
+
+### Step 3. Construct the Authorization Message
+
+```typescript
+// Generate a unique nonce (32 random bytes)
+const nonce = ethers.hexlify(ethers.randomBytes(32));
+
+// Set validity window
+const validAfter = 0; // Valid immediately
+const validBefore = Math.floor(Date.now() / 1000) + 3600; // Expires in 1 hour
+
+// Convert amount to wei (18 decimals on BSC)
+const amount = ethers.parseUnits('0.01', 18); // 0.01 tokens
+
+const authorization = {
+  token: TOKEN_ADDRESS,
+  from: wallet.address,
+  to: RECIPIENT,
+  value: amount.toString(),
+  validAfter: validAfter,
+  validBefore: validBefore,
+  nonce: nonce,
+};
+```
+
+### Step 4. Define the EIP-712 Domain and Types
+
+```typescript
+const domain = {
+  name: 'B402',
+  version: '1',
+  chainId: 56,
+  verifyingContract: RELAYER_ADDRESS,
+};
+
+const types = {
+  TransferWithAuthorization: [
+    { name: 'token', type: 'address' },
+    { name: 'from', type: 'address' },
+    { name: 'to', type: 'address' },
+    { name: 'value', type: 'uint256' },
+    { name: 'validAfter', type: 'uint256' },
+    { name: 'validBefore', type: 'uint256' },
+    { name: 'nonce', type: 'bytes32' },
+  ],
+};
+```
+
+### Step 5. Sign the Message
+
+```typescript
+const signature = await wallet.signTypedData(domain, types, authorization);
+
+console.log('Signature:', signature);
+// e.g., '0x1234abcd...' (65-byte hex string)
+```
+
+<Note>
+  `wallet.signTypedData()` is the ethers.js v6 method. In ethers v5, use `wallet._signTypedData()`.
+</Note>
+
+---
+
+## Submitting to the Facilitator
+
+After signing, construct the payload and submit it to the Facilitator API for verification and settlement.
+
+### Payload Structure
+
+```typescript
+const payload = {
+  paymentPayload: {
+    token: TOKEN_ADDRESS,
+    payload: {
+      authorization: authorization,
+      signature: signature,
+    },
+  },
+  paymentRequirements: {
+    network: 'mainnet',
+    relayerContract: RELAYER_ADDRESS,
+  },
+};
+```
+
+### Verify the Signature
+
+```bash
+curl -X POST https://facilitator.b402.ai/api/v1/verify \
+  -H "Content-Type: application/json" \
+  -d '{
+    "paymentPayload": {
+      "token": "0x8d0d000ee44948fc98c9b98a4fa4921476f08b0d",
+      "payload": {
+        "authorization": {
+          "token": "0x8d0d000ee44948fc98c9b98a4fa4921476f08b0d",
+          "from": "0xYourWalletAddress",
+          "to": "0xRecipientAddress",
+          "value": "10000000000000000",
+          "validAfter": 0,
+          "validBefore": 1735693200,
+          "nonce": "0xabcdef..."
+        },
+        "signature": "0x1234abcd..."
+      }
+    },
+    "paymentRequirements": {
+      "network": "mainnet",
+      "relayerContract": "0x590162bf4b50F6576a459B75309eE21D92178A10"
+    }
+  }'
+```
+
+**Verify Response**
+
+```json
+{
+  "isValid": true,
+  "payer": "0xYourWalletAddress"
+}
+```
+
+If invalid:
+```json
+{
+  "isValid": false,
+  "invalidReason": "Insufficient allowance for relayer contract"
+}
+```
+
+### Settle the Payment
+
+Once verified, send the same payload to the settle endpoint:
+
+```bash
+curl -X POST https://facilitator.b402.ai/api/v1/settle \
+  -H "Content-Type: application/json" \
+  -d '{ ... same payload as verify ... }'
+```
+
+**Settle Response**
+
+```json
+{
+  "success": true,
+  "transaction": "0x9f8e7d6c5b4a3210...",
+  "network": "mainnet",
+  "payer": "0xYourWalletAddress",
+  "blockNumber": 45678901
+}
+```
+
+---
+
+## Nonce Generation
+
+Each EIP-712 authorization requires a unique 32-byte nonce. The nonce prevents the same signed message from being submitted twice.
+
+```typescript
+// Recommended: cryptographically random bytes
+const nonce = ethers.hexlify(ethers.randomBytes(32));
+// e.g., '0xa1b2c3d4e5f6...'
+```
+
+The nonce is a `bytes32` value, not a sequential counter. Use cryptographically secure random bytes. The b402 Relayer contract tracks used nonces on-chain and rejects any nonce that has already been consumed.
+
+---
+
+## Full Working Example
+
+Complete script that generates an EIP-712 signature and submits it to the Facilitator:
+
+```typescript
+import { ethers } from 'ethers';
+
+// Configuration
+const PRIVATE_KEY = process.env.PRIVATE_KEY;
+const RPC_URL = 'https://bsc-dataseed1.binance.org';
+const FACILITATOR_URL = 'https://facilitator.b402.ai';
+
+const TOKEN_ADDRESS = '0x8d0d000ee44948fc98c9b98a4fa4921476f08b0d'; // USD1
+const RELAYER_ADDRESS = '0x590162bf4b50F6576a459B75309eE21D92178A10';
+const RECIPIENT = '0x0553B926D6a599CAAc56377042cA6B40dd0b7F4e';
+
+// EIP-712 domain and types
+const domain = {
+  name: 'B402',
+  version: '1',
+  chainId: 56,
+  verifyingContract: RELAYER_ADDRESS,
+};
+
+const types = {
+  TransferWithAuthorization: [
+    { name: 'token', type: 'address' },
+    { name: 'from', type: 'address' },
+    { name: 'to', type: 'address' },
+    { name: 'value', type: 'uint256' },
+    { name: 'validAfter', type: 'uint256' },
+    { name: 'validBefore', type: 'uint256' },
+    { name: 'nonce', type: 'bytes32' },
+  ],
+};
+
+async function main() {
+  if (!PRIVATE_KEY) {
+    throw new Error('Set PRIVATE_KEY environment variable');
+  }
+
+  // Initialize wallet
+  const provider = new ethers.JsonRpcProvider(RPC_URL);
+  const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
+  console.log('Wallet:', wallet.address);
+
+  // Build authorization
+  const authorization = {
+    token: TOKEN_ADDRESS,
+    from: wallet.address,
+    to: RECIPIENT,
+    value: ethers.parseUnits('0.01', 18).toString(),
+    validAfter: 0,
+    validBefore: Math.floor(Date.now() / 1000) + 3600,
+    nonce: ethers.hexlify(ethers.randomBytes(32)),
+  };
+
+  console.log('Authorization:', JSON.stringify(authorization, null, 2));
+
+  // Sign EIP-712 message
+  const signature = await wallet.signTypedData(domain, types, authorization);
+  console.log('Signature:', signature);
+
+  // Build Facilitator payload
+  const payload = {
+    paymentPayload: {
+      token: TOKEN_ADDRESS,
+      payload: {
+        authorization,
+        signature,
+      },
+    },
+    paymentRequirements: {
+      network: 'mainnet',
+      relayerContract: RELAYER_ADDRESS,
+    },
+  };
+
+  // Step 1: Verify
+  console.log('\nVerifying payment...');
+  const verifyRes = await fetch(`${FACILITATOR_URL}/api/v1/verify`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  const verifyData = await verifyRes.json();
+  console.log('Verify result:', verifyData);
+
+  if (!verifyData.isValid) {
+    console.error('Verification failed:', verifyData.invalidReason);
+    process.exit(1);
+  }
+
+  // Step 2: Settle
+  console.log('\nSettling payment...');
+  const settleRes = await fetch(`${FACILITATOR_URL}/api/v1/settle`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  const settleData = await settleRes.json();
+  console.log('Settle result:', settleData);
+
+  if (settleData.success) {
+    console.log(`\nPayment settled: https://bscscan.com/tx/${settleData.transaction}`);
+  } else {
+    console.error('Settlement failed:', settleData.errorReason);
+  }
+}
+
+main().catch(console.error);
+```
+
+---
+
+## Common Errors and Debugging
+
+### Signature Verification Failed
+
+**Cause:** The domain, types, or message values do not match what the Facilitator expects.
+
+**Checklist:**
+- `verifyingContract` must be the relayer address, not the token address
+- `chainId` must match the network (`56` for mainnet, `97` for testnet)
+- `domain.name` must be exactly `'B402'` (case-sensitive)
+- `domain.version` must be `'1'`
+- `authorization.from` must match the signer's address
+
+### Insufficient Allowance
+
+**Cause:** The payer has not approved the relayer contract to spend their tokens.
+
+**Fix:** Before signing, approve the relayer:
+
+```typescript
+const token = new ethers.Contract(TOKEN_ADDRESS, [
+  'function approve(address spender, uint256 amount) returns (bool)',
+], wallet);
+
+const tx = await token.approve(
+  RELAYER_ADDRESS,
+  ethers.MaxUint256, // Unlimited approval
+);
+await tx.wait();
+```
+
+### Nonce Already Used
+
+**Cause:** The same `nonce` value was submitted in a previous authorization that was already settled.
+
+**Fix:** Always generate a fresh random nonce for each payment:
+
+```typescript
+const nonce = ethers.hexlify(ethers.randomBytes(32));
+```
+
+### Authorization Expired
+
+**Cause:** The current block timestamp is past the `validBefore` value.
+
+**Fix:** Set a longer validity window or submit the payment promptly after signing:
+
+```typescript
+// Valid for 1 hour from now
+const validBefore = Math.floor(Date.now() / 1000) + 3600;
+```
+
+### Wrong Token Decimals
+
+**Cause:** Passing a value with incorrect decimal precision.
+
+**Fix:** All supported tokens (USDT, USDC, USD1) use 18 decimals on BNB Chain. Always use `ethers.parseUnits()`:
+
+```typescript
+// Correct: 0.01 tokens with 18 decimals
+const value = ethers.parseUnits('0.01', 18).toString();
+// '10000000000000000'
+
+// Wrong: using 6 decimals (this is NOT BSC)
+const wrong = ethers.parseUnits('0.01', 6).toString();
+// '10000' - too small, payment will fail or be incorrect
+```
+
+---
+
+## Next Steps
+
+- [b402-sdk](/sdks/b402-sdk) - Use the SDK to handle signatures automatically
+- [b402-express](/sdks/b402-express) - Accept payments in your Express.js API
+- [Facilitator API](/developers/facilitator/overview) - Full API reference for verify and settle
+- [Network & Token Support](/concepts/network-token-support) - Supported tokens and addresses

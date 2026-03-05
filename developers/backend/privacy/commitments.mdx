@@ -1,0 +1,85 @@
+---
+title: 'Get Commitments'
+description: 'Retrieve shielded commitments for an address'
+---
+
+`GET /privacy/commitments` returns all shield commitments (privacy deposits) for an Ethereum address. Results are ordered by block number ascending. No authentication required.
+
+```
+GET /privacy/commitments
+```
+
+## Query Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `eoa` | `string` | Yes | Ethereum address (`0x...`) |
+
+## Response
+
+### 200 - Commitments
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `shields` | `array` | List of shield commitment objects |
+| `shields[].transactionHash` | `string` | On-chain transaction hash |
+| `shields[].commitmentHash` | `string` | Poseidon hash of the commitment |
+| `shields[].treeNumber` | `string` | Merkle tree index (e.g., `"0"`) |
+| `shields[].position` | `number` | Leaf position within the tree |
+| `shields[].tokenAddress` | `string` | Shielded token contract address |
+| `shields[].tokenType` | `number` | Token standard (`0` = ERC-20) |
+| `shields[].tokenSubID` | `string` | Sub-identifier (ERC-721/1155), `"0"` for ERC-20 |
+| `shields[].amount` | `string` | Shielded amount in wei |
+| `shields[].fee` | `string` | Shield fee in wei |
+| `shields[].npk` | `string` | Note public key |
+| `shields[].encryptedBundle0` | `string` | Encrypted note data (part 0) |
+| `shields[].encryptedBundle1` | `string` | Encrypted note data (part 1) |
+| `shields[].encryptedBundle2` | `string` | Encrypted note data (part 2) |
+| `shields[].shieldKey` | `string` | Encryption key for the shield note |
+
+### Error Responses
+
+| Status | Code | Description |
+|--------|------|-------------|
+| 400 | `validation_error` | Missing or invalid `eoa` parameter |
+
+## Examples
+
+### cURL
+
+```bash
+curl -G https://backend.b402.ai/privacy/commitments \
+  --data-urlencode "eoa=0xAbC1234567890aBcDeF1234567890AbCdEf123456"
+```
+
+### TypeScript
+
+```typescript
+const params = new URLSearchParams({
+  eoa: '0xAbC1234567890aBcDeF1234567890AbCdEf123456',
+});
+
+const response = await fetch(
+  `https://backend.b402.ai/privacy/commitments?${params}`
+);
+const { shields } = await response.json();
+
+for (const shield of shields) {
+  console.log('Commitment:', shield.commitmentHash);
+  console.log('Token:', shield.tokenAddress);
+  console.log('Amount:', shield.amount);
+  console.log('Tree:', shield.treeNumber, 'Position:', shield.position);
+}
+```
+
+## Notes
+
+- Results are not cached. Each request queries the latest on-chain state.
+- Commitments are ordered by block number ascending (oldest first).
+- The `encryptedBundle` fields contain the note data encrypted with the `shieldKey`. Only the note owner can decrypt these.
+
+## Related
+
+- [Check Nullifiers](/developers/backend/privacy/nullifiers) - Check if commitments have been spent
+- [Get Merkle Proof](/developers/backend/privacy/merkle-proof) - Generate a proof for a commitment position
+- [Backend API Overview](/developers/backend/overview) - Authentication, rate limits, error format

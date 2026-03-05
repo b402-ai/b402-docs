@@ -1,0 +1,81 @@
+# b402 Developer Documentation
+
+> b402 is a gasless crypto payment protocol on BNB Chain that extends HTTP 402 for machine-to-machine payments. Buyers sign payment payloads off-chain; the Facilitator handles gas and on-chain settlement.
+
+## Overview
+- [Introduction](https://docs.b402.ai/introduction): What b402 is, how it works, quick code examples
+- [Architecture](https://docs.b402.ai/architecture): Three-layer architecture (Application, Facilitator, Blockchain)
+
+## Concepts
+- [HTTP 402 Flow](https://docs.b402.ai/concepts/http-402): Request → 402 → Pay → Access lifecycle
+- [Client-Server Model](https://docs.b402.ai/concepts/client-server): Buyer/seller interaction patterns
+- [Facilitator](https://docs.b402.ai/concepts/facilitator): Off-chain service for verify/settle
+- [Relayer](https://docs.b402.ai/concepts/relayer): On-chain contract for transferWithAuthorization
+- [Wallet](https://docs.b402.ai/concepts/wallet): EOA vs Smart Wallet (ERC-7579 Nexus)
+- [Network & Token Support](https://docs.b402.ai/concepts/network-token-support): BNB Chain, USDT/USDC/USD1, contract addresses
+- [Privacy (Incognito)](https://docs.b402.ai/concepts/privacy-incognito): RAILGUN integration for shielded payments
+- [Agent Identity](https://docs.b402.ai/concepts/agent-identity): ERC-8004 on-chain identity for AI agents
+
+## Getting Started
+- [Quickstart](https://docs.b402.ai/get-started/quickstart): 5-minute setup for buyers and sellers
+- [Buyer Guide (EOA)](https://docs.b402.ai/get-started/buyer): EIP-712 signed payments with standard wallets
+- [Buyer Guide (Smart Wallet)](https://docs.b402.ai/get-started/buyer-smart-wallet): Gasless payments for AI agents
+- [Seller Guide](https://docs.b402.ai/get-started/seller): Express.js middleware integration
+- [Agent Cookbook](https://docs.b402.ai/get-started/agent-cookbook): End-to-end code recipes
+
+## Facilitator API Reference
+- [Overview](https://docs.b402.ai/developers/facilitator/overview): Base URL, authentication, rate limits
+- [Health Check](https://docs.b402.ai/developers/facilitator/api-reference/facilitator/health-check): GET /health
+- [EOA Verify](https://docs.b402.ai/developers/facilitator/api-reference/eoa-payments/verify): POST /verify
+- [EOA Settle](https://docs.b402.ai/developers/facilitator/api-reference/eoa-payments/settle): POST /settle
+- [Smart Wallet Verify](https://docs.b402.ai/developers/facilitator/api-reference/smart-wallet/verify): POST /wallet/verify
+- [Smart Wallet Settle](https://docs.b402.ai/developers/facilitator/api-reference/smart-wallet/settle): POST /wallet/settle
+- [Deploy Verify](https://docs.b402.ai/developers/facilitator/api-reference/wallet-deployment/deploy-verify): POST /deploy/verify
+- [Deploy Settle](https://docs.b402.ai/developers/facilitator/api-reference/wallet-deployment/deploy-settle): POST /deploy/settle
+- [List Wallets](https://docs.b402.ai/developers/facilitator/api-reference/wallet-deployment/list-wallets): GET /wallets
+- [Get Master Wallet](https://docs.b402.ai/developers/facilitator/api-reference/wallet-deployment/get-master-wallet): GET /wallet/master
+- [Claim](https://docs.b402.ai/developers/facilitator/api-reference/wallet-deployment/claim): POST /claim
+- [Incognito Verify](https://docs.b402.ai/developers/facilitator/api-reference/incognito/verify): POST /incognito/verify
+- [Incognito Settle](https://docs.b402.ai/developers/facilitator/api-reference/incognito/settle): POST /incognito/settle
+- [Swap Quote](https://docs.b402.ai/developers/facilitator/api-reference/swap/quote): GET /swap/quote
+- [Swap Health](https://docs.b402.ai/developers/facilitator/api-reference/swap/health): GET /swap/health
+- [Swap Execute](https://docs.b402.ai/developers/facilitator/api-reference/swap/execute): POST /swap/execute
+- [Swap Payment Intent](https://docs.b402.ai/developers/facilitator/api-reference/swap/payment-intent): POST /swap/payment-intent
+- [Gasless Approve](https://docs.b402.ai/developers/facilitator/api-reference/swap/gasless-approve): POST /swap/gasless-approve
+- [Swap Wallet Verify](https://docs.b402.ai/developers/facilitator/api-reference/swap/wallet-verify): POST /swap/wallet/verify
+- [Swap Wallet Settle](https://docs.b402.ai/developers/facilitator/api-reference/swap/wallet-settle): POST /swap/wallet/settle
+- [Error Reference](https://docs.b402.ai/developers/errors): All error codes
+
+## Backend API Reference
+- [Overview](https://docs.b402.ai/developers/backend/overview): Authentication, rate limits, pagination
+- [Commitments](https://docs.b402.ai/developers/backend/privacy/commitments): GET /privacy/commitments
+- [Nullifiers](https://docs.b402.ai/developers/backend/privacy/nullifiers): POST /privacy/nullifiers
+- [Merkle Proof](https://docs.b402.ai/developers/backend/privacy/merkle-proof): GET /privacy/merkle-proof
+- [Unshield](https://docs.b402.ai/developers/backend/privacy/unshield): POST /privacy/unshield
+- [Unshield Status](https://docs.b402.ai/developers/backend/privacy/unshield-status): GET /privacy/unshield/:id
+- [Global Metrics](https://docs.b402.ai/developers/backend/metrics/global): GET /metrics
+- [Buyer Metrics](https://docs.b402.ai/developers/backend/metrics/buyers): GET /metrics/buyers
+- [Seller Metrics](https://docs.b402.ai/developers/backend/metrics/sellers): GET /metrics/sellers
+- [Transactions](https://docs.b402.ai/developers/backend/transactions): GET /transactions
+
+## SDK Reference
+- [b402-sdk](https://docs.b402.ai/sdks/b402-sdk): TypeScript SDK for payments
+- [b402-express](https://docs.b402.ai/sdks/b402-express): Express.js middleware
+- [EIP-712 Signature Guide](https://docs.b402.ai/sdks/eip712-signature-guide): Manual signature construction
+
+## Guides
+- [Smart Wallet Deep Dive](https://docs.b402.ai/guides/smart-wallet-deep-dive): ERC-7579, UserOps, paymaster
+- [Privacy Deep Dive](https://docs.b402.ai/guides/privacy-incognito-deep-dive): RAILGUN, commitments, Merkle trees
+- [Self-Hosting](https://docs.b402.ai/guides/self-hosting): Run your own facilitator
+- [Chapter 0 Campaign](https://docs.b402.ai/guides/chapter-0-campaign): Rewards program
+
+## b402 Services
+- [Facilitator](https://docs.b402.ai/b402-services/b402-facilitator): Hosted facilitator service
+- [b402scan](https://docs.b402.ai/b402-services/b402scan): Ecosystem explorer
+- [Community](https://docs.b402.ai/b402-services/community): Links and support
+
+## Resources
+- [FAQ](https://docs.b402.ai/resources/faq): Frequently asked questions
+- [Glossary](https://docs.b402.ai/resources/glossary): Key terms and definitions
+- [Contract Addresses](https://docs.b402.ai/resources/contract-addresses): All deployed contracts
+- [Changelog](https://docs.b402.ai/resources/changelog): Documentation updates

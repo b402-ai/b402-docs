@@ -1,0 +1,142 @@
+---
+title: 'Settle Incognito Operation'
+description: 'Submit a signed incognito UserOp to the ERC-4337 bundler'
+---
+
+`POST /wallet/incognito/settle` takes the signed UserOperation from [`/wallet/incognito/verify`](/developers/facilitator/api-reference/incognito/verify) and submits it to the ERC-4337 bundler for on-chain execution. The flow is identical to standard wallet settlement but executes a RAILGUN shield or unshield operation.
+
+```
+POST /wallet/incognito/settle
+```
+
+<Note>
+Settlement typically completes in ~3 seconds on BNB Chain. The facilitator covers all gas costs.
+</Note>
+
+## Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `userOp` | `object` | Yes | The full UserOperation from `/wallet/incognito/verify`, with `signature` populated |
+| `signature` | `string` | Yes | User's signature of the `userOpHash` (hex) |
+
+The `userOp` object must contain all fields exactly as returned by `/wallet/incognito/verify`. Do not modify any field other than `signature`.
+
+## Response
+
+### 200 - Settlement Successful
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `success` | `boolean` | Whether the transaction was mined successfully |
+| `txHash` | `string` | On-chain transaction hash |
+| `userOpHash` | `string` | UserOperation hash matching the one from `/wallet/incognito/verify` |
+
+### Error Responses
+
+| Status | Code | Description |
+|--------|------|-------------|
+| 400 | `validation_error` | Missing or malformed `userOp` or `signature` |
+| 400 | `validation_error` | Signature does not match the `userOpHash` |
+| 400 | `userop_error` | Bundler rejected the UserOp (insufficient gas, nonce conflict, paymaster denial) |
+| 500 | `blockchain_error` | Transaction reverted or receipt polling timed out |
+
+## What Happens Server-Side
+
+1. **Injects signature** - Places the user's signature into the UserOp
+2. **Submits to bundler** - Sends the signed UserOp via `eth_sendUserOperation`
+3. **Polls for receipt** - Waits for the bundler to mine the transaction
+4. **Returns result** - Responds with the transaction hash
+
+## Examples
+
+### cURL
+
+```bash
+curl -X POST https://facilitator.b402.ai/wallet/incognito/settle \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userOp": {
+      "sender": "0x...wallet_address",
+      "nonce": "0x...",
+      "callData": "0x...encoded_railgun_call",
+      "callGasLimit": "0x...",
+      "verificationGasLimit": "0x...",
+      "preVerificationGas": "0x...",
+      "maxFeePerGas": "0x...",
+      "maxPriorityFeePerGas": "0x...",
+      "paymaster": "0x...",
+      "paymasterVerificationGasLimit": "0x...",
+      "paymasterPostOpGasLimit": "0x...",
+      "paymasterData": "0x...",
+      "signature": "0x...user_signature_of_userOpHash"
+    },
+    "signature": "0x...user_signature_of_userOpHash"
+  }'
+```
+
+### TypeScript
+
+```typescript
+import { Wallet } from 'ethers';
+
+// 1. Get unsigned UserOp from /wallet/incognito/verify
+const verifyRes = await fetch('https://facilitator.b402.ai/wallet/incognito/verify', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    walletAddress: '0x...nexus_smart_wallet',
+    incognitoData: {
+      type: 'shield',
+      token: '0x55d398326f99059fF775485246999027B3197955',
+      amount: '10000000000000000',
+    },
+    paymentRequirements: { network: 'bsc' },
+  }),
+});
+const { userOp, userOpHash } = await verifyRes.json();
+
+// 2. Sign the userOpHash
+const ownerWallet = new Wallet(process.env.PRIVATE_KEY);
+const signature = await ownerWallet.signMessage(
+  Buffer.from(userOpHash.slice(2), 'hex')
+);
+
+// 3. Submit signed UserOp
+const settleRes = await fetch('https://facilitator.b402.ai/wallet/incognito/settle', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    userOp: { ...userOp, signature },
+    signature,
+  }),
+});
+
+const result = await settleRes.json();
+
+if (result.success) {
+  console.log('Incognito operation settled');
+  console.log('TX:', result.txHash);
+  console.log(`View on BscScan: https://bscscan.com/tx/${result.txHash}`);
+} else {
+  console.error('Settlement failed');
+}
+```
+
+## Error Handling
+
+Bundler-level failures return `userop_error`. Common causes:
+
+| Cause | What To Do |
+|-------|------------|
+| Nonce already used | Re-call `/wallet/incognito/verify` for a fresh UserOp |
+| Paymaster expired | Re-call `/wallet/incognito/verify` for new paymaster data |
+| Insufficient balance | Token balance changed between verify and settle |
+| Gas estimation mismatch | Network conditions changed; retry from verify |
+
+For all `userop_error` and `blockchain_error` responses, the safe recovery path is to re-call `/wallet/incognito/verify` and restart the flow.
+
+## Related
+
+- [Verify Incognito Operation](/developers/facilitator/api-reference/incognito/verify) - Build the unsigned UserOp
+- [Settle Payment (Smart Wallet)](/developers/facilitator/api-reference/smart-wallet/settle) - Standard smart wallet settlement

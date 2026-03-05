@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 400" fill="none">
+  <defs>
+    <style>
+      text { font-family: 'Helvetica Neue', Arial, sans-serif; }
+    </style>
+  </defs>
+
+  <rect width="720" height="400" rx="12" fill="#0D0D0D"/>
+
+  <!-- Title -->
+  <text x="360" y="30" text-anchor="middle" font-size="13" fill="#F4B526" font-weight="600" font-family="Helvetica Neue, Arial, sans-serif">Poseidon Merkle Tree · Depth 16</text>
+
+  <!-- ═══ LEVEL 0: ROOT ═══ -->
+  <circle cx="360" cy="70" r="22" fill="#1a1a1a" stroke="#F4B526" stroke-width="2"/>
+  <text x="360" y="75" text-anchor="middle" font-size="12" fill="#fff" font-weight="600" font-family="Helvetica Neue, Arial, sans-serif">Root</text>
+
+  <!-- Root → L1 edges -->
+  <line x1="342" y1="88" x2="200" y2="128" stroke="#F4B526" stroke-width="1.2"/>
+  <line x1="378" y1="88" x2="520" y2="128" stroke="#F4B526" stroke-width="1.2"/>
+
+  <!-- ═══ LEVEL 1 ═══ -->
+  <circle cx="200" cy="145" r="18" fill="#1a1a1a" stroke="#F4B526" stroke-width="1.5"/>
+  <text x="200" y="150" text-anchor="middle" font-size="11" fill="#fff" font-weight="500" font-family="Helvetica Neue, Arial, sans-serif">H₁</text>
+
+  <circle cx="520" cy="145" r="18" fill="#1a1a1a" stroke="#F4B526" stroke-width="1.5"/>
+  <text x="520" y="150" text-anchor="middle" font-size="11" fill="#fff" font-weight="500" font-family="Helvetica Neue, Arial, sans-serif">H₂</text>
+
+  <!-- Level labels -->
+  <text x="48" y="75" font-size="10" fill="#555" font-family="Helvetica Neue, Arial, sans-serif">Level 16</text>
+  <text x="48" y="150" font-size="10" fill="#555" font-family="Helvetica Neue, Arial, sans-serif">Level 15</text>
+
+  <!-- L1 → L2 edges -->
+  <line x1="185" y1="161" x2="120" y2="198" stroke="#F4B526" stroke-width="1"/>
+  <line x1="215" y1="161" x2="280" y2="198" stroke="#F4B526" stroke-width="1"/>
+  <line x1="505" y1="161" x2="440" y2="198" stroke="#333" stroke-width="1" stroke-dasharray="4 3"/>
+  <line x1="535" y1="161" x2="600" y2="198" stroke="#333" stroke-width="1" stroke-dasharray="4 3"/>
+
+  <!-- ═══ LEVEL 2 ═══ -->
+  <circle cx="120" cy="215" r="15" fill="#1a1a1a" stroke="#F4B526" stroke-width="1"/>
+  <text x="120" y="220" text-anchor="middle" font-size="10" fill="#fff" font-weight="500" font-family="Helvetica Neue, Arial, sans-serif">H</text>
+
+  <circle cx="280" cy="215" r="15" fill="#1a1a1a" stroke="#F4B526" stroke-width="1"/>
+  <text x="280" y="220" text-anchor="middle" font-size="10" fill="#fff" font-weight="500" font-family="Helvetica Neue, Arial, sans-serif">H</text>
+
+  <!-- Dimmed right-side nodes -->
+  <circle cx="440" cy="215" r="8" fill="#151515" stroke="#333" stroke-width="1"/>
+  <circle cx="600" cy="215" r="8" fill="#151515" stroke="#333" stroke-width="1"/>
+
+  <text x="48" y="220" font-size="10" fill="#555" font-family="Helvetica Neue, Arial, sans-serif">Level 14</text>
+
+  <!-- ═══ SKIP INDICATOR (Levels 13 → 1) ═══ -->
+  <!-- Dashed lines down from L2 nodes -->
+  <line x1="120" y1="230" x2="120" y2="280" stroke="#F4B526" stroke-width="1" stroke-dasharray="2 4"/>
+  <line x1="280" y1="230" x2="280" y2="280" stroke="#F4B526" stroke-width="1" stroke-dasharray="2 4"/>
+
+  <!-- Ellipsis between levels -->
+  <text x="120" y="262" text-anchor="middle" font-size="14" fill="#555" font-family="Helvetica Neue, Arial, sans-serif">⋮</text>
+  <text x="280" y="262" text-anchor="middle" font-size="14" fill="#555" font-family="Helvetica Neue, Arial, sans-serif">⋮</text>
+
+  <!-- Right side ellipsis -->
+  <text x="520" y="220" text-anchor="middle" font-size="16" fill="#444" font-family="Helvetica Neue, Arial, sans-serif">· · ·</text>
+
+  <!-- ═══ LEAF LEVEL (Level 0) ═══ -->
+  <!-- Edges from invisible parent to leaves -->
+  <line x1="105" y1="282" x2="75" y2="305" stroke="#F4B526" stroke-width="1"/>
+  <line x1="135" y1="282" x2="165" y2="305" stroke="#F4B526" stroke-width="1"/>
+  <line x1="265" y1="282" x2="255" y2="305" stroke="#F4B526" stroke-width="1"/>
+  <line x1="295" y1="282" x2="345" y2="305" stroke="#F4B526" stroke-width="1"/>
+
+  <text x="48" y="322" font-size="10" fill="#555" font-family="Helvetica Neue, Arial, sans-serif">Level 0</text>
+
+  <!-- Leaf 0 -->
+  <rect x="35" y="305" width="80" height="28" rx="6" fill="#1a1a1a" stroke="#F4B526" stroke-width="1.5"/>
+  <text x="75" y="324" text-anchor="middle" font-size="11" fill="#F4B526" font-weight="500" font-family="Helvetica Neue, Arial, sans-serif">Leaf 0</text>
+
+  <!-- Leaf 1 -->
+  <rect x="125" y="305" width="80" height="28" rx="6" fill="#1a1a1a" stroke="#F4B526" stroke-width="1.5"/>
+  <text x="165" y="324" text-anchor="middle" font-size="11" fill="#F4B526" font-weight="500" font-family="Helvetica Neue, Arial, sans-serif">Leaf 1</text>
+
+  <!-- Ellipsis -->
+  <text x="222" y="324" text-anchor="middle" font-size="14" fill="#555" font-family="Helvetica Neue, Arial, sans-serif">···</text>
+
+  <!-- Leaf N -->
+  <rect x="235" y="305" width="80" height="28" rx="6" fill="#1a1a1a" stroke="#F4B526" stroke-width="1"/>
+  <text x="275" y="324" text-anchor="middle" font-size="11" fill="#F4B526" font-weight="500" font-family="Helvetica Neue, Arial, sans-serif">Leaf N</text>
+
+  <!-- Ellipsis -->
+  <text x="340" y="324" text-anchor="middle" font-size="14" fill="#555" font-family="Helvetica Neue, Arial, sans-serif">···</text>
+
+  <!-- Leaf 65535 (dimmed, far right) -->
+  <line x1="600" y1="223" x2="600" y2="305" stroke="#333" stroke-width="1" stroke-dasharray="3 5"/>
+  <rect x="555" y="305" width="90" height="28" rx="6" fill="#121212" stroke="#333" stroke-width="1"/>
+  <text x="600" y="323" text-anchor="middle" font-size="10" fill="#555" font-weight="500" font-family="Helvetica Neue, Arial, sans-serif">Leaf 65535</text>
+
+  <!-- ═══ LEGEND ═══ -->
+  <line x1="60" y1="360" x2="660" y2="360" stroke="#1a1a1a" stroke-width="1"/>
+  <text x="360" y="380" text-anchor="middle" font-size="10" fill="#666" font-family="Helvetica Neue, Arial, sans-serif">65,536 leaves  ·  Poseidon(left, right) hash at every node  ·  Zero value = keccak256("Railgun") mod p</text>
+</svg>

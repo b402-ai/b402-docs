@@ -1,0 +1,50 @@
+---
+title: 'Swap Health Check'
+description: 'Check swap service availability'
+---
+
+`GET /swap/health` returns the current status of the swap service, including the router integration and number of available trading pairs.
+
+```
+GET /swap/health
+```
+
+## Response
+
+### 200 - Healthy
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `status` | `string` | Service status (`"ok"`) |
+| `router` | `string` | DEX router in use (`"PancakeSwap V3"`) |
+| `pairs` | `number` | Number of available trading pairs |
+
+## Examples
+
+### cURL
+
+```bash
+curl https://facilitator.b402.ai/swap/health
+```
+
+### TypeScript
+
+```typescript
+const response = await fetch('https://facilitator.b402.ai/swap/health');
+const health = await response.json();
+
+console.log('Status:', health.status);   // "ok"
+console.log('Router:', health.router);   // "PancakeSwap V3"
+console.log('Pairs:', health.pairs);
+```
+
+## Notes
+
+- No authentication required
+- Use this endpoint to verify the swap service is operational before initiating swaps
+- A non-200 response or missing `status: "ok"` indicates the swap service is degraded
+
+## Related
+
+- [Get Swap Quote](/developers/facilitator/api-reference/swap/quote) - Preview swap pricing
+- [Execute Swap](/developers/facilitator/api-reference/swap/execute) - Execute a token swap

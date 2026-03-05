@@ -4,7 +4,7 @@ description: 'Accept payments from buyers'
 icon: 'coin-vertical'
 ---
 
-The **b402 protocol** enables you to monetize your APIs or web services with **gasless EVM-compatible token payments** on supported chains like BNB Chain and Base.
+The **b402 protocol** enables you to monetize your APIs or web services with **gasless EVM-compatible token payments** across supported EVM chains.
 
 This guide walks you through integrating the `b402-express` middleware to create paid API routes that require crypto payments before access.
 
@@ -34,7 +34,7 @@ const { b402 } = require('b402-express');
 const app = express();
 
 app.use(b402(
-  { payTo: '0x...' }, // your wallet address on a supported chain (e.g., BNB Chain or Base)
+  { payTo: '0x...' }, // your wallet address on a supported chain
   {
     'GET /premium': { price: '0.01', token: 'USD1' },
     'GET /basic': { price: '0.001', token: 'USDT' },
@@ -58,16 +58,56 @@ When a protected endpoint is accessed without payment, the middleware returns a 
 - Token contract address
 - Your receiving wallet (payTo)
 - Required amount
-- Relayer contract address (e.g., 0xE1C2830d5DDd6B49E9c46EbE03a98Cb44CD8eA5a on BNB Chain)
+- Relayer contract address (e.g., `0x590162bf4b50F6576a459B75309eE21D92178A10`)
 - Description of the payment
 
 After payment, verified details become available in the request object:
 
 ``` ts lines
-req.b402.txHash  // transaction hash on the configured chain (e.g., BNB Chain or Base)
+req.b402.txHash  // transaction hash on the configured chain
 req.b402.payer   // payer’s wallet address
+```
+
+## Complete Example
+
+```typescript
+const express = require('express');
+const { b402 } = require('b402-express');
+
+const app = express();
+
+// Configure b402 middleware with your wallet and pricing
+app.use(b402(
+  { payTo: '0xYourWalletAddress' },
+  {
+    'GET /premium-data': { price: '0.01', token: 'USD1' },
+    'GET /analytics':    { price: '0.005', token: 'USDT' },
+  }
+));
+
+// Paid route - requires payment
+app.get('/premium-data', (req, res) => {
+  console.log('Payment from:', req.b402.payer);
+  console.log('TX hash:', req.b402.txHash);
+  res.json({ data: 'premium content', timestamp: Date.now() });
+});
+
+// Free route - no payment required
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
+app.listen(3000, () => {
+  console.log('b402 server running on port 3000');
+});
 ```
 
 ## Supported Tokens
 
-For the complete list of supported tokens across both BNB Chain Mainnet and Testnet, see the [Supported Tokens](/b402-protocol/supported-tokens) page. 
+For the complete list of supported tokens, see [Network & Token Support](/concepts/network-token-support).
+
+## Next Steps
+
+- [Buyer Guide](/get-started/buyer) - Understand the buyer flow
+- [Facilitator API Reference](/developers/facilitator/overview) - Direct API integration
+- [Architecture](/architecture) - Understand the full payment flow

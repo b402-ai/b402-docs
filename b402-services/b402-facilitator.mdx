@@ -1,37 +1,79 @@
 ---
 title: b402 Facilitator
-description: 'Overview of the official b402 Facilitator service'
+description: 'The official hosted facilitator service for payment verification and settlement'
 icon: arrow-progress
 ---
 
-The **b402 Facilitator** is the official off-chain service that powers payment verification and settlement for the **b402 protocol**.  
-
-It provides shared infrastructure for verifying signed payment payloads, executing on-chain settlements, and ensuring consistent behavior across networks and token schemes.  
-
-By abstracting blockchain complexity, the facilitator offers a uniform API for developers and resource servers—enabling better reliability, observability, and interoperability across multiple merchants and applications.
+The **b402 Facilitator** is the official off-chain service that powers payment verification and settlement for the b402 protocol.
 
 <Note>
-Official b402 Facilitator endpoint: `https://facilitator.b402.ai` 
+**Endpoint:** `https://facilitator.b402.ai`
 </Note>
----
+
+## What It Does
+
+The Facilitator bridges HTTP requests and on-chain settlement. It:
+
+1. **Verifies** signed payment payloads (EIP-712 or UserOp)
+2. **Settles** payments on-chain via the Relayer contract
+3. **Deploys** smart wallets on first use
+4. **Executes** token swaps via PancakeSwap V3
+5. **Processes** private (Incognito) payments via RAILGUN
+
+Developers never interact with the blockchain directly. The Facilitator handles gas fees, transaction submission, and confirmation monitoring.
+
+## Supported Payment Models
+
+| Model | Flow | Gas |
+|-------|------|-----|
+| **EOA** | Sign EIP-712 → verify → settle | Facilitator pays gas |
+| **Smart Wallet** | Build UserOp → sign → settle via bundler | Paymaster covers gas (deducted from payment) |
+| **Incognito** | Shielded payment with RAILGUN privacy | Facilitator pays gas |
 
 ## Key Benefits
 
-- **Unified verification and settlement:** Consistent handling of all supported schemes and networks.  
-- **Reduced on-chain complexity:** Offload blockchain operations from individual servers.  
-- **Multi-tenant design:** Serve multiple merchants or applications through a common `/verify` and `/settle` API.  
-- **Service discovery:** Help clients identify compatible merchants via the `/list` endpoint.
+- **Non-custodial.** The Facilitator never holds funds. Payments are signed by the buyer and settled directly on-chain.
+- **Gasless for users.** Gas costs are absorbed by the Facilitator (EOA) or deducted from the payment token (Smart Wallet).
+- **Multi-tenant.** Any number of sellers can use the same Facilitator endpoint. Each seller specifies their own `payTo` address.
+- **Idempotent verification.** Replay attacks are prevented via nonces and on-chain checks.
 
----
+## Endpoints
 
-## Facilitator Responsibilities
+The Facilitator exposes these endpoint groups:
 
-The facilitator is responsible for securely mediating between clients (buyers) and resource servers (sellers) while ensuring correct on-chain behavior.
+| Group | Purpose | Auth |
+|-------|---------|------|
+| [Health](/developers/facilitator/api-reference/facilitator/health-check) | Service status | None |
+| [EOA Payments](/developers/facilitator/api-reference/eoa-payments/verify) | Verify and settle EOA payments | None |
+| [Smart Wallet](/developers/facilitator/api-reference/smart-wallet/verify) | Verify and settle smart wallet payments | None |
+| [Wallet Deployment](/developers/facilitator/api-reference/wallet-deployment/deploy-verify) | Deploy and manage smart wallets | None |
+| [Swap](/developers/facilitator/api-reference/swap/quote) | Token swaps via PancakeSwap V3 | None |
+| [Incognito](/developers/facilitator/api-reference/incognito/verify) | Private payments via RAILGUN | None |
 
-- Expose secure `/verify` and `/settle` endpoints following **x402-compatible** request/response formats  
-- Validate **Payment Payloads** according to scheme and network specifications  
-- Prevent replay attacks and ensure **idempotent verification**  
-- Submit verified transactions for **on-chain settlement** and monitor confirmations  
-- Provide clear, structured error responses for failed verifications or settlements  
-- Maintain reliable RPC and wallet infrastructure for supported networks  
-- Implement **logging**, **metrics**, **rate limiting**, and **alerting** for operational robustness
+See the [Facilitator API Reference](/developers/facilitator/overview) for complete endpoint documentation.
+
+## Self-Hosting
+
+The Facilitator is open-source and can be self-hosted. This is useful for:
+
+- Running a private facilitator for your application
+- Custom rate limiting and access control
+- Operating on networks not yet supported by the official instance
+
+See the [Self-Hosting Guide](/guides/self-hosting) for setup instructions.
+
+## Rate Limits
+
+The hosted Facilitator enforces rate limits to ensure fair usage:
+
+| Tier | Limit |
+|------|-------|
+| Anonymous | 30 requests/minute per IP |
+| Authenticated | No limit (valid `X-Admin-Secret`) |
+
+## Security
+
+- **Signature verification.** Every payment is cryptographically verified before settlement.
+- **On-chain finality.** Payments are only confirmed after on-chain transaction confirmation.
+- **No private key exposure.** Buyers sign locally; the Facilitator only receives signatures.
+- **Nonce-based replay protection.** Each payment uses a unique nonce to prevent double-spending.

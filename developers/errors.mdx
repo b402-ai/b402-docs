@@ -1,65 +1,161 @@
 ---
-title: 'Errors'
-description: 'Troubleshoot problems with comprehensive breakdown of all error codes'
-icon: 'hexagon-exclamation'
+title: Error Reference
+description: 'All error codes returned by b402 APIs'
+icon: hexagon-exclamation
 ---
 
-EigenExplorer API returns machine readable error codes, human readable error messages and a link to the docs for more information.
+b402 APIs return structured error responses with machine-readable codes, human-readable messages, and documentation links.
 
-Here is how an error response looks like:
+## Error Response Format
 
 ```json
 {
-    "error": {
-        "code": "not_found",
-        "message": "The requested resource was not found.",
-        "doc_url": "https://api.eigenexplorer.com/api-reference/errors#not_found"
-    }
+  "error": {
+    "code": "signature_error",
+    "message": "Invalid signature",
+    "doc_url": "https://b402.ai#signature_error",
+    "details": []
+  }
 }
 ```
 
-## Error Codes
+| Field | Type | Description |
+|-------|------|-------------|
+| `code` | string | Machine-readable error code |
+| `message` | string | Human-readable explanation |
+| `doc_url` | string | Link to documentation for this error |
+| `details` | array | Additional context (validation errors, etc.) |
 
-Here is a list of all error codes EigenExplorer API returns:
+## HTTP Error Codes
 
-### `bad_request`
+### General Errors
 
--   **Status:** 400
--   **Problem:** The request is malformed, either missing required fields, using wrong datatypes, or being syntactically incorrect.
--   **Solution:** Check the request and make sure it is properly formatted.
+| Code | HTTP Status | Description | Solution |
+|------|-------------|-------------|----------|
+| `bad_request` | 400 | Malformed request, missing fields, wrong types | Check request format against the API reference |
+| `unauthorized` | 401 | Missing or invalid authentication | Add `x-admin-api-key` header for admin endpoints |
+| `forbidden` | 403 | Valid auth but insufficient permissions | Check your API key permissions |
+| `not_found` | 404 | Resource not found | Verify the endpoint path and resource ID |
+| `unprocessable_entity` | 422 | Invalid input data (Zod validation failure) | Check `details` array for specific field errors |
+| `rate_limit_exceeded` | 429 | Too many requests (100/15min per IP) | Wait and retry. Contact support for higher limits |
+| `internal_server_error` | 500 | Unexpected server error | Retry later. If persistent, contact support |
 
-### `unauthorized`
+### Payment Errors
 
--   **Status:** 401
--   **Problem:** The request has not been applied because it lacks valid authentication credentials for the target resource.
--   **Solution:** Make sure you are using the correct API key or access token.
+| Code | HTTP Status | Description | Common Cause |
+|------|-------------|-------------|-------------|
+| `validation_error` | 400 | Request validation failed | Missing required fields, invalid addresses, bad JSON |
+| `signature_error` | 401 | EIP-712 signature invalid | Wrong signer, corrupted signature, wrong chain ID |
+| `nonce_error` | 400 | Nonce already used | Generate a new random bytes32 nonce |
+| `payment_verification_error` | 400 | Payment payload invalid | Expired time window, authorization not yet valid |
+| `payment_error` | 400 | Payment-specific issue | Wrong fee amount, invalid recipient |
+| `payment_settlement_error` | 500 | On-chain settlement failed | Insufficient balance, reverted transaction |
+| `token_error` | 400 | Token-related issue | Unsupported token, insufficient balance/allowance |
 
-### `forbidden`
+### Blockchain Errors
 
--   **Status:** 403
--   **Problem:** The server understood the request, but is refusing to fulfill it because the client lacks proper permission.
--   **Solution:** Make sure you have the necessary permissions to access the resource.
+| Code | HTTP Status | Description | Common Cause |
+|------|-------------|-------------|-------------|
+| `blockchain_error` | 500 | On-chain operation failed | Transaction reverted, network congestion |
+| `configuration_error` | 500 | Server misconfiguration | Missing env vars, invalid network config |
 
-### `not_found`
+### Smart Wallet Errors
 
--   **Status:** 404
--   **Problem:** The server has not found anything matching the request URI.
--   **Solution:** Check the request and make sure the resource exists.
+| Code | HTTP Status | Description | Common Cause |
+|------|-------------|-------------|-------------|
+| `wallet_error` | 400 | Wallet operation failed | Wallet not deployed, already deployed, already paid |
+| `userp_error` | 500 | UserOperation failed | Bundler rejection, gas estimation failure, paymaster error |
 
-### `unprocessable_entity`
+## Specific Error Messages
 
--   **Status:** 422
--   **Problem:** The server was unable to process the request because it contains invalid data.
--   **Solution:** Check the request and make sure input data is valid.
+### Signature & Nonce
 
-### `rate_limit_exceeded`
+| Error | Message |
+|-------|---------|
+| `ERR_INVALID_SIGNATURE` | Invalid signature |
+| `ERR_SIGNATURE_VERIFICATION_FAILED` | Signature verification failed |
+| `ERR_NONCE_ALREADY_USED` | Nonce already used |
+| `ERR_AUTHORIZATION_NOT_VALID_YET` | Authorization not yet valid |
+| `ERR_AUTHORIZATION_EXPIRED` | Authorization expired |
 
--   **Status:** 429
--   **Problem:** The request has been rate limited.
--   **Solution:** Wait for a while and try again.
+### Wallet Deployment
 
-### `internal_server_error`
+| Error | Message |
+|-------|---------|
+| `ERR_WALLET_NOT_DEPLOYED` | Wallet not deployed |
+| `ERR_WALLET_ALREADY_DEPLOYED` | Wallet for this address has already been deployed |
+| `ERR_WALLET_ALREADY_PAID` | Payment already exists for this wallet address |
+| `ERR_MISSING_DEPLOYMENT_PARAMS` | Missing deployment parameters (ownerAddress and salt required) |
+| `ERR_INVALID_WALLET_COUNT` | Wallet count must be between 1 and 10 |
+| `ERR_INCORRECT_DEPLOYMENT_FEE` | Wrong deployment fee payment |
+| `ERR_WALLET_DEPLOYMENT_FAILED` | Failed to deploy wallets |
+| `ERR_NO_PENDING_DEPLOYMENTS` | No pending wallet deployments found for this payment transaction |
 
--   **Status:** 500
--   **Problem:** The server encountered an unexpected condition that prevented it from fulfilling the request.
--   **Solution:** Try again later. If the problem persists, contact support.
+### Token & Balance
+
+| Error | Message |
+|-------|---------|
+| `ERR_UNSUPPORTED_TOKEN` | Token not supported |
+| `ERR_INSUFFICIENT_BALANCE` | Insufficient token balance |
+| `ERR_INSUFFICIENT_ALLOWANCE` | Insufficient token allowance |
+| `ERR_TOKEN_INFO_FETCH_FAILED` | Could not fetch token information |
+
+### Transaction Validation
+
+| Error | Message |
+|-------|---------|
+| `ERR_EMPTY_TRANSACTIONS` | At least one transaction required |
+| `ERR_TOO_MANY_TRANSACTIONS` | Too many transactions, maximum 20 |
+| `ERR_MULTIPLE_TOKENS_NOT_ALLOWED` | All transactions must use the same token |
+| `ERR_ARRAY_LENGTH_MISMATCH` | Recipients and amounts arrays must have same length |
+| `ERR_INVALID_AMOUNT` | Invalid amount |
+| `ERR_ZERO_ADDRESS_RECIPIENT` | Recipient cannot be zero address |
+
+### UserOperation (Smart Wallet)
+
+| Error | Message |
+|-------|---------|
+| `ERR_USEROP_CREATION_FAILED` | Failed to create UserOperation |
+| `ERR_INVALID_USEROP` | Invalid UserOperation structure |
+| `ERR_BUNDLER_SUBMISSION_FAILED` | Failed to submit to bundler |
+| `ERR_PAYMASTER_SIGNING_FAILED` | Failed to sign as paymaster |
+| `ERR_GAS_ESTIMATION_FAILED` | Gas estimation failed |
+| `ERR_NO_RECEIPT` | No receipt returned from bundler |
+
+### Swap
+
+| Error | Message |
+|-------|---------|
+| `ERR_SWAP_QUOTE_FAILED` | Failed to get swap quote |
+| `ERR_SWAP_EXECUTION_FAILED` | Swap execution failed |
+| `ERR_SWAP_INSUFFICIENT_LIQUIDITY` | Insufficient liquidity for swap |
+| `ERR_SWAP_SLIPPAGE_EXCEEDED` | Swap slippage exceeded maximum allowed |
+| `ERR_SWAP_MISSING_PARAMS` | Missing required swap parameters |
+| `ERR_SWAP_INVALID_TOKEN` | Invalid token address for swap |
+
+## Handling Errors
+
+```typescript
+const response = await fetch('https://facilitator.b402.ai/verify', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(payload),
+});
+
+if (!response.ok) {
+  const { error } = await response.json();
+  switch (error.code) {
+    case 'nonce_error':
+      // Generate new nonce and retry
+      break;
+    case 'signature_error':
+      // Re-sign the payload
+      break;
+    case 'rate_limit_exceeded':
+      // Wait and retry
+      break;
+    default:
+      console.error(`${error.code}: ${error.message}`);
+  }
+}
+```

@@ -1,21 +1,97 @@
 ---
-title: 'Quickstart'
-description: 'Get started with b402 in under 2 minutes'
-icon: 'rocket'
+title: Quickstart
+description: 'Get started with b402 in under 5 minutes'
+icon: rocket
 ---
 
-b402 enables seamless payments on EVM chains like BNB Chain and Base using secure EIP-712 signatures.
+b402 enables gasless crypto payments over HTTP across EVM chains. The facilitator handles gas fees and on-chain settlement. You just sign and send.
 
-The b402 facilitator automatically manages gas fees and on-chain settlement, allowing users and sellers to transact without friction across supported chains.
+## Choose Your Path
 
-Whether you’re offering a service or purchasing one, you can get started in under 2 minutes with the quickstart guides below.
-
-<CardGroup cols={2}> 
-  <Card title="For Sellers" icon="store" href="/get-started/seller"> 
-    Set up a seller server and accept payments from buyers 
-  </Card> 
-  <Card title="For Buyers" icon="wallet" href="/get-started/buyer"> 
-    Start sending payments to sellers
-  </Card> 
-
+<CardGroup cols={2}>
+  <Card title="I want to pay for APIs" icon="wallet" href="/get-started/buyer">
+    **Buyer (EOA)** - Send payments using a standard wallet and EIP-712 signatures.
+  </Card>
+  <Card title="I want to charge for APIs" icon="store" href="/get-started/seller">
+    **Seller** - Accept payments with Express.js middleware. Zero blockchain code.
+  </Card>
+  <Card title="I'm building an AI agent" icon="robot" href="/get-started/buyer-smart-wallet">
+    **Buyer (Smart Wallet)** - Gasless smart wallet payments for autonomous agents.
+  </Card>
+  <Card title="I want recipes" icon="book" href="/get-started/agent-cookbook">
+    **Agent Cookbook** - End-to-end code recipes for common agent payment scenarios.
+  </Card>
 </CardGroup>
+
+## Quick Overview
+
+### For Buyers (30 seconds)
+
+```bash
+npm install ethers b402-sdk
+```
+
+```typescript
+import { Wallet, JsonRpcProvider } from 'ethers';
+import { B402 } from 'b402-sdk';
+
+const provider = new JsonRpcProvider('https://bsc-dataseed1.binance.org');
+const wallet = new Wallet(process.env.PRIVATE_KEY, provider);
+const b402 = new B402('mainnet');
+
+const result = await b402.pay(wallet, {
+  amount: '0.01',
+  token: 'USD1',
+  recipient: '0x...sellerAddress',
+});
+
+console.log('TX:', result.txHash);
+```
+
+<Warning>
+Before your first payment, you must approve the b402 Relayer to spend your tokens. See the [Buyer Guide](/get-started/buyer) for the one-time approval step.
+</Warning>
+
+### For Sellers (30 seconds)
+
+```bash
+npm install express b402-express
+```
+
+```typescript
+const express = require('express');
+const { b402 } = require('b402-express');
+
+const app = express();
+
+app.use(b402(
+  { payTo: '0x...yourWallet' },
+  { 'GET /premium': { price: '0.01', token: 'USD1' } }
+));
+
+app.get('/premium', (req, res) => {
+  res.json({ data: 'paid content', payer: req.b402.payer });
+});
+
+app.listen(3000);
+```
+
+No API keys needed. The middleware handles `402` responses, payment verification, and settlement automatically.
+
+## Supported Tokens
+
+| Token | Symbol | Network |
+|-------|--------|---------|
+| Tether USD | USDT | BNB Chain, Base |
+| USD Coin | USDC | BNB Chain, Base |
+| WLFI USD | USD1 | BNB Chain |
+
+See [Network & Token Support](/concepts/network-token-support) for contract addresses and chain details.
+
+## Next Steps
+
+- [Buyer Guide (EOA)](/get-started/buyer) - Full walkthrough with balance checks and approval
+- [Seller Guide](/get-started/seller) - Complete Express.js integration guide
+- [Buyer Guide (Smart Wallet)](/get-started/buyer-smart-wallet) - Gasless payments for agents
+- [Facilitator API Reference](/developers/facilitator/overview) - Direct API integration
+- [Architecture](/architecture) - Understand how the layers fit together

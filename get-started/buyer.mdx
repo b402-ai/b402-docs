@@ -1,30 +1,24 @@
 ---
-title: Buyer Guide
-description: 'Send payments to sellers'
+title: Buyer Guide (EOA)
+description: 'Send gasless payments using a standard wallet'
 icon: 'cart-shopping'
 ---
 
-The b402 protocol enables users to make gasless payments in EVM-compatible tokens such as USD1 and USDT on supported chains like BNB Chain and Base.
+This guide shows how to send a gasless payment to a seller using the b402 TypeScript SDK with an EOA (standard) wallet.
 
-This guide shows how to send a payment to a seller using the b402 TypeScript SDK.
+As a buyer, you authorize payments by signing EIP-712 messages. The [b402 Facilitator](/concepts/facilitator) covers gas costs and settles on-chain via the b402 Relayer. Payments finalize in under 3 seconds.
 
-## Overview
-
-As a buyer, you can authorize payments using EIP-712 signatures without paying any gas fees.
-
-The [b402 Facilitator](/b402-services/b402-facilitator) covers the gas cost and settles the transaction on-chain via the b402 Relayer.
-
-Payments typically finalize in under 3 seconds.
+<Tip>
+For gasless payments without the approval step, see the [Smart Wallet Buyer Guide](/get-started/buyer-smart-wallet).
+</Tip>
 
 ## Prerequisites
 
-Before running the example, make sure you have:
-
 1. Node.js 18+
-2. A wallet on a supported chain (e.g., BNB Chain or Base) with USD1 tokens
-3. A valid private key exported as an environment variable
+2. A wallet on a supported chain (BNB Chain or Base) with USD1, USDT, or USDC tokens
+3. Private key exported as an environment variable
 
-```ts .env
+```bash
 export PRIVATE_KEY=your_private_key_here
 ```
 
@@ -39,7 +33,7 @@ npm install ethers b402-sdk
 ## Example
 The following example demonstrates how to send a USD1 payment to a seller service that supports the b402 protocol.
 
-This walkthrough uses **BNB Chain mainnet** as the concrete example. To use another supported chain (such as Base), swap in the appropriate RPC endpoint, token address, relayer address, and block explorer URLs.
+This walkthrough uses **BNB Chain mainnet**. The same flow works on any supported chain (see [Network & Token Support](/concepts/network-token-support)).
 
 This walkthrough shows the complete flow from connecting your wallet to confirming the on-chain transaction.
 
@@ -59,7 +53,7 @@ import { B402 } from 'b402-sdk';
 
 // USD1 stablecoin and b402 relayer contract on BNB Chain
 const USD1 = '0x8d0d000ee44948fc98c9b98a4fa4921476f08b0d';
-const RELAYER = '0xE1C2830d5DDd6B49E9c46EbE03a98Cb44CD8eA5a';
+const RELAYER = '0x590162bf4b50F6576a459B75309eE21D92178A10';
 const RPC = 'https://bsc-dataseed1.binance.org';
 
 async function main() {
@@ -152,7 +146,7 @@ import { B402 } from 'b402-sdk';
 
 // Define constants for the USD1 token, b402 Relayer contract, and BNB Chain RPC endpoint
 const USD1 = '0x8d0d000ee44948fc98c9b98a4fa4921476f08b0d';
-const RELAYER = '0xE1C2830d5DDd6B49E9c46EbE03a98Cb44CD8eA5a';
+const RELAYER = '0x590162bf4b50F6576a459B75309eE21D92178A10';
 const RPC = 'https://bsc-dataseed1.binance.org';
 
 async function main() {
@@ -227,3 +221,10 @@ async function main() {
 // Execute the script
 main();
 ```
+
+## Next Steps
+
+- [Smart Wallet Buyer Guide](/get-started/buyer-smart-wallet) - Gasless payments without approval steps
+- [Seller Guide](/get-started/seller) - Set up a b402-enabled server
+- [EIP-712 Signature Guide](/sdks/eip712-signature-guide) - Construct signatures manually
+- [Network & Token Support](/concepts/network-token-support) - All supported tokens and addresses

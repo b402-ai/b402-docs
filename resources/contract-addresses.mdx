@@ -1,0 +1,60 @@
+---
+title: Contract Addresses
+description: 'All deployed contract addresses for the b402 protocol'
+icon: file-contract
+---
+
+## BNB Chain Mainnet (Chain ID: 56)
+
+### Core Contracts
+
+| Contract | Address | Purpose |
+|----------|---------|---------|
+| B402 Relayer (Official) | `0x590162bf4b50F6576a459B75309eE21D92178A10` | EIP-712 payment settlement |
+| B402 Relayer (Custom) | `0x9dB0eDC77C9047a06Fd6dE82c892630DAa5eF601` | Alternative relayer |
+
+### Smart Wallet Infrastructure
+
+| Contract | Address | Purpose |
+|----------|---------|---------|
+| Nexus Account Factory | `0x0000006648ED9B2B842552BE63Af870bC74af837` | Deterministic smart wallet deployment |
+| Nexus Bootstrap | `0x0000003eDf18913c01cBc482C978bBD3D6E8ffA3` | Smart wallet initialization |
+| EntryPoint (v0.7) | `0x0000000071727De22E5E9d8BAf0edAc6f37da032` | ERC-4337 UserOp execution |
+| K1 Validator | See environment config | ECDSA signature validation module |
+
+### Supported Tokens
+
+| Token | Symbol | Address | Decimals |
+|-------|--------|---------|----------|
+| Tether USD | USDT | `0x55d398326f99059fF775485246999027B3197955` | 18 |
+| USD Coin | USDC | `0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d` | 18 |
+| WLFI USD | USD1 | `0x8d0d000ee44948fc98c9b98a4fa4921476f08b0d` | 18 |
+
+## BNB Chain Testnet (Chain ID: 97)
+
+### Supported Tokens
+
+| Token | Symbol | Address | Decimals |
+|-------|--------|---------|----------|
+| Tether USD (Test) | USDT | `0x337610d27c682E347C9cD60BD4b3b107C9d34dDd` | 18 |
+
+## Service Endpoints
+
+| Service | URL | Description |
+|---------|-----|-------------|
+| Facilitator API | `https://facilitator.b402.ai` | Payment verification and settlement |
+| Backend API | `https://backend.b402.ai` | Analytics, privacy, and transaction data |
+| b402scan | `https://b402scan.ai` | Ecosystem explorer (coming soon) |
+
+## Block Explorers
+
+| Network | Explorer | URL |
+|---------|----------|-----|
+| BSC Mainnet | BscScan | `https://bscscan.com` |
+| BSC Testnet | BscScan Testnet | `https://testnet.bscscan.com` |
+
+## Notes
+
+- **All tokens use 18 decimals** on BNB Chain. Amounts in API calls are in wei (1 USDT = `1000000000000000000`).
+- **Token whitelisting** — Only tokens whitelisted on the Relayer contract can be used for payments.
+- See [Network & Token Support](/concepts/network-token-support) for detailed token and chain information.

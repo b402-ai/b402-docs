@@ -1,0 +1,98 @@
+---
+title: 'Buyer Leaderboard'
+description: 'Paginated buyer rankings by transaction count'
+---
+
+`GET /metrics/buyers` returns a paginated leaderboard of buyers ranked by transaction count (descending). No authentication required. Responses are cached for **2 minutes**.
+
+```
+GET /metrics/buyers
+```
+
+## Query Parameters
+
+| Parameter | Type | Default | Max | Description |
+|-----------|------|---------|-----|-------------|
+| `skip` | `string` | `"0"` | - | Number of records to skip |
+| `take` | `string` | `"12"` | 1000 | Number of records to return |
+
+## Response
+
+### 200 - Buyer Leaderboard
+
+**`data[]` fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `address` | `string` | Buyer wallet address |
+| `transactions` | `number` | Total transaction count |
+| `volume` | `number` | Aggregate USD volume |
+| `sellers` | `number` | Unique sellers transacted with |
+| `latest` | `string` | ISO 8601 timestamp of most recent transaction |
+
+**`meta` fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `total` | `number` | Total number of buyers |
+| `skip` | `number` | Records skipped |
+| `take` | `number` | Records returned |
+
+```json
+{
+  "data": [
+    {
+      "address": "0xAbC1234567890aBcDeF1234567890AbCdEf123456",
+      "transactions": 150,
+      "volume": 15000.50,
+      "sellers": 12,
+      "latest": "2024-03-01T12:00:00.000Z"
+    }
+  ],
+  "meta": {
+    "total": 342,
+    "skip": 0,
+    "take": 12
+  }
+}
+```
+
+## Examples
+
+### cURL
+
+```bash
+# First page (default)
+curl "https://backend.b402.ai/metrics/buyers"
+
+# Second page of 20
+curl "https://backend.b402.ai/metrics/buyers?skip=20&take=20"
+```
+
+### TypeScript
+
+```typescript
+const params = new URLSearchParams({ skip: '0', take: '20' });
+const response = await fetch(
+  `https://backend.b402.ai/metrics/buyers?${params}`
+);
+const { data: buyers, meta } = await response.json();
+
+console.log(`Showing ${buyers.length} of ${meta.total} buyers`);
+
+for (const buyer of buyers) {
+  console.log(`${buyer.address}: ${buyer.transactions} txns, $${buyer.volume}`);
+}
+```
+
+## Error Codes
+
+| Code | HTTP Status | Description |
+|------|-------------|-------------|
+| `validation_error` | 400 | Invalid `skip` or `take` values (e.g., `take` exceeds 1000) |
+
+## Related
+
+- [Global Metrics](/developers/backend/metrics/global) - Protocol-wide stats and individual buyer lookup
+- [Seller Leaderboard](/developers/backend/metrics/sellers) - Paginated seller rankings
+- [Transactions](/developers/backend/transactions) - Query individual transactions

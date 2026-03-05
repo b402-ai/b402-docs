@@ -1,0 +1,266 @@
+---
+title: 'Deploy Wallet (Settle)'
+description: 'Execute on-chain wallet deployment and optional funding after verification'
+---
+
+Deploys wallets via the factory contract, settles the payment, and optionally funds the newly deployed wallets. Call [`/deploy/verify`](/developers/facilitator/api-reference/wallet-deployment/deploy-verify) first to compute addresses and fees.
+
+Two flows are available depending on how the payer signs the transaction.
+
+## EOA Deploy Settle
+
+```
+POST /deploy/settle
+```
+
+Submits signed EIP-712 payment payloads and triggers on-chain deployment.
+
+### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `paymentPayload` | `PaymentPayload[]` | Yes | Same signed payments from the verify step |
+| `paymentRequirements` | `object` | Yes | Same configuration from the verify step |
+| `paymentRequirements.network` | `string` | Yes | Target network (`bsc`) |
+| `paymentRequirements.relayerContract` | `string` | Yes | b402 Relayer contract address |
+| `paymentRequirements.deployment` | `object` | Yes | Deployment parameters |
+| `paymentRequirements.deployment.ownerAddress` | `string` | Yes | Owner of the wallets |
+| `paymentRequirements.deployment.salts` | `string[]` | Yes | 1-10 salts matching the verify request |
+| `paymentRequirements.deployment.fundingRequested` | `boolean` | Yes | Whether to fund wallets after deployment |
+| `paymentRequirements.deployment.token` | `string` | Yes | ERC-20 token contract address |
+| `wallets` | `object[]` | Yes | Wallet array returned from `/deploy/verify` |
+| `wallets[].address` | `string` | Yes | Deterministic wallet address |
+| `wallets[].salt` | `string` | Yes | Salt for this wallet |
+| `wallets[].owner` | `string` | Yes | Owner address |
+| `wallets[].fundingAmount` | `string` | Yes | Amount to fund (wei), `"0"` if no funding |
+
+### Response (200)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `paymentSuccess` | `boolean` | Whether the fee payment settled on-chain |
+| `deploymentSuccess` | `boolean` | Whether all wallets deployed successfully |
+| `fundingSuccess` | `boolean` | Whether all funding transfers completed |
+| `wallets` | `object[]` | Per-wallet deployment results |
+| `wallets[].address` | `string` | Deployed wallet address |
+| `wallets[].deploymentTxHash` | `string` | Transaction hash for deployment |
+| `wallets[].fundingTxHash` | `string \| null` | Transaction hash for funding, `null` if not requested |
+| `wallets[].fundingCompleted` | `boolean` | Whether this wallet was funded |
+| `failedWallets` | `string[]` | Addresses that failed to deploy |
+| `failedFundings` | `string[]` | Addresses that failed to receive funding |
+| `paymentTxHash` | `string` | Transaction hash for the fee payment |
+| `deploymentFee` | `string` | Fee charged (wei) |
+
+### cURL
+
+```bash
+curl -X POST https://facilitator.b402.ai/deploy/settle \
+  -H "Content-Type: application/json" \
+  -d '{
+    "paymentPayload": [
+      {
+        "token": "0x55d398326f99059fF775485246999027B3197955",
+        "payload": {
+          "authorization": {
+            "from": "0xAbC1234567890aBcDeF1234567890AbCdEf123456",
+            "to": "0x590162bf4b50F6576a459B75309eE21D92178A10",
+            "value": "500000000000000000",
+            "validAfter": 1709251200,
+            "validBefore": 1709254800,
+            "nonce": "0xaaa...fee_nonce"
+          },
+          "signature": "0x...fee_signature"
+        }
+      }
+    ],
+    "paymentRequirements": {
+      "network": "bsc",
+      "relayerContract": "0x590162bf4b50F6576a459B75309eE21D92178A10",
+      "deployment": {
+        "ownerAddress": "0xAbC1234567890aBcDeF1234567890AbCdEf123456",
+        "salts": ["0x1234...master_salt"],
+        "fundingRequested": false,
+        "token": "0x55d398326f99059fF775485246999027B3197955"
+      }
+    },
+    "wallets": [
+      {
+        "address": "0x...computed_address",
+        "salt": "0x1234...master_salt",
+        "owner": "0xAbC1234567890aBcDeF1234567890AbCdEf123456",
+        "fundingAmount": "0"
+      }
+    ]
+  }'
+```
+
+### TypeScript
+
+```typescript
+// After calling /deploy/verify
+const verifyResult = await verifyResponse.json();
+
+const settleResponse = await fetch("https://facilitator.b402.ai/deploy/settle", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    paymentPayload: [feePayload, ...fundingPayloads],
+    paymentRequirements: {
+      network: "bsc",
+      relayerContract: "0x590162bf4b50F6576a459B75309eE21D92178A10",
+      deployment: {
+        ownerAddress: wallet.address,
+        salts: [masterSalt],
+        fundingRequested: true,
+        token: "0x55d398326f99059fF775485246999027B3197955",
+      },
+    },
+    wallets: verifyResult.wallets,
+  }),
+});
+
+const result = await settleResponse.json();
+
+if (result.deploymentSuccess) {
+  for (const w of result.wallets) {
+    console.log(`Deployed ${w.address} - tx: ${w.deploymentTxHash}`);
+    if (w.fundingCompleted) {
+      console.log(`  Funded - tx: ${w.fundingTxHash}`);
+    }
+  }
+} else {
+  console.error("Failed wallets:", result.failedWallets);
+}
+```
+
+---
+
+## Smart Wallet Deploy Settle
+
+```
+POST /deploy/wallet/settle
+```
+
+For smart wallet payers, submit the signed UserOp from the verify step instead of EIP-712 payment payloads.
+
+### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `userOp` | `object` | Yes | UserOp from `/deploy/wallet/verify` |
+| `signature` | `string` | Yes | Client signature of `userOpHash` |
+| `paymentRequirements` | `object` | Yes | Same configuration from the verify step |
+| `paymentRequirements.network` | `string` | Yes | Target network (`bsc`) |
+| `paymentRequirements.deployment` | `object` | Yes | Deployment parameters |
+| `paymentRequirements.deployment.ownerAddress` | `string` | Yes | Owner of the wallets |
+| `paymentRequirements.deployment.salts` | `string[]` | Yes | Salts matching the verify request |
+| `paymentRequirements.deployment.token` | `string` | Yes | ERC-20 token contract address |
+| `paymentRequirements.deployment.payerAddress` | `string` | Yes | Smart wallet address paying for deployment |
+| `wallets` | `object[]` | Yes | Wallet array returned from `/deploy/wallet/verify` |
+
+### Response (200)
+
+The response schema is identical to the EOA deploy settle response above.
+
+### cURL
+
+```bash
+curl -X POST https://facilitator.b402.ai/deploy/wallet/settle \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userOp": { "sender": "0x...", "nonce": "0x...", "callData": "0x...", "..." : "..." },
+    "signature": "0x...signed_userOpHash",
+    "paymentRequirements": {
+      "network": "bsc",
+      "deployment": {
+        "ownerAddress": "0xAbC1234567890aBcDeF1234567890AbCdEf123456",
+        "salts": ["0x1234...master_salt"],
+        "token": "0x55d398326f99059fF775485246999027B3197955",
+        "payerAddress": "0x...nexus_smart_wallet"
+      }
+    },
+    "wallets": [
+      {
+        "address": "0x...computed_address",
+        "salt": "0x1234...master_salt",
+        "owner": "0xAbC1234567890aBcDeF1234567890AbCdEf123456",
+        "fundingAmount": "0"
+      }
+    ]
+  }'
+```
+
+### TypeScript
+
+```typescript
+// After calling /deploy/wallet/verify and signing the userOpHash
+const verifyResult = await verifyResponse.json();
+
+// Sign the userOpHash with the smart wallet owner's key
+const signature = await walletOwner.signMessage(
+  ethers.getBytes(verifyResult.userOpHash)
+);
+
+const settleResponse = await fetch("https://facilitator.b402.ai/deploy/wallet/settle", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    userOp: verifyResult.userOp,
+    signature,
+    paymentRequirements: {
+      network: "bsc",
+      deployment: {
+        ownerAddress: ownerAddress,
+        salts: [masterSalt],
+        token: "0x55d398326f99059fF775485246999027B3197955",
+        payerAddress: smartWalletAddress,
+      },
+    },
+    wallets: verifyResult.wallets,
+  }),
+});
+
+const result = await settleResponse.json();
+
+if (result.deploymentSuccess) {
+  console.log("All wallets deployed successfully");
+} else {
+  console.error("Failed wallets:", result.failedWallets);
+  // Use /wallet/claim to retry failed deployments
+}
+```
+
+---
+
+## Settlement Process
+
+The facilitator executes these steps in order:
+
+1. **Settle payment** - Executes the fee payment on-chain (EIP-712 transfer or UserOp submission)
+2. **Deploy wallets** - Calls the factory contract with each salt to deploy wallets via `CREATE2`
+3. **Fund wallets** - If funding was requested, transfers tokens to each newly deployed wallet
+4. **Return results** - Reports per-wallet success/failure for both deployment and funding
+
+<Warning>
+If payment succeeds but deployment or funding partially fails, the payment is not reversed. Use [`/wallet/claim`](/developers/facilitator/api-reference/wallet-deployment/claim) to retry failed deployments and fundings.
+</Warning>
+
+<Note>
+The facilitator covers all gas costs for deployment and funding transactions.
+</Note>
+
+## Error Codes
+
+| Code | HTTP Status | Description |
+|------|-------------|-------------|
+| `validation_error` | 400 | Missing required fields or wallets array doesn't match verify response |
+| `payment_settlement_error` | 500 | Fee payment transaction reverted on-chain |
+| `deployment_error` | 500 | Factory contract call failed for one or more wallets |
+| `funding_error` | 500 | Funding transfer failed for one or more wallets |
+| `blockchain_error` | 500 | RPC or network-level failure |
+
+## Related
+
+- [Deploy Wallet (Verify)](/developers/facilitator/api-reference/wallet-deployment/deploy-verify) - Verify before settling
+- [Claim Pending Deployment](/developers/facilitator/api-reference/wallet-deployment/claim) - Retry failed deployments or fundings
+- [List Wallets](/developers/facilitator/api-reference/wallet-deployment/list-wallets) - Confirm deployed wallets

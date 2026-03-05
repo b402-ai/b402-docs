@@ -1,0 +1,189 @@
+---
+title: 'Settle Payment (EOA)'
+description: 'Execute on-chain settlement for a verified EOA payment'
+---
+
+Executes on-chain settlement by calling `transferWithAuthorization()` on the b402 Relayer contract. The facilitator re-verifies the payload, submits the transaction, and pays gas on behalf of the payer.
+
+```
+POST /settle
+```
+
+<Note>
+Settlement typically completes in ~3 seconds on BNB Chain. The facilitator covers all gas costs.
+</Note>
+
+## Request Body
+
+The request body is identical to [`/verify`](/developers/facilitator/api-reference/eoa-payments/verify).
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `paymentPayload` | object | Signed payment data |
+| `paymentPayload.token` | string | Token contract address |
+| `paymentPayload.payload` | object | Authorization and signature |
+| `paymentPayload.payload.authorization` | object | EIP-712 authorization fields |
+| `paymentPayload.payload.authorization.from` | string | Payer wallet address |
+| `paymentPayload.payload.authorization.to` | string | Recipient wallet address |
+| `paymentPayload.payload.authorization.value` | string | Amount in wei (uint256) |
+| `paymentPayload.payload.authorization.validAfter` | number | Unix timestamp, signature valid after |
+| `paymentPayload.payload.authorization.validBefore` | number | Unix timestamp, signature valid before |
+| `paymentPayload.payload.authorization.nonce` | string | Random bytes32 nonce |
+| `paymentPayload.payload.signature` | string | EIP-712 signature |
+| `paymentRequirements` | object | Network and contract details |
+| `paymentRequirements.network` | string | Target network (`bsc`) |
+| `paymentRequirements.relayerContract` | string | b402 Relayer contract address |
+
+## Response
+
+### Successful Settlement (200)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `success` | boolean | `true` |
+| `transaction` | string | On-chain transaction hash |
+| `network` | string | Network where the transaction was settled |
+| `payer` | string | Payer wallet address |
+| `blockNumber` | number | Block number containing the transaction |
+
+### Failed Settlement (200)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `success` | boolean | `false` |
+| `network` | string | Target network |
+| `errorReason` | string | Why settlement failed |
+
+## What Happens On-Chain
+
+1. The facilitator re-runs all [verification checks](/developers/facilitator/api-reference/eoa-payments/verify#verification-checks)
+2. The facilitator calls `transferWithAuthorization()` on the Relayer contract with the signed authorization
+3. The Relayer contract verifies the EIP-712 signature, checks the nonce, and executes `transferFrom()` on the token contract
+4. The nonce is marked as used on-chain, preventing replay
+5. An `AuthorizationUsed` event is emitted for on-chain auditability
+
+<Warning>
+Always call `/verify` before `/settle`. While `/settle` re-verifies internally, calling `/verify` first lets you catch issues without consuming gas.
+</Warning>
+
+## Examples
+
+### cURL
+
+```bash
+curl -X POST https://facilitator.b402.ai/settle \
+  -H "Content-Type: application/json" \
+  -d '{
+    "paymentPayload": {
+      "token": "0x55d398326f99059fF775485246999027B3197955",
+      "payload": {
+        "authorization": {
+          "from": "0xAbC1234567890aBcDeF1234567890AbCdEf123456",
+          "to": "0x9876543210FeDcBa9876543210FeDcBa98765432",
+          "value": "10000000000000000",
+          "validAfter": 1709251200,
+          "validBefore": 1709254800,
+          "nonce": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+        },
+        "signature": "0xabc123...eip712_signature"
+      }
+    },
+    "paymentRequirements": {
+      "network": "bsc",
+      "relayerContract": "0x590162bf4b50F6576a459B75309eE21D92178A10"
+    }
+  }'
+```
+
+### TypeScript
+
+```typescript
+const response = await fetch("https://facilitator.b402.ai/settle", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    paymentPayload: {
+      token: "0x55d398326f99059fF775485246999027B3197955",
+      payload: {
+        authorization: {
+          from: wallet.address,
+          to: recipientAddress,
+          value: "10000000000000000",
+          validAfter: Math.floor(Date.now() / 1000),
+          validBefore: Math.floor(Date.now() / 1000) + 3600,
+          nonce: crypto.randomBytes(32).toString("hex"),
+        },
+        signature: eip712Signature,
+      },
+    },
+    paymentRequirements: {
+      network: "bsc",
+      relayerContract: "0x590162bf4b50F6576a459B75309eE21D92178A10",
+    },
+  }),
+});
+
+const result = await response.json();
+
+if (result.success) {
+  console.log("Settlement complete");
+  console.log("TX:", result.transaction);
+  console.log("Block:", result.blockNumber);
+  console.log(`View on BscScan: https://bscscan.com/tx/${result.transaction}`);
+} else {
+  console.error("Settlement failed:", result.errorReason);
+}
+```
+
+### Verify then Settle (Full Flow)
+
+```typescript
+async function verifyAndSettle(paymentPayload: object, paymentRequirements: object) {
+  const body = JSON.stringify({ paymentPayload, paymentRequirements });
+  const headers = { "Content-Type": "application/json" };
+
+  // Step 1: Verify
+  const verifyRes = await fetch("https://facilitator.b402.ai/verify", {
+    method: "POST",
+    headers,
+    body,
+  });
+  const verification = await verifyRes.json();
+
+  if (!verification.isValid) {
+    throw new Error(`Verification failed: ${verification.invalidReason}`);
+  }
+
+  // Step 2: Settle
+  const settleRes = await fetch("https://facilitator.b402.ai/settle", {
+    method: "POST",
+    headers,
+    body,
+  });
+  const settlement = await settleRes.json();
+
+  if (!settlement.success) {
+    throw new Error(`Settlement failed: ${settlement.errorReason}`);
+  }
+
+  return settlement;
+}
+```
+
+## Error Codes
+
+| Code | HTTP Status | Description |
+|------|-------------|-------------|
+| `payment_settlement_error` | 500 | Transaction submitted but reverted on-chain |
+| `blockchain_error` | 500 | RPC or network-level failure (timeout, node unavailable) |
+| `signature_error` | 400 | EIP-712 signature is malformed or recovery failed during re-verification |
+
+<Info>
+If you receive a `blockchain_error`, wait a few seconds and retry. Transient RPC issues on BNB Chain typically resolve quickly.
+</Info>
+
+## Related
+
+- [Verify Payment (EOA)](/developers/facilitator/api-reference/eoa-payments/verify) - Verify before settling
+- [Facilitator Overview](/concepts/facilitator) - How verification and settlement fit together
+- [Buyer Guide (EOA)](/get-started/buyer) - Full end-to-end payment walkthrough

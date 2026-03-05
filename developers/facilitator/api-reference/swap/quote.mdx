@@ -1,0 +1,84 @@
+---
+title: 'Get Swap Quote'
+description: 'Get a PancakeSwap V3 price quote'
+---
+
+`GET /swap/quote` returns a price quote for a token swap on PancakeSwap V3. Use this to preview the expected output before executing a swap. No authentication required.
+
+```
+GET /swap/quote
+```
+
+## Query Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `tokenIn` | `string` | Yes | Input token contract address |
+| `tokenOut` | `string` | Yes | Output token contract address |
+| `amountIn` | `string` | Yes | Input amount in wei (smallest token unit) |
+
+## Response
+
+### 200 - Quote
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `amountOut` | `string` | Expected output amount in wei |
+| `priceImpact` | `string` | Price impact as a percentage (e.g., `"0.15"`) |
+| `route` | `array` | Swap route through token pairs |
+| `fee` | `string` | PancakeSwap pool fee tier |
+
+### Error Responses
+
+| Status | Code | Description |
+|--------|------|-------------|
+| 400 | `validation_error` | Missing or invalid query parameters |
+| 404 | `no_route` | No liquidity route found for the token pair |
+
+<Note>
+Quotes are informational and do not lock a price. The actual output may differ at execution time due to price movement. Use `minAmountOut` in swap endpoints for slippage protection.
+</Note>
+
+## Examples
+
+### cURL
+
+```bash
+curl -G https://facilitator.b402.ai/swap/quote \
+  --data-urlencode "tokenIn=0x55d398326f99059fF775485246999027B3197955" \
+  --data-urlencode "tokenOut=0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c" \
+  --data-urlencode "amountIn=10000000000000000000"
+```
+
+### TypeScript
+
+```typescript
+const params = new URLSearchParams({
+  tokenIn: '0x55d398326f99059fF775485246999027B3197955',  // USDT
+  tokenOut: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c', // WBNB
+  amountIn: '10000000000000000000', // 10 USDT
+});
+
+const response = await fetch(
+  `https://facilitator.b402.ai/swap/quote?${params}`
+);
+const quote = await response.json();
+
+console.log('Expected output:', quote.amountOut);
+console.log('Price impact:', quote.priceImpact, '%');
+console.log('Route:', quote.route);
+console.log('Fee tier:', quote.fee);
+```
+
+## Notes
+
+- Supports any token pair with liquidity on PancakeSwap V3 (BNB Chain)
+- Amounts are always in wei (smallest token unit)
+- Price impact increases with larger trade sizes relative to pool liquidity
+- Quote does not account for the b402 facilitator fee; the fee is added during swap execution
+
+## Related
+
+- [Execute Swap](/developers/facilitator/api-reference/swap/execute) - Execute swap with EOA payment
+- [Swap Payment Intent](/developers/facilitator/api-reference/swap/payment-intent) - Get EIP-712 payload for a swap
+- [Verify Wallet Swap](/developers/facilitator/api-reference/swap/wallet-verify) - Build swap UserOp for smart wallet

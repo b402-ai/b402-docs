@@ -1,0 +1,90 @@
+---
+title: Agent Identity
+description: 'On-chain identity for AI agents via ERC-8004'
+icon: fingerprint
+---
+
+[ERC-8004](https://eips.ethereum.org/EIPS/eip-8004) is an Ethereum standard for **agent identity**. It gives AI agents a verifiable, on-chain identity that is independent of the wallet they use to transact. In b402, this identity layer connects wallets, reputation, and delegation into a single framework.
+
+## Why Agents Need On-Chain Identity
+
+Without identity, an agent is just a private key. There is no way to distinguish a trusted agent from a new one, no way to delegate authority, and no accountability if something goes wrong. ERC-8004 solves this by providing:
+
+- **Reputation**: Payment history and behavior are linked to a persistent identity, not a disposable wallet address
+- **Delegation**: One agent can authorize another to act on its behalf, with verifiable on-chain proof
+- **Accountability**: Identity owners can be held responsible for their agents' actions
+- **Interoperability**: A single identity works across protocols and applications
+
+## How It Works
+
+### Identity NFT
+
+An ERC-8004 identity is an on-chain NFT (non-fungible token) minted to a wallet address. This NFT serves as the agent's credential. It is non-transferable by default, binding the identity to its original owner.
+
+```
+Owner Wallet (0xABC...) --[mint]--> Agent Identity NFT (tokenId: 42)
+```
+
+The identity NFT contains metadata about the agent: its name, capabilities, and the wallets it controls.
+
+### Wallet Linking
+
+Both EOA and smart wallets can be linked to an ERC-8004 identity. A single identity can control multiple wallets:
+
+| Wallet Type | How It Links |
+|-------------|-------------|
+| EOA | Owner signs a message linking the EOA to the identity |
+| Smart Wallet (Nexus) | The smart wallet's owner address is linked to the identity |
+
+Once linked, every payment made by those wallets contributes to the identity's on-chain reputation.
+
+### Reputation-Linked Signing
+
+When an agent signs a payment (EIP-712 or UserOp), the identity layer allows verifiers to look up:
+
+1. **Who is this agent?** - Resolve the signing wallet to an ERC-8004 identity
+2. **What is their history?** - Query payment volume, frequency, and success rate
+3. **Are they trusted?** - Check reputation score derived from on-chain activity
+
+Sellers can use this information to offer tiered pricing, skip verification steps for trusted agents, or reject unknown agents entirely.
+
+### Delegation
+
+ERC-8004 supports delegation, where one identity grants another the authority to act on its behalf:
+
+```
+Primary Identity (Alice) --[delegate]--> Sub-Agent Identity (Bot-1)
+```
+
+Delegation is useful for:
+
+- **Multi-agent systems**: A primary agent delegates payment authority to worker agents
+- **Organizational hierarchies**: A company identity delegates to department-level agents
+- **Temporary access**: Time-bound delegation that expires automatically
+
+Delegation is recorded on-chain and can be verified by any party without trusting the delegator.
+
+## Integration with b402
+
+In b402, the identity layer is optional but recommended for agents that need:
+
+- Persistent reputation across multiple smart wallets
+- Delegation of payment authority to sub-agents
+- Higher trust levels with sellers (potentially lower fees or priority access)
+
+Both the [EOA](/concepts/wallet#eoa-wallets) and [Smart Wallet](/concepts/wallet#smart-wallets-erc-7579-nexus) payment flows work with or without an ERC-8004 identity. The identity adds a trust layer on top of the existing payment infrastructure.
+
+## Future Plans
+
+The b402 ecosystem is expanding ERC-8004 integration to include:
+
+- **Identity-gated endpoints**: Sellers can restrict access to agents with a minimum reputation score
+- **Cross-protocol reputation**: Agent reputation portable across b402 and other ERC-8004 adopters
+- **Automated delegation policies**: Smart contract rules governing when and how delegation is granted
+- **Identity recovery**: Mechanisms to migrate an identity if the owner wallet is compromised
+
+## Learn More
+
+- [Wallet Concepts](/concepts/wallet) - EOA and smart wallet payment models
+- [ERC-8004 Specification](https://eips.ethereum.org/EIPS/eip-8004) - Full Ethereum standard
+- [Smart Wallet Buyer Guide](/get-started/buyer-smart-wallet) - Agent payment walkthrough

@@ -1,0 +1,77 @@
+---
+title: Privacy (Incognito)
+description: 'Private payments via RAILGUN integration'
+icon: eye-slash
+---
+
+b402 includes an **Incognito mode** that adds on-chain payment privacy using [RAILGUN](https://railgun.org), a zero-knowledge privacy protocol. When enabled, token transfers are shielded so that amounts, senders, and recipients are not visible on the public blockchain.
+
+## Why Privacy Matters
+
+Standard on-chain payments are fully transparent. Every transaction is visible on a block explorer, linking wallet addresses to payment amounts and counterparties. For AI agents making high-frequency API payments, or businesses settling invoices on-chain, this transparency can expose:
+
+- **Spending patterns** that reveal business strategy or usage volumes
+- **Wallet balances** that make addresses targets for social engineering
+- **Counterparty relationships** that leak partnership or vendor information
+
+Incognito mode solves this by routing payments through RAILGUN's shielded pool.
+
+## How It Works
+
+Incognito mode has three operations:
+
+### Shield
+
+Deposit tokens from your visible wallet into the RAILGUN privacy pool. Once shielded, tokens are no longer associated with your public address.
+
+```
+Visible Wallet (0xABC...) --[shield]--> RAILGUN Privacy Pool
+```
+
+Your tokens are now represented as encrypted commitments in a Merkle tree. Only you can decrypt and spend them.
+
+### Transact
+
+Send tokens privately within the RAILGUN pool. The sender, recipient, and amount are hidden behind zero-knowledge proofs. Neither party's address appears in the transaction.
+
+```
+Shielded Balance A --[transact]--> Shielded Balance B
+```
+
+### Unshield
+
+Withdraw tokens from the privacy pool back to a visible wallet address. This is typically the final step when the recipient needs tokens in a standard wallet.
+
+```
+RAILGUN Privacy Pool --[unshield]--> Visible Wallet (0xDEF...)
+```
+
+## Integration with b402
+
+You do not need to interact with RAILGUN contracts directly. The b402 Facilitator handles the complexity:
+
+1. **Shield and unshield** operations are built as ERC-4337 UserOperations via the Facilitator's incognito endpoints
+2. **Gas is sponsored** by the paymaster, so privacy operations are gasless
+3. **The Facilitator signs paymaster data** and submits to the bundler on your behalf
+
+The flow follows the same verify-then-settle pattern as standard smart wallet payments:
+
+1. Call `POST /wallet/incognito/verify` with your wallet address and operation type
+2. Sign the returned `userOpHash` with your owner key
+3. Call `POST /wallet/incognito/settle` with the signed UserOp
+
+<Info>
+Incognito mode is currently available for smart wallets only. EOA incognito support is planned.
+</Info>
+
+## Supported Tokens
+
+All tokens supported by b402 can be shielded: USDT, USDC, and USD1. See [Network & Token Support](/concepts/network-token-support) for contract addresses and supported chains.
+
+## Learn More
+
+- [Incognito Verify API](/developers/facilitator/api-reference/incognito/verify) - Build an unsigned incognito UserOp
+- [Incognito Settle API](/developers/facilitator/api-reference/incognito/settle) - Submit a signed incognito UserOp
+- [Privacy Commitments API](/developers/backend/privacy/commitments) - Query shielded commitments for an address
+- [Nullifiers API](/developers/backend/privacy/nullifiers) - Check if commitments have been spent
+- [Merkle Proof API](/developers/backend/privacy/merkle-proof) - Generate proofs for commitment positions

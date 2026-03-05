@@ -1,0 +1,104 @@
+---
+title: 'List Wallets'
+description: 'List all wallets for an owner address, separated by master and sub wallets'
+---
+
+Returns all wallets associated with an owner address, organized into master and sub wallet groups.
+
+```
+GET /wallet/:owner
+```
+
+## Path Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `owner` | `string` | Owner wallet address |
+
+## Response (200)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `master` | `WalletInfo[]` | Master wallets for this owner (typically one) |
+| `sub` | `WalletInfo[]` | Sub-wallets for this owner |
+
+### WalletInfo
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `ownerAddress` | `string` | Owner EOA address |
+| `walletAddress` | `string` | Deployed wallet address |
+| `salt` | `string` | Salt used for `CREATE2` deployment |
+| `payerAddress` | `string` | Address that paid for deployment |
+| `paymentTxHash` | `string` | Transaction hash for the deployment fee payment |
+| `deploymentTxHash` | `string` | Transaction hash for the wallet deployment |
+| `paymentCompleted` | `boolean` | Whether the fee payment settled |
+| `deploymentCompleted` | `boolean` | Whether the wallet is deployed on-chain |
+| `fundingRequested` | `boolean` | Whether funding was requested during deployment |
+| `fundingCompleted` | `boolean` | Whether funding was transferred |
+| `fundingAmount` | `string` | Funding amount in wei |
+| `fundingTxHash` | `string \| null` | Transaction hash for funding, `null` if not funded |
+| `createdAt` | `string` | ISO 8601 timestamp of record creation |
+| `updatedAt` | `string` | ISO 8601 timestamp of last update |
+
+## Examples
+
+### cURL
+
+```bash
+curl https://facilitator.b402.ai/wallet/0xAbC1234567890aBcDeF1234567890AbCdEf123456
+```
+
+### TypeScript
+
+```typescript
+const owner = "0xAbC1234567890aBcDeF1234567890AbCdEf123456";
+const response = await fetch(`https://facilitator.b402.ai/wallet/${owner}`);
+const data = await response.json();
+
+console.log("Master wallets:", data.master.length);
+console.log("Sub wallets:", data.sub.length);
+
+for (const wallet of [...data.master, ...data.sub]) {
+  const status = wallet.deploymentCompleted ? "deployed" : "pending";
+  console.log(`${wallet.walletAddress} (${status})`);
+}
+```
+
+### Example Response
+
+```json
+{
+  "master": [
+    {
+      "ownerAddress": "0xAbC1234567890aBcDeF1234567890AbCdEf123456",
+      "walletAddress": "0x...master_wallet",
+      "salt": "0x...master_salt",
+      "payerAddress": "0xAbC1234567890aBcDeF1234567890AbCdEf123456",
+      "paymentTxHash": "0x...tx_hash",
+      "deploymentTxHash": "0x...tx_hash",
+      "paymentCompleted": true,
+      "deploymentCompleted": true,
+      "fundingRequested": true,
+      "fundingCompleted": true,
+      "fundingAmount": "1000000000000000000",
+      "fundingTxHash": "0x...tx_hash",
+      "createdAt": "2025-03-01T12:00:00.000Z",
+      "updatedAt": "2025-03-01T12:00:05.000Z"
+    }
+  ],
+  "sub": []
+}
+```
+
+## Error Codes
+
+| Code | HTTP Status | Description |
+|------|-------------|-------------|
+| `validation_error` | 400 | Invalid owner address format |
+| `not_found` | 404 | No wallets found for this owner |
+
+## Related
+
+- [Get Master Wallet](/developers/facilitator/api-reference/wallet-deployment/get-master-wallet) - Get just the master wallet
+- [Deploy Wallet (Verify)](/developers/facilitator/api-reference/wallet-deployment/deploy-verify) - Deploy new wallets

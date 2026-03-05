@@ -1,0 +1,65 @@
+---
+title: Network & Token Support
+description: 'Supported chains, tokens, and contract addresses'
+icon: split
+---
+
+b402 operates across EVM-compatible chains with support for multiple stablecoins. All payments are settled on-chain through the b402 Relayer contract, which is deployed on each supported network.
+
+## Supported Networks
+
+| Network | Chain ID | Status | RPC Endpoint |
+|---------|----------|--------|-------------|
+| BNB Chain Mainnet | 56 | Live | `https://bsc-dataseed1.binance.org` |
+| BNB Chain Testnet | 97 | Live | `https://bsc-testnet-dataseed.bnbchain.org` |
+
+## Supported Tokens
+
+### BNB Chain Mainnet
+
+| Token | Symbol | Address | Decimals |
+|-------|--------|---------|----------|
+| Tether USD | USDT | `0x55d398326f99059fF775485246999027B3197955` | 18 |
+| USD Coin | USDC | `0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d` | 18 |
+| WLFI USD | USD1 | `0x8d0d000ee44948fc98c9b98a4fa4921476f08b0d` | 18 |
+
+### BNB Chain Testnet
+
+| Token | Symbol | Address | Decimals |
+|-------|--------|---------|----------|
+| Tether USD (Test) | USDT | `0x337610d27c682E347C9cD60BD4b3b107C9d34dDd` | 18 |
+
+## Contract Addresses
+
+### BNB Chain Mainnet
+
+| Contract | Address | Purpose |
+|----------|---------|---------|
+| B402 Relayer (Official) | `0x590162bf4b50F6576a459B75309eE21D92178A10` | EIP-712 payment settlement |
+| B402 Relayer (Custom) | `0x9dB0eDC77C9047a06Fd6dE82c892630DAa5eF601` | Alternative relayer |
+| Nexus Account Factory | `0x0000006648ED9B2B842552BE63Af870bC74af837` | Smart wallet deployment |
+| Nexus Bootstrap | `0x0000003eDf18913c01cBc482C978bBD3D6E8ffA3` | Smart wallet initialization |
+| K1 Validator | (see env config) | ECDSA signature validation module |
+| EntryPoint (v0.7) | `0x0000000071727De22E5E9d8BAf0edAc6f37da032` | ERC-4337 UserOp execution |
+
+## Facilitator Endpoints
+
+| Service | URL | Description |
+|---------|-----|-------------|
+| Facilitator API | `https://facilitator.b402.ai` | Payment verification and settlement |
+| Backend API | `https://backend.b402.ai` | Analytics, privacy, and transaction data |
+
+## Block Explorers
+
+| Network | Explorer | URL |
+|---------|----------|-----|
+| BSC Mainnet | BscScan | `https://bscscan.com` |
+| BSC Testnet | BscScan Testnet | `https://testnet.bscscan.com` |
+
+## Token Notes
+
+**All tokens use 18 decimals** on BNB Chain. When specifying amounts in API calls, values are in the smallest unit (wei). For example, 1 USDT = `1000000000000000000` (1e18).
+
+**Token whitelisting.** Only tokens whitelisted on the Relayer contract can be used for payments. The tokens listed above are currently whitelisted.
+
+**Adding new tokens.** New token support requires whitelisting on the Relayer contract by the contract owner. Contact the b402 team to request new token support.

@@ -1,0 +1,112 @@
+---
+title: Architecture Overview
+description: 'How the b402 protocol layers work together'
+icon: layer-group
+---
+
+b402 is built in three layers. Each layer can be used independently, but they work best together.
+
+## Protocol Layer
+
+The foundation is the **b402 Relayer** smart contract, deployed on each supported EVM chain. It handles:
+
+- **EIP-712 signature verification** for gasless payment authorization
+- **On-chain token transfers** via `transferWithAuthorization()`
+- **Replay protection** using random nonces and time windows (`validAfter` / `validBefore`)
+- **Token whitelisting** for supported assets (USDT, USDC, USD1)
+
+The Relayer enables meta-transactions: users sign off-chain, the facilitator pays gas and executes on-chain.
+
+**Contracts:**
+
+| Contract | Address | Network |
+|----------|---------|---------|
+| B402 Relayer (Official) | `0x590162bf4b50F6576a459B75309eE21D92178A10` | BSC Mainnet |
+| B402 Relayer (Custom) | `0x9dB0eDC77C9047a06Fd6dE82c892630DAa5eF601` | BSC Mainnet |
+| Nexus Account Factory | `0x0000006648ED9B2B842552BE63Af870bC74af837` | BSC Mainnet |
+
+## Service Layer
+
+### Facilitator
+
+The Facilitator is the API service that bridges HTTP requests and blockchain settlement. It provides:
+
+**EOA Payments** - Verify and settle EIP-712 signed payments for standard wallets.
+
+**Smart Wallet Payments** - Build and submit ERC-4337 UserOperations for Nexus smart wallets. The facilitator injects fees, signs paymaster data, and submits to bundlers.
+
+**Wallet Deployment** - Deterministic smart wallet creation via ERC-7579 Nexus factory. Wallets are computed off-chain and deployed on first use.
+
+**Incognito Operations** - Privacy-preserving payments through RAILGUN integration. Shield tokens, transact privately, and unshield to recipients.
+
+**Swap** - Integrated PancakeSwap V3 for token-to-token swaps with payment in a single transaction.
+
+**Base URL:** `https://facilitator.b402.ai`
+
+### b402scan
+
+Transaction explorer for b402 payments. Currently in development.
+
+### Backend API
+
+Data layer providing:
+- **Privacy API** - Commitments, nullifiers, Merkle proofs for RAILGUN operations
+- **Metrics API** - Protocol-wide statistics, buyer/seller leaderboards
+- **Transaction API** - Paginated transaction history with filters
+
+## Developer Layer
+
+### b402-sdk (TypeScript)
+
+Client-side SDK for buyers. Handles wallet connection, payment signing, and transaction confirmation.
+
+```bash
+npm install b402-sdk
+```
+
+```typescript
+import { B402 } from 'b402-sdk';
+const b402 = new B402('mainnet');
+const result = await b402.pay(wallet, {
+  amount: '0.01',
+  token: 'USD1',
+  recipient: '0x...',
+});
+```
+
+### b402-express (Middleware)
+
+Server-side middleware for sellers. Wraps Express routes with payment requirements.
+
+```bash
+npm install b402-express
+```
+
+```typescript
+const { b402 } = require('b402-express');
+app.use(b402(
+  { payTo: '0x...' },
+  { 'GET /premium': { price: '0.01', token: 'USD1' } }
+));
+```
+
+## Payment Flow
+
+The full payment lifecycle:
+
+<Frame>
+  <img src="/public/images/diagrams/payment-flow.svg" alt="b402 payment flow: Client, Server, Facilitator, and Blockchain interaction sequence" />
+</Frame>
+
+## Smart Wallet Flow
+
+For ERC-7579 Nexus smart wallets, the flow uses UserOperations instead of direct signatures:
+
+1. Client requests payment with wallet address
+2. Facilitator builds unsigned UserOp with fee injection
+3. Client signs the UserOp hash
+4. Facilitator submits to ERC-4337 bundler with paymaster sponsorship
+5. Bundler executes on-chain (batch call: approve + transfer)
+6. Facilitator returns transaction receipt
+
+This enables gasless, batched operations for AI agents without requiring native gas tokens.

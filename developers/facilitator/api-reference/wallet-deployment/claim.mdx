@@ -1,0 +1,146 @@
+---
+title: 'Claim Pending Deployment'
+description: 'Retry failed wallet deployments and funding transfers'
+---
+
+Retries failed deployments or funding transfers from a previous `/deploy/settle` call. If the payment succeeded but the deployment or funding partially failed, use this endpoint to retry without paying again.
+
+```
+POST /wallet/claim
+```
+
+## Request Body
+
+At least one of `paymentTxHash` or `payerAddress` is required.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `paymentTxHash` | `string` | Conditional | Transaction hash of the original fee payment |
+| `payerAddress` | `string` | Conditional | Address that paid for deployment |
+
+<Info>
+Provide `paymentTxHash` to retry a specific deployment batch. Provide `payerAddress` to retry all pending deployments for that payer. You can provide both to narrow the scope.
+</Info>
+
+## Response (200)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `success` | `boolean` | Whether all retries completed successfully |
+| `deployments` | `object` | Deployment retry results |
+| `deployments.successful` | `object[]` | Wallets that deployed successfully on retry |
+| `deployments.successful[].address` | `string` | Wallet address |
+| `deployments.successful[].deploymentTxHash` | `string` | New deployment transaction hash |
+| `deployments.failed` | `object[]` | Wallets that still failed |
+| `deployments.failed[].address` | `string` | Wallet address |
+| `deployments.failed[].reason` | `string` | Why deployment failed again |
+| `funding` | `object` | Funding retry results |
+| `funding.successful` | `object[]` | Wallets that were funded successfully on retry |
+| `funding.successful[].address` | `string` | Wallet address |
+| `funding.successful[].fundingTxHash` | `string` | New funding transaction hash |
+| `funding.failed` | `object[]` | Wallets that still failed to fund |
+| `funding.failed[].address` | `string` | Wallet address |
+| `funding.failed[].reason` | `string` | Why funding failed again |
+| `network` | `string` | Network where retries were attempted |
+
+## Examples
+
+### cURL
+
+```bash
+# Retry by payment transaction hash
+curl -X POST https://facilitator.b402.ai/wallet/claim \
+  -H "Content-Type: application/json" \
+  -d '{
+    "paymentTxHash": "0x...original_payment_tx"
+  }'
+
+# Retry all pending for a payer
+curl -X POST https://facilitator.b402.ai/wallet/claim \
+  -H "Content-Type: application/json" \
+  -d '{
+    "payerAddress": "0xAbC1234567890aBcDeF1234567890AbCdEf123456"
+  }'
+```
+
+### TypeScript
+
+```typescript
+const response = await fetch("https://facilitator.b402.ai/wallet/claim", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    paymentTxHash: originalPaymentTxHash,
+  }),
+});
+
+const result = await response.json();
+
+if (result.success) {
+  console.log("All retries succeeded");
+} else {
+  if (result.deployments.failed.length > 0) {
+    console.error("Still failed to deploy:", result.deployments.failed);
+  }
+  if (result.funding.failed.length > 0) {
+    console.error("Still failed to fund:", result.funding.failed);
+  }
+}
+```
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "deployments": {
+    "successful": [
+      {
+        "address": "0x...wallet_address",
+        "deploymentTxHash": "0x...new_tx_hash"
+      }
+    ],
+    "failed": []
+  },
+  "funding": {
+    "successful": [
+      {
+        "address": "0x...wallet_address",
+        "fundingTxHash": "0x...new_tx_hash"
+      }
+    ],
+    "failed": []
+  },
+  "network": "bsc"
+}
+```
+
+## When to Use Claim
+
+Call `/wallet/claim` when:
+
+- `/deploy/settle` returned `deploymentSuccess: false` or `fundingSuccess: false`
+- The `failedWallets` or `failedFundings` arrays in the settle response are non-empty
+- You want to retry all pending operations for a payer address
+
+<Warning>
+Claim only retries operations where the payment already succeeded. If the payment itself failed during settle, you need to start a new verify/settle flow.
+</Warning>
+
+<Note>
+There is no additional fee for retrying via claim. The original payment covers all retry attempts.
+</Note>
+
+## Error Codes
+
+| Code | HTTP Status | Description |
+|------|-------------|-------------|
+| `validation_error` | 400 | Neither `paymentTxHash` nor `payerAddress` provided |
+| `not_found` | 404 | No pending deployments found for the given parameters |
+| `deployment_error` | 500 | Retry failed due to on-chain error |
+| `blockchain_error` | 500 | RPC or network-level failure |
+
+## Related
+
+- [Deploy Wallet (Settle)](/developers/facilitator/api-reference/wallet-deployment/deploy-settle) - Initial deployment that may require claim
+- [List Wallets](/developers/facilitator/api-reference/wallet-deployment/list-wallets) - Check wallet status after claiming

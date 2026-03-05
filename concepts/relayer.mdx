@@ -1,50 +1,94 @@
 ---
 title: b402 Relayer
-description: 'On-chain contract for gasless EVM-token payments in b402'
+description: 'On-chain contract for gasless EVM-token payments'
 icon: ballot-check
 ---
 
-The **b402 Relayer** is the on-chain smart contract that enables gasless EVM-token payments on supported networks such as BNB Chain and Base.  
-
-It works in tandem with the Facilitator service, verifying off-chain signatures and executing authorized token transfers on behalf of users.
-
-Beyond gasless execution, the Relayer supports **multiple tokens within each supported network’s ecosystem**, allowing agents and applications to send and receive payments in custom BEP-20 / ERC-20 assets.
-
-<Note>
-The b402 Relayer contract is currently **unaudited** and **not intended for production use**. It should only be deployed in testing or development environments.
-</Note>
-
----
-
-## Key Capabilities
-
-The **b402 Relayer** serves as a meta-transaction executor for tokens that do not natively implement EIP-3009 or `permit()` functionality.  
-
-It allows a facilitator to submit a signed authorization from a user and pay the associated gas cost to execute the transfer on-chain.
-
-This design enables off-chain payment authorization, ideal for agents, automated clients, or users without BNB for gas.
-
-**Features:**
-- Executes gasless BEP-20 or ERC-20 transfers (e.g., USDT, USDC, BUSD)  
-- Verifies **EIP-712** signatures for authenticity  
-- Prevents replay attacks using nonces  
-- Enforces validity windows (`validAfter`, `validBefore`)  
-- Supports **token whitelisting** for enhanced security  
-- Compatible with all **standard EVM tokens** on supported chains (e.g., BNB Chain and Base)  
-
----
+The b402 Relayer is the smart contract that enables gasless token payments across EVM chains. It verifies EIP-712 signatures and executes authorized token transfers, with the facilitator paying gas on behalf of the user. The Relayer is deployed on each supported chain (currently BNB Chain and Base).
 
 ## How It Works
 
-1. **User signs off-chain authorization**  
-   The user (or agent) signs an **EIP-712 message** authorizing a specific token transfer.  
-   Example message:  
-   > “I authorize the transfer of 1 USDT from my address to the recipient.”
+1. **User signs off-chain.** The user signs an EIP-712 `TransferWithAuthorization` message specifying the token, amount, recipient, nonce, and time window.
 
-2. **Facilitator verifies and relays on-chain**  
-   The facilitator validates the user’s signature locally.  
-   If valid, it calls the `transferWithAuthorization()` function on the Relayer contract and **pays the gas** for execution.
+2. **Facilitator relays on-chain.** The facilitator submits the signed authorization to the Relayer contract's `transferWithAuthorization()` function and pays the gas.
 
-3. **Contract executes the transfer**  
-   The Relayer verifies the signature, ensures nonce and time constraints are met, and then calls the token contract’s `transferFrom()` function on behalf of the user.
+3. **Contract executes transfer.** The Relayer verifies the signature, checks nonce uniqueness and time constraints, then calls `transferFrom()` on the token contract.
 
+## Contract Interface
+
+The Relayer exposes three functions:
+
+```solidity
+// Execute a signed token transfer
+function transferWithAuthorization(
+  address token,
+  address from,
+  address to,
+  uint256 value,
+  uint256 validAfter,
+  uint256 validBefore,
+  bytes32 nonce,
+  bytes signature
+) external;
+
+// Check if a nonce has been used
+function authorizationState(
+  address from,
+  bytes32 nonce
+) external view returns (bool);
+
+// Check if a token is whitelisted
+function isTokenWhitelisted(
+  address token
+) external view returns (bool);
+```
+
+## EIP-712 Domain
+
+The Relayer uses this EIP-712 domain for signature verification:
+
+```json
+{
+  "name": "B402",
+  "version": "1",
+  "chainId": 56,
+  "verifyingContract": "0x590162bf4b50F6576a459B75309eE21D92178A10"
+}
+```
+
+For testnet, use `chainId: 97` and the testnet Relayer address.
+
+## Security Features
+
+**Nonce-based replay protection.** Each nonce (random `bytes32`) can only be used once per signer. The Relayer tracks used nonces and rejects duplicates.
+
+**Time window enforcement.** Signatures include `validAfter` and `validBefore` timestamps. The current block timestamp must fall within this window (typically a 1-hour window).
+
+**Token whitelisting.** Only approved tokens can be transferred through the Relayer. This prevents unauthorized token interactions.
+
+**Signature verification.** The Relayer recovers the signer from the EIP-712 signature and verifies it matches the `from` address.
+
+## Contract Addresses
+
+| Contract | Address | Network |
+|----------|---------|---------|
+| B402 Relayer (Official) | `0x590162bf4b50F6576a459B75309eE21D92178A10` | BSC Mainnet |
+| B402 Relayer (Custom) | `0x9dB0eDC77C9047a06Fd6dE82c892630DAa5eF601` | BSC Mainnet |
+
+<Note>
+The b402 Relayer contract is currently unaudited. Review the source code before using in production.
+</Note>
+
+## Prerequisites for EOA Users
+
+Before making a payment through the Relayer, the user must approve the Relayer contract to spend their tokens:
+
+```typescript
+// One-time approval per token
+const token = new Contract(USDT_ADDRESS, ['function approve(address,uint256) returns (bool)'], wallet);
+await token.approve(RELAYER_ADDRESS, ethers.MaxUint256);
+```
+
+This approval only needs to happen once per token. After approval, all future payments through the Relayer are gasless for the user.
+
+Smart wallet users do not need this step. Approvals are batched into the UserOperation.
