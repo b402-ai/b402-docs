@@ -283,10 +283,10 @@ const res = await fetch(`${FACILITATOR_URL}/wallet/0xOwnerAddress.../master`)
 const { masterWalletAddress, salt } = await res.json()
 
 // Or compute locally
-import { keccak256, toUtf8Bytes } from "ethers"
+import { keccak256, toUtf8Bytes, getAddress } from "ethers"
 
 function getMasterSalt(ownerAddress: string): string {
-  const normalized = ownerAddress.toLowerCase()
+  const normalized = getAddress(ownerAddress).slice(2) // checksummed, 0x stripped
   const reversed = normalized.split("").reverse().join("")
   return keccak256(toUtf8Bytes("b402-" + reversed))
 }

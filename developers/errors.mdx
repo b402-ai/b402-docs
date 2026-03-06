@@ -37,7 +37,7 @@ b402 APIs return structured error responses with machine-readable codes, human-r
 | `forbidden` | 403 | Valid auth but insufficient permissions | Check your API key permissions |
 | `not_found` | 404 | Resource not found | Verify the endpoint path and resource ID |
 | `unprocessable_entity` | 422 | Invalid input data (Zod validation failure) | Check `details` array for specific field errors |
-| `rate_limit_exceeded` | 429 | Too many requests (100/15min per IP) | Wait and retry. Contact support for higher limits |
+| `rate_limit_exceeded` | 429 | Too many requests (30 per minute per IP) | Wait and retry. Contact support for higher limits |
 | `internal_server_error` | 500 | Unexpected server error | Retry later. If persistent, contact support |
 
 ### Payment Errors

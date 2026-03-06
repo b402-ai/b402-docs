@@ -41,8 +41,8 @@
   <text x="180" y="234" text-anchor="middle" font-size="9" fill="#777">Verify · Settle · Deploy Wallets · Swap</text>
 
   <rect x="330" y="192" width="200" height="60" rx="8" fill="#161616" stroke="#F4B526" stroke-width="1"/>
-  <text x="430" y="216" text-anchor="middle" font-size="14" fill="#fff" font-weight="600">Backend API</text>
-  <text x="430" y="234" text-anchor="middle" font-size="9" fill="#777">Privacy · Metrics · Chapter 0</text>
+  <text x="430" y="216" text-anchor="middle" font-size="14" fill="#fff" font-weight="600">Privacy Pool</text>
+  <text x="430" y="234" text-anchor="middle" font-size="9" fill="#777">Shield · Unshield · ZK Proofs</text>
 
   <rect x="550" y="192" width="200" height="60" rx="8" fill="#161616" stroke="#2a2a2a" stroke-width="1"/>
   <text x="650" y="216" text-anchor="middle" font-size="14" fill="#aaa" font-weight="500">b402scan</text>

@@ -22,7 +22,7 @@ Every EIP-712 signature includes a domain separator that binds the signature to 
 const EIP712_DOMAIN = {
   name: 'B402',
   version: '1',
-  chainId: 56,                    // BNB Chain mainnet (97 for testnet, 8453 for Base)
+  chainId: 56,                    // BNB Chain mainnet (8453 for Base)
   verifyingContract: '0xE91b564EB8DFF305Ff8efA332f84c487b9da5171', // b402 RelayerV3
 };
 ```
@@ -31,7 +31,7 @@ const EIP712_DOMAIN = {
 |-------|-------|-------------|
 | `name` | `'B402'` | Protocol name. Always `'B402'`. |
 | `version` | `'1'` | Domain version. Always `'1'`. |
-| `chainId` | `56` | BNB Chain mainnet. Use `97` for testnet, `8453` for Base. |
+| `chainId` | `56` | BNB Chain mainnet. Use `8453` for Base. |
 | `verifyingContract` | `0xE91b564EB8DFF305Ff8efA332f84c487b9da5171` | The b402 RelayerV3 contract address. Same address on all supported chains. |
 
 <Warning>
@@ -386,7 +386,7 @@ main().catch(console.error);
 
 **Checklist:**
 - `verifyingContract` must be the relayer address, not the token address
-- `chainId` must match the network (`56` for mainnet, `97` for testnet)
+- `chainId` must match the network (`56` for BNB Chain, `8453` for Base)
 - `domain.name` must be exactly `'B402'` (case-sensitive)
 - `domain.version` must be `'1'`
 - `authorization.from` must match the signer's address
@@ -458,7 +458,7 @@ The b402 Relayer is deployed on Base with the same contract address as BNB Chain
 
 | Parameter | BNB Chain | Base |
 |-----------|-----------|------|
-| Chain ID | `56` (testnet: `97`) | `8453` |
+| Chain ID | `56` | `8453` |
 | RPC | `https://bsc-dataseed1.binance.org` | `https://mainnet.base.org` |
 | USDC Address | `0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d` | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` |
 | USDC Decimals | 18 | 6 |

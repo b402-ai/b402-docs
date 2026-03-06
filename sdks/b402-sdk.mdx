@@ -100,7 +100,7 @@ const result = await b402.shield({ token: 'USDC', amount: '100' })
 
 | Param | Type | Required | Description |
 |-------|------|----------|-------------|
-| `token` | `string` | Yes | Token symbol (`USDC`, `WETH`, `DAI`) |
+| `token` | `string` | Yes | Token symbol (`USDC` on Base) |
 | `amount` | `string` | Yes | Amount to shield |
 
 **Returns:** `{ txHash: string, indexed: boolean }`
@@ -376,7 +376,7 @@ Gas for all DeFi operations is sponsored by the facilitator. The standard b402 p
 | Shield | ETH gas on EOA (one-time onboarding) |
 | Swap | DEX fee (varies by pair) |
 | Lend / Redeem | 0% |
-| Privacy pool unshield | 0.25% |
+| Privacy pool unshield | $0.00 (included in protocol fee) |
 
 ## Error Handling
 
@@ -391,7 +391,7 @@ try {
 | Error | Fix |
 |-------|-----|
 | `zeroXApiKey required for swaps` | Pass `zeroXApiKey` in constructor |
-| `Unknown token: X` | Use: `USDC`, `WETH`, `DAI` |
+| `Unknown token: X` | Shield: `USDC`. Swaps: any token supported by the DEX (e.g. `USDC`, `WETH`, `DAI`) |
 | `Unknown vault: X` | Use: `steakhouse`, `moonwell`, `gauntlet`, `steakhouse-hy` |
 | `No shares in X` | No position — deposit first with `lend()` |
 | `Insufficient balance` | Shield more tokens or check EOA balance |
