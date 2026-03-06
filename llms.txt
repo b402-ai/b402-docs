@@ -46,7 +46,6 @@
 ## b402 Services
 - [Facilitator](https://docs.b402.ai/b402-services/b402-facilitator): Hosted facilitator service
 - [b402scan](https://docs.b402.ai/b402-services/b402scan): Ecosystem explorer
-- [Community](https://docs.b402.ai/b402-services/community): Links and support
 
 ## Resources
 - [FAQ](https://docs.b402.ai/resources/faq): Frequently asked questions

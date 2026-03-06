@@ -68,34 +68,36 @@ The server provides resources behind a payment gate. Servers include:
 
 ### Server Code Example
 
-Using `b402-express` middleware:
+Using the Facilitator API directly:
 
 ```typescript
 const express = require('express');
-const { b402 } = require('b402-express');
-
 const app = express();
+app.use(express.json());
 
-// Define paid routes
-app.use(b402(
-  { payTo: '0xYourWalletAddress' },
-  {
-    'GET /premium-data': { price: '0.01', token: 'USD1' },
-    'GET /analytics':    { price: '0.005', token: 'USDT' },
-  }
-));
+app.post('/premium-data', async (req, res) => {
+  const { paymentPayload } = req.body;
 
-// This route requires payment
-app.get('/premium-data', (req, res) => {
-  // Payment verified - req.b402 contains settlement info
-  console.log('Paid by:', req.b402.payer);
-  console.log('TX hash:', req.b402.txHash);
-  res.json({ data: 'premium content' });
-});
+  // 1. Verify the payment
+  const verifyRes = await fetch('https://facilitatorv3.b402.ai/api/v1/verify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ paymentPayload }),
+  });
+  const { isValid } = await verifyRes.json();
+  if (!isValid) return res.status(402).json({ error: 'Payment required' });
 
-// This route is free (not listed in pricing)
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
+  // 2. Settle on-chain
+  const settleRes = await fetch('https://facilitatorv3.b402.ai/api/v1/settle', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ paymentPayload }),
+  });
+  const { success, transaction } = await settleRes.json();
+  if (!success) return res.status(500).json({ error: 'Settlement failed' });
+
+  // 3. Serve the resource
+  res.json({ data: 'premium content', txHash: transaction });
 });
 ```
 

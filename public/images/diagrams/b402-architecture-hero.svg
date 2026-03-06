@@ -16,8 +16,8 @@
   <text x="130" y="100" text-anchor="middle" font-size="9" fill="#777">TypeScript SDK</text>
 
   <rect x="230" y="60" width="160" height="52" rx="8" fill="#161616" stroke="#F4B526" stroke-width="1"/>
-  <text x="310" y="83" text-anchor="middle" font-size="13" fill="#fff" font-weight="600">b402-express</text>
-  <text x="310" y="100" text-anchor="middle" font-size="9" fill="#777">Seller Middleware</text>
+  <text x="310" y="83" text-anchor="middle" font-size="13" fill="#fff" font-weight="600">ClawPay</text>
+  <text x="310" y="100" text-anchor="middle" font-size="9" fill="#777">Agent Payments</text>
 
   <rect x="410" y="60" width="160" height="52" rx="8" fill="#161616" stroke="#2a2a2a" stroke-width="1"/>
   <text x="490" y="83" text-anchor="middle" font-size="13" fill="#aaa" font-weight="500">b402 Docs</text>

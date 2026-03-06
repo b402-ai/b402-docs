@@ -45,7 +45,7 @@ b402 APIs return structured error responses with machine-readable codes, human-r
 | Code | HTTP Status | Description | Common Cause |
 |------|-------------|-------------|-------------|
 | `validation_error` | 400 | Request validation failed | Missing required fields, invalid addresses, bad JSON |
-| `signature_error` | 401 | EIP-712 signature invalid | Wrong signer, corrupted signature, wrong chain ID |
+| `signature_error` | 400 | EIP-712 signature invalid | Wrong signer, corrupted signature, wrong chain ID |
 | `nonce_error` | 400 | Nonce already used | Generate a new random bytes32 nonce |
 | `payment_verification_error` | 400 | Payment payload invalid | Expired time window, authorization not yet valid |
 | `payment_error` | 400 | Payment-specific issue | Wrong fee amount, invalid recipient |
@@ -64,7 +64,7 @@ b402 APIs return structured error responses with machine-readable codes, human-r
 | Code | HTTP Status | Description | Common Cause |
 |------|-------------|-------------|-------------|
 | `wallet_error` | 400 | Wallet operation failed | Wallet not deployed, already deployed, already paid |
-| `userp_error` | 500 | UserOperation failed | Bundler rejection, gas estimation failure, paymaster error |
+| `userop_error` | 500 | UserOperation failed | Bundler rejection, gas estimation failure, paymaster error |
 
 ## Specific Error Messages
 
@@ -121,17 +121,6 @@ b402 APIs return structured error responses with machine-readable codes, human-r
 | `ERR_PAYMASTER_SIGNING_FAILED` | Failed to sign as paymaster |
 | `ERR_GAS_ESTIMATION_FAILED` | Gas estimation failed |
 | `ERR_NO_RECEIPT` | No receipt returned from bundler |
-
-### Swap
-
-| Error | Message |
-|-------|---------|
-| `ERR_SWAP_QUOTE_FAILED` | Failed to get swap quote |
-| `ERR_SWAP_EXECUTION_FAILED` | Swap execution failed |
-| `ERR_SWAP_INSUFFICIENT_LIQUIDITY` | Insufficient liquidity for swap |
-| `ERR_SWAP_SLIPPAGE_EXCEEDED` | Swap slippage exceeded maximum allowed |
-| `ERR_SWAP_MISSING_PARAMS` | Missing required swap parameters |
-| `ERR_SWAP_INVALID_TOKEN` | Invalid token address for swap |
 
 ## Handling Errors
 
