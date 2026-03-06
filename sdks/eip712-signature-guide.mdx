@@ -182,7 +182,7 @@ const payload = {
 ### Verify the Signature
 
 ```bash
-curl -X POST https://facilitatorv3.b402.ai/api/v1/verify \
+curl -X POST https://facilitatorv3.b402.ai/verify \
   -H "Content-Type: application/json" \
   -d '{
     "paymentPayload": {
@@ -229,7 +229,7 @@ If invalid:
 Once verified, send the same payload to the settle endpoint:
 
 ```bash
-curl -X POST https://facilitatorv3.b402.ai/api/v1/settle \
+curl -X POST https://facilitatorv3.b402.ai/settle \
   -H "Content-Type: application/json" \
   -d '{ ... same payload as verify ... }'
 ```
@@ -342,7 +342,7 @@ async function main() {
 
   // Step 1: Verify
   console.log('\nVerifying payment...');
-  const verifyRes = await fetch(`${FACILITATOR_URL}/api/v1/verify`, {
+  const verifyRes = await fetch(`${FACILITATOR_URL}/verify`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -357,7 +357,7 @@ async function main() {
 
   // Step 2: Settle
   console.log('\nSettling payment...');
-  const settleRes = await fetch(`${FACILITATOR_URL}/api/v1/settle`, {
+  const settleRes = await fetch(`${FACILITATOR_URL}/settle`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),

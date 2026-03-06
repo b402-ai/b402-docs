@@ -79,7 +79,7 @@ app.post('/premium-data', async (req, res) => {
   const { paymentPayload } = req.body;
 
   // 1. Verify the payment
-  const verifyRes = await fetch('https://facilitatorv3.b402.ai/api/v1/verify', {
+  const verifyRes = await fetch('https://facilitatorv3.b402.ai/verify', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ paymentPayload }),
@@ -88,7 +88,7 @@ app.post('/premium-data', async (req, res) => {
   if (!isValid) return res.status(402).json({ error: 'Payment required' });
 
   // 2. Settle on-chain
-  const settleRes = await fetch('https://facilitatorv3.b402.ai/api/v1/settle', {
+  const settleRes = await fetch('https://facilitatorv3.b402.ai/settle', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ paymentPayload }),

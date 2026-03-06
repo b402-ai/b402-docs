@@ -12,8 +12,6 @@ The Facilitator API handles payment verification and on-chain settlement for the
 https://facilitatorv3.b402.ai
 ```
 
-All endpoints are prefixed with `/api/v1`.
-
 ## Payment Models
 
 The Facilitator supports two distinct payment flows:
@@ -21,15 +19,15 @@ The Facilitator supports two distinct payment flows:
 **EOA Payments** use EIP-712 typed signatures. The buyer signs a `TransferWithAuthorization` message off-chain, and the Facilitator verifies the signature then submits the on-chain transaction.
 
 ```
-POST /api/v1/verify   → Verify EIP-712 signature
-POST /api/v1/settle   → Execute on-chain settlement
+POST /verify   → Verify EIP-712 signature
+POST /settle   → Execute on-chain settlement
 ```
 
 **Smart Wallet Payments** use ERC-4337 UserOperations. The Facilitator constructs a UserOp with fee injection, the buyer signs it, and the Facilitator submits it to a bundler for execution.
 
 ```
-POST /api/v1/wallet/verify   → Build unsigned UserOp
-POST /api/v1/wallet/settle   → Submit signed UserOp
+POST /wallet/verify   → Build unsigned UserOp
+POST /wallet/settle   → Submit signed UserOp
 ```
 
 ## Endpoint Groups
@@ -41,8 +39,6 @@ POST /api/v1/wallet/settle   → Submit signed UserOp
 | **Wallet Deployment** | `POST /deploy/verify`, `POST /deploy/settle`, `POST /deploy/wallet/verify`, `POST /deploy/wallet/settle`, `GET /wallet/:owner`, `GET /wallet/:owner/master`, `POST /wallet/claim` | Deploy and manage smart wallets |
 | **Incognito** | `POST /wallet/incognito/verify`, `POST /wallet/incognito/settle` | Privacy-preserving payments via privacy pool |
 | **Utility** | `GET /health` | Service health and status |
-
-<Note>All endpoint paths above are relative to `/api/v1`.</Note>
 
 ## Request Format
 
