@@ -63,7 +63,7 @@ const EIP712_TYPES = {
 | `token` | `address` | The ERC-20 token contract address being transferred (e.g., USD1, USDT, USDC). |
 | `from` | `address` | The payer's wallet address. Must match the signer. |
 | `to` | `address` | The recipient's wallet address (the seller). |
-| `value` | `uint256` | The transfer amount in the token's smallest unit (wei). For 18-decimal tokens on BNB Chain, `1.0` token = `1000000000000000000`. On Base, USDC uses 6 decimals (`1.0` = `1000000`). |
+| `value` | `uint256` | The transfer amount in the token's smallest unit (wei). For 18-decimal tokens on BNB Chain, `1.0` token = `1000000000000000000`. On Base, USDC and USDT use 6 decimals (`1.0` = `1000000`). |
 | `validAfter` | `uint256` | Unix timestamp (seconds). The authorization is not valid before this time. Typically set to `0` (valid immediately). |
 | `validBefore` | `uint256` | Unix timestamp (seconds). The authorization expires after this time. Typically set to current time + 1 hour. |
 | `nonce` | `bytes32` | A unique 32-byte random value. Prevents replay attacks. Each authorization must use a unique nonce. |
@@ -105,7 +105,7 @@ const nonce = ethers.hexlify(ethers.randomBytes(32));
 const validAfter = 0; // Valid immediately
 const validBefore = Math.floor(Date.now() / 1000) + 3600; // Expires in 1 hour
 
-// Convert amount to wei (18 decimals on BNB Chain, 6 for USDC on Base)
+// Convert amount to wei (18 decimals on BNB Chain, 6 for USDC/USDT on Base)
 const amount = ethers.parseUnits('0.01', 18); // 0.01 tokens on BNB Chain
 
 const authorization = {
@@ -441,7 +441,7 @@ const validBefore = Math.floor(Date.now() / 1000) + 3600;
 const bnbValue = ethers.parseUnits('0.01', 18).toString();
 // '10000000000000000'
 
-// Base: USDC uses 6 decimals
+// Base: USDC and USDT use 6 decimals
 const baseValue = ethers.parseUnits('0.01', 6).toString();
 // '10000'
 ```
