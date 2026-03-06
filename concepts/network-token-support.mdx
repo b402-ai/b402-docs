@@ -42,19 +42,18 @@ b402 operates across EVM-compatible chains with support for multiple stablecoins
 
 | Contract | Address | Purpose |
 |----------|---------|---------|
-| B402 Relayer (Official) | `0x590162bf4b50F6576a459B75309eE21D92178A10` | EIP-712 payment settlement |
-| B402 Relayer (Custom) | `0x9dB0eDC77C9047a06Fd6dE82c892630DAa5eF601` | Alternative relayer |
+| B402 RelayerV3 | `0xE91b564EB8DFF305Ff8efA332f84c487b9da5171` | EIP-712 payment settlement |
 | Nexus Account Factory | `0x0000006648ED9B2B842552BE63Af870bC74af837` | Smart wallet deployment |
 | Nexus Bootstrap | `0x0000003eDf18913c01cBc482C978bBD3D6E8ffA3` | Smart wallet initialization |
-| K1 Validator | (see env config) | ECDSA signature validation module |
 | EntryPoint (v0.7) | `0x0000000071727De22E5E9d8BAf0edAc6f37da032` | ERC-4337 UserOp execution |
 
 ### Base Mainnet
 
 | Contract | Address | Purpose |
 |----------|---------|---------|
-| Railgun Proxy | `0x26111e2379E5fC0A7Cd8728fe52c7b84CA4fbE85` | RAILGUN privacy proxy |
-| RailgunSmartWallet Impl | `0x92Ab00D5DCBcf3bC2af010c6eA94fe57a9A3331D` | RAILGUN smart wallet implementation |
+| B402 RelayerV3 | `0xE91b564EB8DFF305Ff8efA332f84c487b9da5171` | EIP-712 payment settlement |
+| Privacy Proxy | `0x26111e2379E5fC0A7Cd8728fe52c7b84CA4fbE85` | Privacy pool proxy |
+| Privacy Pool Wallet Impl | `0x92Ab00D5DCBcf3bC2af010c6eA94fe57a9A3331D` | Privacy pool smart wallet implementation |
 | PoseidonT3 | `0xB407837aD487EF6DD1044CcEEF13f111A334503A` | ZK-friendly hash (3 inputs) |
 | PoseidonT4 | `0x9dB0eDC77C9047a06Fd6dE82c892630DAa5eF601` | ZK-friendly hash (4 inputs) |
 | Delegator | `0xa5F50a2670dfc3b41616DEC18Db7335B8235404D` | Delegation contract |
@@ -67,16 +66,15 @@ b402 operates across EVM-compatible chains with support for multiple stablecoins
 
 | Service | URL | Description |
 |---------|-----|-------------|
-| Facilitator API | `https://facilitator.b402.ai` | Payment verification and settlement |
-| Backend API | `https://backend.b402.ai` | Analytics, privacy, and transaction data |
+| Facilitator API | `https://facilitatorv3.b402.ai` | Payment verification and settlement |
 
 ## Block Explorers
 
 | Network | Explorer | URL |
 |---------|----------|-----|
-| BSC Mainnet | BscScan | `https://bscscan.com` |
+| BNB Chain Mainnet | BscScan | `https://bscscan.com` |
 | Base Mainnet | BaseScan | `https://basescan.org` |
-| BSC Testnet | BscScan Testnet | `https://testnet.bscscan.com` |
+| BNB Chain Testnet | BscScan Testnet | `https://testnet.bscscan.com` |
 
 ## Token Notes
 

@@ -21,9 +21,8 @@ The Relayer enables meta-transactions: users sign off-chain, the facilitator pay
 
 | Contract | Address | Network |
 |----------|---------|---------|
-| B402 Relayer (Official) | `0x590162bf4b50F6576a459B75309eE21D92178A10` | BSC Mainnet |
-| B402 Relayer (Custom) | `0x9dB0eDC77C9047a06Fd6dE82c892630DAa5eF601` | BSC Mainnet |
-| Nexus Account Factory | `0x0000006648ED9B2B842552BE63Af870bC74af837` | BSC Mainnet |
+| B402 RelayerV3 | `0xE91b564EB8DFF305Ff8efA332f84c487b9da5171` | BNB Chain + Base Mainnet |
+| Nexus Account Factory | `0x0000006648ED9B2B842552BE63Af870bC74af837` | BNB Chain Mainnet |
 
 ## Service Layer
 
@@ -37,58 +36,47 @@ The Facilitator is the API service that bridges HTTP requests and blockchain set
 
 **Wallet Deployment** - Deterministic smart wallet creation via ERC-7579 Nexus factory. Wallets are computed off-chain and deployed on first use.
 
-**Incognito Operations** - Privacy-preserving payments through RAILGUN integration. Shield tokens, transact privately, and unshield to recipients.
+**Incognito Operations** - Privacy-preserving payments through the b402 privacy pool. Shield tokens, transact privately, and unshield to recipients.
 
-**Swap** - Integrated PancakeSwap V3 for token-to-token swaps with payment in a single transaction.
+**Swap** - Private token swaps with payment in a single transaction.
 
-**Base URL:** `https://facilitator.b402.ai`
+**Base URL:** `https://facilitatorv3.b402.ai`
 
 ### b402scan
 
-Transaction explorer for b402 payments. Currently in development.
-
-### Backend API
-
-Data layer providing:
-- **Privacy API** - Commitments, nullifiers, Merkle proofs for RAILGUN operations
-- **Metrics API** - Protocol-wide statistics, buyer/seller leaderboards
-- **Transaction API** - Paginated transaction history with filters
+Agent reputation and seller discovery platform. Browse verified sellers, check agent payment history, and discover APIs accepting b402 payments. Currently in development.
 
 ## Developer Layer
 
-### b402-sdk (TypeScript)
+### Direct API Integration
 
-Client-side SDK for buyers. Handles wallet connection, payment signing, and transaction confirmation.
-
-```bash
-npm install b402-sdk
-```
+The Facilitator API is the primary integration point. Any HTTP client can interact with b402:
 
 ```typescript
-import { B402 } from 'b402-sdk';
-const b402 = new B402('mainnet');
-const result = await b402.pay(wallet, {
-  amount: '0.01',
-  token: 'USD1',
-  recipient: '0x...',
+// Verify and settle a payment
+const verify = await fetch('https://facilitatorv3.b402.ai/verify', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ paymentPayload }),
+});
+const settle = await fetch('https://facilitatorv3.b402.ai/settle', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ paymentPayload }),
 });
 ```
 
-### b402-express (Middleware)
+### Agent Framework Integration
 
-Server-side middleware for sellers. Wraps Express routes with payment requirements.
+b402 works with popular AI agent frameworks:
 
-```bash
-npm install b402-express
-```
+- **MCP Tools** — Expose b402 payment capabilities as Model Context Protocol tools for Claude, GPT, and other LLM agents
+- **LangChain / CrewAI** — Custom tools that wrap the Facilitator API for autonomous agent payments
+- **Vercel AI SDK** — Server-side payment verification in AI-powered API routes
 
-```typescript
-const { b402 } = require('b402-express');
-app.use(b402(
-  { payTo: '0x...' },
-  { 'GET /premium': { price: '0.01', token: 'USD1' } }
-));
-```
+### EIP-712 Signatures
+
+For buyers, the core integration is signing EIP-712 typed data. See the [EIP-712 Signature Guide](/sdks/eip712-signature-guide) for manual construction.
 
 ## Payment Flow
 

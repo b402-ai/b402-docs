@@ -22,8 +22,8 @@ Every EIP-712 signature includes a domain separator that binds the signature to 
 const EIP712_DOMAIN = {
   name: 'B402',
   version: '1',
-  chainId: 56,                    // BNB Chain mainnet (97 for testnet)
-  verifyingContract: '0x590162bf4b50F6576a459B75309eE21D92178A10', // b402 Relayer
+  chainId: 56,                    // BNB Chain mainnet (97 for testnet, 8453 for Base)
+  verifyingContract: '0xE91b564EB8DFF305Ff8efA332f84c487b9da5171', // b402 RelayerV3
 };
 ```
 
@@ -31,8 +31,8 @@ const EIP712_DOMAIN = {
 |-------|-------|-------------|
 | `name` | `'B402'` | Protocol name. Always `'B402'`. |
 | `version` | `'1'` | Domain version. Always `'1'`. |
-| `chainId` | `56` | BNB Chain mainnet. Use `97` for testnet. |
-| `verifyingContract` | `0x590162bf...` | The b402 Relayer contract address. This is the contract that will execute the transfer. |
+| `chainId` | `56` | BNB Chain mainnet. Use `97` for testnet, `8453` for Base. |
+| `verifyingContract` | `0xE91b564EB8DFF305Ff8efA332f84c487b9da5171` | The b402 RelayerV3 contract address. Same address on all supported chains. |
 
 <Warning>
   The `verifyingContract` must match the relayer address for the target network. Using the wrong address will cause signature verification to fail.
@@ -63,7 +63,7 @@ const EIP712_TYPES = {
 | `token` | `address` | The ERC-20 token contract address being transferred (e.g., USD1, USDT, USDC). |
 | `from` | `address` | The payer's wallet address. Must match the signer. |
 | `to` | `address` | The recipient's wallet address (the seller). |
-| `value` | `uint256` | The transfer amount in the token's smallest unit (wei). For 18-decimal tokens on BSC, `1.0` token = `1000000000000000000`. |
+| `value` | `uint256` | The transfer amount in the token's smallest unit (wei). For 18-decimal tokens on BNB Chain, `1.0` token = `1000000000000000000`. On Base, USDC uses 6 decimals (`1.0` = `1000000`). |
 | `validAfter` | `uint256` | Unix timestamp (seconds). The authorization is not valid before this time. Typically set to `0` (valid immediately). |
 | `validBefore` | `uint256` | Unix timestamp (seconds). The authorization expires after this time. Typically set to current time + 1 hour. |
 | `nonce` | `bytes32` | A unique 32-byte random value. Prevents replay attacks. Each authorization must use a unique nonce. |
@@ -78,6 +78,7 @@ const EIP712_TYPES = {
 import { ethers } from 'ethers';
 
 const provider = new ethers.JsonRpcProvider('https://bsc-dataseed1.binance.org');
+// For Base: new ethers.JsonRpcProvider('https://mainnet.base.org');
 const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 ```
 
@@ -88,7 +89,7 @@ const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 const TOKEN_ADDRESS = '0x8d0d000ee44948fc98c9b98a4fa4921476f08b0d';
 
 // b402 Relayer contract
-const RELAYER_ADDRESS = '0x590162bf4b50F6576a459B75309eE21D92178A10';
+const RELAYER_ADDRESS = '0xE91b564EB8DFF305Ff8efA332f84c487b9da5171';
 
 // Seller's wallet
 const RECIPIENT = '0x0553B926D6a599CAAc56377042cA6B40dd0b7F4e';
@@ -104,8 +105,8 @@ const nonce = ethers.hexlify(ethers.randomBytes(32));
 const validAfter = 0; // Valid immediately
 const validBefore = Math.floor(Date.now() / 1000) + 3600; // Expires in 1 hour
 
-// Convert amount to wei (18 decimals on BSC)
-const amount = ethers.parseUnits('0.01', 18); // 0.01 tokens
+// Convert amount to wei (18 decimals on BNB Chain, 6 for USDC on Base)
+const amount = ethers.parseUnits('0.01', 18); // 0.01 tokens on BNB Chain
 
 const authorization = {
   token: TOKEN_ADDRESS,
@@ -181,7 +182,7 @@ const payload = {
 ### Verify the Signature
 
 ```bash
-curl -X POST https://facilitator.b402.ai/api/v1/verify \
+curl -X POST https://facilitatorv3.b402.ai/api/v1/verify \
   -H "Content-Type: application/json" \
   -d '{
     "paymentPayload": {
@@ -201,7 +202,7 @@ curl -X POST https://facilitator.b402.ai/api/v1/verify \
     },
     "paymentRequirements": {
       "network": "mainnet",
-      "relayerContract": "0x590162bf4b50F6576a459B75309eE21D92178A10"
+      "relayerContract": "0xE91b564EB8DFF305Ff8efA332f84c487b9da5171"
     }
   }'
 ```
@@ -228,7 +229,7 @@ If invalid:
 Once verified, send the same payload to the settle endpoint:
 
 ```bash
-curl -X POST https://facilitator.b402.ai/api/v1/settle \
+curl -X POST https://facilitatorv3.b402.ai/api/v1/settle \
   -H "Content-Type: application/json" \
   -d '{ ... same payload as verify ... }'
 ```
@@ -271,10 +272,10 @@ import { ethers } from 'ethers';
 // Configuration
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 const RPC_URL = 'https://bsc-dataseed1.binance.org';
-const FACILITATOR_URL = 'https://facilitator.b402.ai';
+const FACILITATOR_URL = 'https://facilitatorv3.b402.ai';
 
 const TOKEN_ADDRESS = '0x8d0d000ee44948fc98c9b98a4fa4921476f08b0d'; // USD1
-const RELAYER_ADDRESS = '0x590162bf4b50F6576a459B75309eE21D92178A10';
+const RELAYER_ADDRESS = '0xE91b564EB8DFF305Ff8efA332f84c487b9da5171';
 const RECIPIENT = '0x0553B926D6a599CAAc56377042cA6B40dd0b7F4e';
 
 // EIP-712 domain and types
@@ -365,6 +366,7 @@ async function main() {
   console.log('Settle result:', settleData);
 
   if (settleData.success) {
+    // Use https://basescan.org/tx/ for Base transactions
     console.log(`\nPayment settled: https://bscscan.com/tx/${settleData.transaction}`);
   } else {
     console.error('Settlement failed:', settleData.errorReason);
@@ -432,23 +434,51 @@ const validBefore = Math.floor(Date.now() / 1000) + 3600;
 
 **Cause:** Passing a value with incorrect decimal precision.
 
-**Fix:** All supported tokens (USDT, USDC, USD1) use 18 decimals on BNB Chain. Always use `ethers.parseUnits()`:
+**Fix:** Token decimals vary by chain. Always check the token's decimals for the target chain and use `ethers.parseUnits()`:
 
 ```typescript
-// Correct: 0.01 tokens with 18 decimals
-const value = ethers.parseUnits('0.01', 18).toString();
+// BNB Chain: all tokens (USDT, USDC, USD1) use 18 decimals
+const bnbValue = ethers.parseUnits('0.01', 18).toString();
 // '10000000000000000'
 
-// Wrong: using 6 decimals (this is NOT BSC)
-const wrong = ethers.parseUnits('0.01', 6).toString();
-// '10000' - too small, payment will fail or be incorrect
+// Base: USDC uses 6 decimals
+const baseValue = ethers.parseUnits('0.01', 6).toString();
+// '10000'
+```
+
+<Warning>
+  Using the wrong decimals will cause the payment to fail or transfer an incorrect amount. Always verify decimals via [Network & Token Support](/concepts/network-token-support).
+</Warning>
+
+---
+
+## Base Chain Notes
+
+The b402 Relayer is deployed on Base with the same contract address as BNB Chain. Key differences when targeting Base:
+
+| Parameter | BNB Chain | Base |
+|-----------|-----------|------|
+| Chain ID | `56` (testnet: `97`) | `8453` |
+| RPC | `https://bsc-dataseed1.binance.org` | `https://mainnet.base.org` |
+| USDC Address | `0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d` | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` |
+| USDC Decimals | 18 | 6 |
+| Block Explorer | [BscScan](https://bscscan.com) | [BaseScan](https://basescan.org) |
+| RelayerV3 | `0xE91b564EB8DFF305Ff8efA332f84c487b9da5171` | `0xE91b564EB8DFF305Ff8efA332f84c487b9da5171` |
+
+When signing for Base, update the EIP-712 domain:
+
+```typescript
+const domain = {
+  name: 'B402',
+  version: '1',
+  chainId: 8453,  // Base mainnet
+  verifyingContract: '0xE91b564EB8DFF305Ff8efA332f84c487b9da5171',
+};
 ```
 
 ---
 
 ## Next Steps
 
-- [b402-sdk](/sdks/b402-sdk) - Use the SDK to handle signatures automatically
-- [b402-express](/sdks/b402-express) - Accept payments in your Express.js API
 - [Facilitator API](/developers/facilitator/overview) - Full API reference for verify and settle
 - [Network & Token Support](/concepts/network-token-support) - Supported tokens and addresses

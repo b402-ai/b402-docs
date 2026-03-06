@@ -24,7 +24,7 @@ No headers, query parameters, or body required.
 |-------|------|-------------|
 | `status` | `string` | Service status. `"ok"` when healthy. |
 | `service` | `string` | Service identifier. Always `"b402-facilitator"`. |
-| `network` | `string` | Active blockchain network (e.g. `"bsc"`). |
+| `network` | `string` | Active blockchain network (`"bsc"` or `"base"`). |
 | `relayer` | `string` | Relayer contract address used for settlements. |
 
 #### Example
@@ -34,7 +34,7 @@ No headers, query parameters, or body required.
   "status": "ok",
   "service": "b402-facilitator",
   "network": "bsc",
-  "relayer": "0x590162bf4b50F6576a459B75309eE21D92178A10"
+  "relayer": "0xE91b564EB8DFF305Ff8efA332f84c487b9da5171"
 }
 ```
 
@@ -49,18 +49,18 @@ No headers, query parameters, or body required.
 #### cURL
 
 ```bash
-curl -X GET https://facilitator.b402.ai/api/v1/health
+curl -X GET https://facilitatorv3.b402.ai/api/v1/health
 ```
 
 #### TypeScript
 
 ```typescript
-const response = await fetch("https://facilitator.b402.ai/api/v1/health");
+const response = await fetch("https://facilitatorv3.b402.ai/api/v1/health");
 const data = await response.json();
 
 console.log(data.status);   // "ok"
 console.log(data.network);  // "bsc"
-console.log(data.relayer);  // "0x590162bf4b50F6576a459B75309eE21D92178A10"
+console.log(data.relayer);  // "0xE91b564EB8DFF305Ff8efA332f84c487b9da5171"
 ```
 
 <Tip>

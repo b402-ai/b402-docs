@@ -17,49 +17,29 @@ Rather than depending on token-level signature standards like EIP-3009, b402 int
 b402 is organized in three layers:
 
 1. **Protocol Layer** — The b402 Relayer smart contract handles EIP-712 signature verification and on-chain token transfers. Deployed on BNB Chain and Base, with more chains to follow.
-2. **Service Layer** — The Facilitator verifies payment payloads, settles transactions, deploys smart wallets, and executes swaps. b402scan provides transaction discovery.
-3. **Developer Layer** — `b402-sdk` (TypeScript) and `b402-express` (middleware) let you integrate in minutes.
+2. **Service Layer** — The Facilitator verifies payment payloads, settles transactions, deploys smart wallets, and executes swaps. b402scan provides agent reputation and seller discovery.
+3. **Developer Layer** — Integrate via the Facilitator API, MCP tools, or agent frameworks (LangChain, CrewAI, Vercel AI SDK).
 
 ## What Makes b402 Different
 
 Compared to standard x402 implementations:
 
-| Feature | x402 (Coinbase) | b402 |
-|---------|-----------------|------|
+| Feature | x402 | b402 |
+|---------|------|------|
 | Tokens | USDC only | USDT, USDC, USD1, any whitelisted ERC-20 |
-| Privacy | None | RAILGUN integration (shield, transact, unshield) |
+| Privacy | None | Privacy pool integration (shield, transact, unshield) |
 | Wallets | EOA only | EOA + Smart Wallets (ERC-7579 Nexus) |
-| Gas | Buyer pays | Gasless for buyers (facilitator covers gas) |
+| Gas | Gasless (USDC only, via EIP-3009) | Gasless (any whitelisted ERC-20, via Relayer) |
 | Swaps | None | Integrated DEX swaps |
 | Identity | None | ERC-8004 agent identity |
 | Chains | Base (USDC only) | Multichain — BNB Chain, Base, more planned |
-
-## How It Works
-
-```
-1. Agent sends GET /premium-data to a b402-enabled server
-2. Server responds: 402 Payment Required + payment instructions
-3. Agent signs EIP-712 payment payload (no gas needed)
-4. Agent resends request with X-PAYMENT header
-5. Server calls facilitator /verify then /settle
-6. Facilitator executes on-chain transfer
-7. Server returns the data
-```
-
-## Who Is b402 For?
-
-**Agents and Developers (Buyers)**
-AI agents, bots, and scripts that need to autonomously pay for APIs, data, or compute. Smart wallet support means agents can operate with gasless, batched transactions across multiple chains.
-
-**Service Providers (Sellers)**
-Developers who want to monetize APIs with crypto payments. Add `b402-express` middleware to your Express app and start charging per-request, no payment gateway needed.
 
 ## What Can You Build?
 
 - **Autonomous API trading bots** that pay per query
 - **AI agents** purchasing verified data feeds or inference time
 - **Usage-based paywalls** for analytics, content, or compute
-- **Private payments** where transaction details are shielded via RAILGUN
+- **Private payments** where transaction details are shielded via the b402 privacy pool
 - **Cross-chain agent workflows** that transact wherever liquidity exists
 
 ## Get Started
@@ -68,14 +48,14 @@ Developers who want to monetize APIs with crypto payments. Add `b402-express` mi
   <Card title="Quickstart" icon="rocket" href="/get-started/quickstart">
     Send your first payment in under 2 minutes
   </Card>
-  <Card title="Concepts" icon="book-open-cover" href="/concepts/http-402">
+  <Card title="Architecture" icon="book-open-cover" href="/architecture">
     Understand how the protocol works
   </Card>
   <Card title="Facilitator API" icon="webhook" href="/developers/facilitator/overview">
     Full API reference for all endpoints
   </Card>
-  <Card title="SDKs" icon="code" href="/sdks/b402-sdk">
-    TypeScript SDK and Express middleware
+  <Card title="EIP-712 Signatures" icon="code" href="/sdks/eip712-signature-guide">
+    Learn how to sign payment payloads
   </Card>
 </CardGroup>
 
@@ -84,6 +64,6 @@ Developers who want to monetize APIs with crypto payments. Add `b402-express` mi
 <CardGroup cols={2}>
   <Card title="GitHub" icon="github" href="https://github.com/b402-ai">
   </Card>
-  <Card title="Discord" icon="discord" href="https://discord.gg/JpCB9SbK">
+  <Card title="Discord" icon="discord" href="https://discord.com/invite/b402">
   </Card>
 </CardGroup>

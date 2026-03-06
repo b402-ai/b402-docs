@@ -16,8 +16,8 @@ The facilitator never holds user funds or keys. It validates signatures, pays ga
 | **Settle transactions** | Execute token transfers via the Relayer contract |
 | **Smart wallet ops** | Build and submit ERC-4337 UserOperations |
 | **Deploy wallets** | Create deterministic Nexus smart wallets |
-| **Incognito payments** | Process RAILGUN shield/unshield operations |
-| **Swap execution** | PancakeSwap V3 token swaps with payment |
+| **Incognito payments** | Process privacy pool shield/unshield operations |
+| **Swap execution** | Private token swaps with payment |
 
 ## Two Payment Models
 
@@ -50,7 +50,7 @@ Smart wallet payments are fully gasless for the user. The paymaster covers gas c
 
 The hosted b402 facilitator is live at:
 
-**Base URL:** `https://facilitator.b402.ai`
+**Base URL:** `https://facilitatorv3.b402.ai`
 
 **Supported networks:** BNB Chain mainnet, Base mainnet, BNB Chain testnet
 
@@ -58,18 +58,7 @@ The hosted b402 facilitator is live at:
 
 **Rate limit:** 30 requests per minute per IP
 
-See the [Facilitator API Reference](/developers/facilitator/overview) for full endpoint documentation.
-
-## Self-Hosting
-
-Facilitators can be self-hosted. You need:
-
-- A funded relayer wallet (for gas)
-- MongoDB for wallet state
-- RPC endpoint for the target chain(s)
-- Bundler RPC for smart wallet operations
-
-See the [Self-Hosting Guide](/guides/self-hosting) for setup instructions.
+See the [Facilitator API Reference](/developers/facilitator/overview) for full endpoint documentation and [Fee Structure](/concepts/fees) for pricing details.
 
 ## Interaction Flow
 

@@ -51,18 +51,16 @@ The Relayer uses this EIP-712 domain for signature verification:
 {
   "name": "B402",
   "version": "1",
-  "chainId": 56,
-  "verifyingContract": "0x590162bf4b50F6576a459B75309eE21D92178A10"
+  "chainId": 56,  // Use 8453 for Base
+  "verifyingContract": "0xE91b564EB8DFF305Ff8efA332f84c487b9da5171"
 }
 ```
 
-For testnet, use `chainId: 97` and the testnet Relayer address.
+For testnet, use `chainId: 97` and the testnet Relayer address. For Base, use `chainId: 8453`.
 
 ## Security Features
 
 **Nonce-based replay protection.** Each nonce (random `bytes32`) can only be used once per signer. The Relayer tracks used nonces and rejects duplicates.
-
-**Time window enforcement.** Signatures include `validAfter` and `validBefore` timestamps. The current block timestamp must fall within this window (typically a 1-hour window).
 
 **Token whitelisting.** Only approved tokens can be transferred through the Relayer. This prevents unauthorized token interactions.
 
@@ -72,12 +70,8 @@ For testnet, use `chainId: 97` and the testnet Relayer address.
 
 | Contract | Address | Network |
 |----------|---------|---------|
-| B402 Relayer (Official) | `0x590162bf4b50F6576a459B75309eE21D92178A10` | BSC Mainnet |
-| B402 Relayer (Custom) | `0x9dB0eDC77C9047a06Fd6dE82c892630DAa5eF601` | BSC Mainnet |
-
-<Note>
-The b402 Relayer contract is currently unaudited. Review the source code before using in production.
-</Note>
+| B402 RelayerV3 | `0xE91b564EB8DFF305Ff8efA332f84c487b9da5171` | BNB Chain Mainnet |
+| B402 RelayerV3 | `0xE91b564EB8DFF305Ff8efA332f84c487b9da5171` | Base Mainnet |
 
 ## Prerequisites for EOA Users
 

@@ -7,7 +7,7 @@ icon: arrow-progress
 The **b402 Facilitator** is the official off-chain service that powers payment verification and settlement for the b402 protocol.
 
 <Note>
-**Endpoint:** `https://facilitator.b402.ai`
+**Endpoint:** `https://facilitatorv3.b402.ai`
 </Note>
 
 ## What It Does
@@ -17,8 +17,8 @@ The Facilitator bridges HTTP requests and on-chain settlement. It:
 1. **Verifies** signed payment payloads (EIP-712 or UserOp)
 2. **Settles** payments on-chain via the Relayer contract
 3. **Deploys** smart wallets on first use
-4. **Executes** token swaps via PancakeSwap V3
-5. **Processes** private (Incognito) payments via RAILGUN
+4. **Executes** private token swaps
+5. **Processes** private (Incognito) payments via the b402 privacy pool
 
 Developers never interact with the blockchain directly. The Facilitator handles gas fees, transaction submission, and confirmation monitoring.
 
@@ -28,13 +28,12 @@ Developers never interact with the blockchain directly. The Facilitator handles 
 |-------|------|-----|
 | **EOA** | Sign EIP-712 → verify → settle | Facilitator pays gas |
 | **Smart Wallet** | Build UserOp → sign → settle via bundler | Paymaster covers gas (deducted from payment) |
-| **Incognito** | Shielded payment with RAILGUN privacy | Facilitator pays gas |
+| **Incognito** | Shielded payment with b402 privacy pool | Facilitator pays gas |
 
 ## Key Benefits
 
 - **Non-custodial.** The Facilitator never holds funds. Payments are signed by the buyer and settled directly on-chain.
 - **Gasless for users.** Gas costs are absorbed by the Facilitator (EOA) or deducted from the payment token (Smart Wallet).
-- **Multi-tenant.** Any number of sellers can use the same Facilitator endpoint. Each seller specifies their own `payTo` address.
 - **Idempotent verification.** Replay attacks are prevented via nonces and on-chain checks.
 
 ## Endpoints
@@ -47,29 +46,9 @@ The Facilitator exposes these endpoint groups:
 | [EOA Payments](/developers/facilitator/api-reference/eoa-payments/verify) | Verify and settle EOA payments | None |
 | [Smart Wallet](/developers/facilitator/api-reference/smart-wallet/verify) | Verify and settle smart wallet payments | None |
 | [Wallet Deployment](/developers/facilitator/api-reference/wallet-deployment/deploy-verify) | Deploy and manage smart wallets | None |
-| [Swap](/developers/facilitator/api-reference/swap/quote) | Token swaps via PancakeSwap V3 | None |
-| [Incognito](/developers/facilitator/api-reference/incognito/verify) | Private payments via RAILGUN | None |
+| [Incognito](/developers/facilitator/api-reference/incognito/verify) | Private payments via privacy pool | None |
 
 See the [Facilitator API Reference](/developers/facilitator/overview) for complete endpoint documentation.
-
-## Self-Hosting
-
-The Facilitator is open-source and can be self-hosted. This is useful for:
-
-- Running a private facilitator for your application
-- Custom rate limiting and access control
-- Operating on networks not yet supported by the official instance
-
-See the [Self-Hosting Guide](/guides/self-hosting) for setup instructions.
-
-## Rate Limits
-
-The hosted Facilitator enforces rate limits to ensure fair usage:
-
-| Tier | Limit |
-|------|-------|
-| Anonymous | 30 requests/minute per IP |
-| Authenticated | No limit (valid `X-Admin-Secret`) |
 
 ## Security
 

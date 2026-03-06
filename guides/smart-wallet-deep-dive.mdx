@@ -81,7 +81,6 @@ The bootstrap is a one-time operation baked into the `factoryData` field of the 
 | EntryPoint v0.7 | `0x0000000071727De22E5E9d8BAf0edAc6f37da032` | ERC-4337 singleton, executes UserOps |
 | Nexus Account Factory | `0x0000006648ED9B2B842552BE63Af870bC74af837` | Deploys smart wallets via CREATE2 |
 | Nexus Bootstrap | `0x0000003eDf18913c01cBc482C978bBD3D6E8ffA3` | Initializes wallet modules on deploy |
-| K1 Validator | Configured via `K1_VALIDATOR_ADDRESS` env | ECDSA signature validation module |
 
 ## UserOperation v0.7 Format
 
@@ -141,7 +140,7 @@ const request: VerifyWalletRequest = {
     {
       to: "0xRecipient...",    // Payment recipient
       amount: "1000000000000000000", // 1 USDT (18 decimals)
-      token: "0x55d398326f99059fF775485246999027B3197955" // USDT on BSC
+      token: "0x55d398326f99059fF775485246999027B3197955" // USDT on BNB Chain
     }
   ]
 }
@@ -222,7 +221,7 @@ The paymaster enables gasless transactions by sponsoring the gas cost and recove
 3. When the bundler submits the UserOp, the EntryPoint calls the paymaster's `validatePaymasterUserOp()`
 4. The paymaster verifies its own signature and locks the gas deposit
 5. After execution, the paymaster's `postOp()` is called to settle the gas accounting
-6. The gas cost (in BNB) is effectively deducted from the payment token amount
+6. The gas cost (in native gas tokens) is effectively deducted from the payment token amount
 
 ### Fee Structure
 
@@ -274,49 +273,6 @@ const firstUserOp: UserOperation = {
 
 After deployment, subsequent UserOps omit the `factory` and `factoryData` fields.
 
-## Code Example: Full Flow
-
-```typescript
-import { ethers } from "ethers"
-
-const FACILITATOR_URL = "https://facilitator.b402.ai"
-
-// Step 1: Request an unsigned UserOp
-const verifyRes = await fetch(`${FACILITATOR_URL}/wallet/verify`, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    walletAddress: "0xYourSmartWallet...",
-    transactions: [{
-      to: "0xRecipient...",
-      amount: "1000000000000000000", // 1 USDT
-      token: "0x55d398326f99059fF775485246999027B3197955"
-    }]
-  })
-})
-
-const { userOp, userOpHash, feeAmount, totalAmount } = await verifyRes.json()
-console.log(`Fee: ${ethers.formatUnits(feeAmount, 18)} USDT`)
-console.log(`Total: ${ethers.formatUnits(totalAmount, 18)} USDT`)
-
-// Step 2: Sign the UserOp hash with the owner key
-const ownerWallet = new ethers.Wallet("0xOwnerPrivateKey...")
-const signature = await ownerWallet.signMessage(ethers.getBytes(userOpHash))
-
-// Step 3: Submit the signed UserOp
-const settleRes = await fetch(`${FACILITATOR_URL}/wallet/settle`, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    userOp,
-    signature
-  })
-})
-
-const { success, txHash, payments } = await settleRes.json()
-console.log(`Transaction: https://bscscan.com/tx/${txHash}`)
-```
-
 ## Getting Your Master Wallet Address
 
 You can compute or fetch the master wallet address for any owner:
@@ -338,7 +294,7 @@ function getMasterSalt(ownerAddress: string): string {
 
 ## Incognito Payments via Smart Wallet
 
-Smart wallets can also execute privacy (incognito) operations by wrapping RAILGUN calls in a UserOp. The `/wallet/incognito/verify` endpoint accepts raw contract calls:
+Smart wallets can also execute privacy (incognito) operations by wrapping privacy pool calls in a UserOp. The `/wallet/incognito/verify` endpoint accepts raw contract calls:
 
 ```typescript
 const verifyRes = await fetch(`${FACILITATOR_URL}/wallet/incognito/verify`, {
@@ -349,7 +305,7 @@ const verifyRes = await fetch(`${FACILITATOR_URL}/wallet/incognito/verify`, {
     walletAddress: "0xSmartWallet...",
     calls: [
       {
-        to: "0xRailgunContract...",
+        to: "0xPrivacyPoolContract...",
         value: "0",
         data: "0x..." // Encoded shield/transact/unshield call
       }
@@ -363,7 +319,6 @@ Up to 3 calls can be batched in a single incognito UserOp.
 ## Further Reading
 
 - [Wallet Concepts](/concepts/wallet) - High-level overview of EOA vs smart wallets
-- [Privacy Deep Dive](/guides/privacy-incognito-deep-dive) - RAILGUN integration details
-- [Self-Hosting](/guides/self-hosting) - Run your own facilitator
+- [Privacy Deep Dive](/guides/privacy-incognito-deep-dive) - Privacy pool integration details
 - [ERC-4337 Spec](https://eips.ethereum.org/EIPS/eip-4337) - Account Abstraction specification
 - [ERC-7579 Spec](https://eips.ethereum.org/EIPS/eip-7579) - Modular smart account standard

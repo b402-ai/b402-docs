@@ -22,7 +22,7 @@ This means buyers, sellers, and AI agents can interact with the Facilitator with
 A small set of endpoints used for internal operations require the `x-admin-api-key` header. These are currently limited to wallet deployment operations.
 
 ```bash
-curl -X POST https://facilitator.b402.ai/api/v1/deploy/settle \
+curl -X POST https://facilitatorv3.b402.ai/api/v1/deploy/settle \
   -H "Content-Type: application/json" \
   -H "x-admin-api-key: your-admin-key" \
   -d '{ ... }'

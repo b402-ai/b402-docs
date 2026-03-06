@@ -4,128 +4,68 @@ description: 'Frequently asked questions'
 icon: 'messages'
 ---
 
-<Tabs>
-    <Tab title="General">
-        <Accordion title='What is b402 in a single sentence?'>
-            b402 is a multichain payment protocol that gives AI agents and web services gasless, confidential, multi-token transactions across EVM-compatible chains.
-        </Accordion>
+<AccordionGroup>
+    <Accordion title='What is b402 in a single sentence?'>
+        b402 is a multichain payment protocol that gives AI agents and web services gasless, confidential, multi-token transactions across EVM-compatible chains.
+    </Accordion>
 
-        <Accordion title='How is b402 related to x402?'>
-            b402 extends the [x402](https://x402.org) protocol. x402 established HTTP-native agent payments using USDC on Base. b402 adds gasless execution for any token (via its own Relayer contract), compliant confidentiality (via RAILGUN), smart wallet support (ERC-7579 Nexus), and multichain deployment.
-        </Accordion>
+    <Accordion title='How is b402 related to x402?'>
+        b402 extends the [x402](https://x402.org) protocol. x402 established HTTP-native agent payments with gasless USDC transfers on Base via EIP-3009. b402 expands this to any whitelisted ERC-20 token (via its own Relayer contract), adds compliant confidentiality (via a zero-knowledge privacy pool), smart wallet support (ERC-7579 Nexus), and multichain deployment.
+    </Accordion>
 
-        <Accordion title='Why not use traditional payment rails or API keys?'>
-            Traditional systems rely on centralized processors, accounts, and manual flows.
-            b402 removes those barriers — enabling **machine-to-machine, HTTP-native payments** that settle instantly on-chain with minimal fees.
-        </Accordion>
+    <Accordion title='Why not use traditional payment rails or API keys?'>
+        Traditional systems rely on centralized processors, accounts, and manual flows.
+        b402 removes those barriers — enabling **machine-to-machine, HTTP-native payments** that settle instantly on-chain with minimal fees.
+    </Accordion>
 
-        <Accordion title='Is b402 only for crypto-native projects?'>
-            No. Any service — from API providers to AI agents to websites — can integrate b402 to enable programmatic, per-request or usage-based payments.
-        </Accordion>
-    </Tab>
+    <Accordion title='Is b402 only for crypto-native projects?'>
+        No. Any service — from API providers to AI agents to websites — can integrate b402 to enable programmatic, per-request or usage-based payments.
+    </Accordion>
 
-    <Tab title="Language & Frameworks">
-        <Accordion title='Which languages and frameworks are supported?'>
-            The b402 reference implementations are written in **TypeScript**, but the protocol is open and language-agnostic.
-            Anyone can implement it in Go, Rust, or any environment that supports HTTP requests and ECDSA/EIP-712 signing.
-            Developers are encouraged to open PRs or RFCs in the GitHub repository to expand SDK coverage.
-        </Accordion>
-    </Tab>
+    <Accordion title='Which languages and frameworks are supported?'>
+        The b402 reference implementations are written in **TypeScript**, but the protocol is open and language-agnostic.
+        Anyone can implement it in Go, Rust, or any environment that supports HTTP requests and ECDSA/EIP-712 signing.
+        Developers are encouraged to open PRs or RFCs in the GitHub repository to expand SDK coverage.
+    </Accordion>
 
-    <Tab title="Facilitators">
-        <Accordion title='Who operates facilitators?'>
-            b402 is permissionless — anyone can deploy and operate a facilitator.
-            The **b402 Reference Facilitator** is currently live on BNB Chain and Base. As the protocol expands to more EVM chains, facilitators can be deployed wherever agents need to transact.
-        </Accordion>
+    <Accordion title='Who operates the Facilitator?'>
+        The Facilitator is managed by the b402 core team. It is currently live on BNB Chain and Base.
+    </Accordion>
 
-        <Accordion title='What prevents a malicious facilitator from stealing funds?'>
-            Each payment payload is **signed by the buyer** and **settled directly on-chain**.
-            A facilitator that tampers with a payload fails cryptographic verification.
-            b402 is a **non-custodial** protocol — facilitators never hold funds.
-        </Accordion>
-    </Tab>
+    <Accordion title='Which networks and tokens are supported today?'>
+        | Network | Tokens | Status |
+        | -------- | ------- | ------- |
+        | BNB Chain | USDT, USDC, USD1 | **Mainnet** |
+        | Base | USDC | **Mainnet** |
+        | BNB Testnet | USDT (test) | **Testnet** |
 
-    <Tab title="Pricing & Schemes">
-        <Accordion title='How should I price my endpoint or API?'>
-            Common pricing models include:
-            1. **Flat per-call** — fixed fee per request (e.g., `$0.001`).
-            2. **Tiered** — different prices for `/basic` vs `/pro` routes.
-            3. **Up-to** — pay-as-you-go pricing that adjusts with usage (under development).
-        </Accordion>
+        Gas is covered by the Facilitator (EOA) or Paymaster (Smart Wallet).
+        The protocol is chain-agnostic by design — additional EVM chains and tokens will be added as the network expands.
+        See [Network & Token Support](/concepts/network-token-support) for contract addresses.
+    </Accordion>
 
-        <Accordion title='Can I integrate b402 with existing usage meters or subscription systems?'>
-            Yes. b402 handles the **payment execution**, not usage tracking.
-            You can still use existing metering tools or subscription logic (like Metronome or custom CRON billing) and trigger b402 payments when thresholds are reached.
-        </Accordion>
-    </Tab>
+    <Accordion title='Why does b402 work with any token, while x402 only supports USDC?'>
+        x402 relies on EIP-3009 (`transferWithAuthorization`), which is built into USDC but not implemented by most tokens (USDT, USD1, etc.). b402 introduces its own Relayer contract that accepts EIP-712 signed messages and executes standard `transfer()` calls on behalf of the user. This means any whitelisted ERC-20 token works, on any deployed chain.
+    </Accordion>
 
-    <Tab title="Networks & Tokens">
-        <Accordion title='Which networks and tokens are supported today?'>
-            | Network | Tokens | Status |
-            | -------- | ------- | ------- |
-            | BNB Chain | USDT, USDC, USD1 | **Mainnet** |
-            | Base | USDC | **Mainnet** |
-            | BNB Testnet | USDT (test) | **Testnet** |
+    <Accordion title='Does b402 support fiat on- or off-ramps?'>
+        Not natively.
+        However, facilitators or third-party gateways can integrate fiat payment bridges for deposits or withdrawals if required.
+    </Accordion>
 
-            Gas is covered by the Facilitator (EOA) or Paymaster (Smart Wallet). No extra fees for buyers.
-            The protocol is chain-agnostic by design — additional EVM chains and tokens will be added as the network expands.
-            See [Network & Token Support](/concepts/network-token-support) for contract addresses.
-        </Accordion>
+    <Accordion title='Do I need to expose my private key to the backend?'>
+        No.
+        Agents or buyers **sign locally** in their runtime environment (browser, VM, or enclave).
+        Servers and facilitators only verify signatures — they never have access to private keys.
+    </Accordion>
 
-        <Accordion title='Why does b402 work with any token, while x402 only supports USDC?'>
-            x402 relies on EIP-3009 (`transferWithAuthorization`), which is built into USDC but not implemented by most tokens (USDT, USD1, etc.). b402 introduces its own Relayer contract that accepts EIP-712 signed messages and executes standard `transfer()` calls on behalf of the user. This means any whitelisted ERC-20 token works, on any deployed chain.
-        </Accordion>
+    <Accordion title='What is the relationship between b402 privacy and RAILGUN?'>
+        b402's privacy pool uses a custom implementation inspired by [RAILGUN](https://railgun.org)'s zero-knowledge proof system. RAILGUN pioneered compliant on-chain privacy using zkSNARKs, encrypted commitments, and Merkle trees — b402 builds on these foundational cryptographic primitives.
 
-        <Accordion title='Does b402 support fiat on- or off-ramps?'>
-            Not natively.
-            However, facilitators or third-party gateways can integrate fiat payment bridges for deposits or withdrawals if required.
-        </Accordion>
-    </Tab>
+        **How b402 differs from Tornado Cash:**
+        - **Tornado Cash** used fixed-denomination pools and offered no compliance mechanism. It was sanctioned by OFAC in 2022.
+        - **b402's privacy pool** supports arbitrary amounts, integrates with ERC-4337 smart wallets for gasless operation, and is designed with compliance in mind — shielded balances can be verified against screening requirements without revealing transaction details.
 
-    <Tab title="Security">
-        <Accordion title='Do I need to expose my private key to the backend?'>
-            No.
-            Agents or buyers **sign locally** in their runtime environment (browser, VM, or enclave).
-            Servers and facilitators only verify signatures — they never have access to private keys.
-        </Accordion>
-
-        <Accordion title='How are refunds handled?'>
-            b402 currently supports **push-style payments** — once settled, they're final.
-            Refunds are handled at the business-logic level by sending a new transaction back to the buyer.
-            Future "conditional" or **escrow schemes** may introduce reversible or time-locked transfers.
-        </Accordion>
-    </Tab>
-
-    <Tab title="Agents & Automation">
-        <Accordion title='How do AI agents know what to pay?'>
-            Agents follow the same 402 lifecycle:
-            1. Request the resource.
-            2. Receive `402 Payment Required` with structured payment options.
-            3. Select a scheme and sign a payload via the b402 SDK.
-            4. Resubmit with the `X-PAYMENT` header.
-        </Accordion>
-
-        <Accordion title='Do agents need wallets?'>
-            Yes. Each agent must have a **programmable wallet** capable of signing EIP-712 payloads.
-            Wallets can be EOAs, smart wallets (EIP-1271), or ERC-8004 agent identities.
-            Libraries like **viem**, **ethers-v6**, or the **b402 SDK** simplify this setup.
-        </Accordion>
-    </Tab>
-
-    <Tab title="Governance & Roadmap">
-        <Accordion title='Is there a formal specification or whitepaper?'>
-            * **Specification:** [GitHub Spec Repository](https://github.com/b402/specs)
-            * **Whitepaper:** [b402.org Whitepaper](https://b402.org/whitepaper.pdf)
-            * **License:** Apache-2.0, fully open standard.
-        </Accordion>
-
-        <Accordion title='How will b402 evolve?'>
-            b402 development is public and community-driven.
-            Upcoming priorities include:
-            * Expanded chain deployments across EVM networks
-            * Broader token support on existing and new chains
-            * ERC-8004-based identity verification
-            * Standardized trust and reputation layer for agents
-        </Accordion>
-    </Tab>
-</Tabs>
+        b402 does not use Tornado Cash code or architecture.
+    </Accordion>
+</AccordionGroup>

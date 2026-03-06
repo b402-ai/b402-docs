@@ -61,7 +61,7 @@ function getMasterSalt(ownerAddress: string): string {
 ### cURL
 
 ```bash
-curl https://facilitator.b402.ai/wallet/0xAbC1234567890aBcDeF1234567890AbCdEf123456/master
+curl https://facilitatorv3.b402.ai/wallet/0xAbC1234567890aBcDeF1234567890AbCdEf123456/master
 ```
 
 ### TypeScript
@@ -69,7 +69,7 @@ curl https://facilitator.b402.ai/wallet/0xAbC1234567890aBcDeF1234567890AbCdEf123
 ```typescript
 const owner = "0xAbC1234567890aBcDeF1234567890AbCdEf123456";
 const response = await fetch(
-  `https://facilitator.b402.ai/wallet/${owner}/master`
+  `https://facilitatorv3.b402.ai/wallet/${owner}/master`
 );
 const masterWallet = await response.json();
 

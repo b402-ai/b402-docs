@@ -7,7 +7,7 @@
     },
     "servers": [
         {
-            "url": "https://facilitator.b402.ai",
+            "url": "https://facilitatorv3.b402.ai",
             "description": "Production server"
         }
     ],
@@ -158,7 +158,7 @@
                 "properties": {
                     "token": {
                         "type": "string",
-                        "description": "BEP-20 token contract address"
+                        "description": "ERC-20 token contract address"
                     },
                     "payload": {
                         "type": "object",
@@ -187,7 +187,7 @@
                 "properties": {
                     "network": {
                         "type": "string",
-                        "description": "Network identifier (e.g., bnb-mainnet, bnb-testnet)"
+                        "description": "Network identifier (e.g., \"bsc\" or \"base\")"
                     },
                     "relayerContract": {
                         "type": "string",

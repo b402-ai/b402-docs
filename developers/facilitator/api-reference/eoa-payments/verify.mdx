@@ -25,7 +25,7 @@ POST /verify
 | `paymentPayload.payload.authorization.nonce` | string | Random bytes32 nonce |
 | `paymentPayload.payload.signature` | string | EIP-712 signature |
 | `paymentRequirements` | object | Network and contract details |
-| `paymentRequirements.network` | string | Target network (`bsc`) |
+| `paymentRequirements.network` | string | Target network (`"bsc"` or `"base"`) |
 | `paymentRequirements.relayerContract` | string | b402 Relayer contract address |
 
 ## Response
@@ -63,7 +63,7 @@ A valid verification does not guarantee settlement will succeed. On-chain state 
 ### cURL
 
 ```bash
-curl -X POST https://facilitator.b402.ai/verify \
+curl -X POST https://facilitatorv3.b402.ai/verify \
   -H "Content-Type: application/json" \
   -d '{
     "paymentPayload": {
@@ -82,7 +82,7 @@ curl -X POST https://facilitator.b402.ai/verify \
     },
     "paymentRequirements": {
       "network": "bsc",
-      "relayerContract": "0x590162bf4b50F6576a459B75309eE21D92178A10"
+      "relayerContract": "0xE91b564EB8DFF305Ff8efA332f84c487b9da5171"
     }
   }'
 ```
@@ -90,7 +90,7 @@ curl -X POST https://facilitator.b402.ai/verify \
 ### TypeScript
 
 ```typescript
-const response = await fetch("https://facilitator.b402.ai/verify", {
+const response = await fetch("https://facilitatorv3.b402.ai/verify", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
@@ -109,8 +109,8 @@ const response = await fetch("https://facilitator.b402.ai/verify", {
       },
     },
     paymentRequirements: {
-      network: "bsc",
-      relayerContract: "0x590162bf4b50F6576a459B75309eE21D92178A10",
+      network: "bsc", // or "base"
+      relayerContract: "0xE91b564EB8DFF305Ff8efA332f84c487b9da5171",
     },
   }),
 });
@@ -138,4 +138,4 @@ if (result.isValid) {
 
 - [Settle Payment (EOA)](/developers/facilitator/api-reference/eoa-payments/settle) - Execute settlement after verification
 - [EIP-712 Signature Guide](/sdks/eip712-signature-guide) - Construct signatures for this endpoint
-- [Buyer Guide (EOA)](/get-started/buyer) - Full end-to-end payment walkthrough
+- [Quickstart](/get-started/quickstart) - Get started with b402

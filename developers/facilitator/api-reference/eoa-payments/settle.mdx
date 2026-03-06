@@ -10,7 +10,7 @@ POST /settle
 ```
 
 <Note>
-Settlement typically completes in ~3 seconds on BNB Chain. The facilitator covers all gas costs.
+Settlement typically completes in ~3 seconds on supported chains. The facilitator covers all gas costs.
 </Note>
 
 ## Request Body
@@ -31,7 +31,7 @@ The request body is identical to [`/verify`](/developers/facilitator/api-referen
 | `paymentPayload.payload.authorization.nonce` | string | Random bytes32 nonce |
 | `paymentPayload.payload.signature` | string | EIP-712 signature |
 | `paymentRequirements` | object | Network and contract details |
-| `paymentRequirements.network` | string | Target network (`bsc`) |
+| `paymentRequirements.network` | string | Target network (`"bsc"` or `"base"`) |
 | `paymentRequirements.relayerContract` | string | b402 Relayer contract address |
 
 ## Response
@@ -71,7 +71,7 @@ Always call `/verify` before `/settle`. While `/settle` re-verifies internally, 
 ### cURL
 
 ```bash
-curl -X POST https://facilitator.b402.ai/settle \
+curl -X POST https://facilitatorv3.b402.ai/settle \
   -H "Content-Type: application/json" \
   -d '{
     "paymentPayload": {
@@ -90,7 +90,7 @@ curl -X POST https://facilitator.b402.ai/settle \
     },
     "paymentRequirements": {
       "network": "bsc",
-      "relayerContract": "0x590162bf4b50F6576a459B75309eE21D92178A10"
+      "relayerContract": "0xE91b564EB8DFF305Ff8efA332f84c487b9da5171"
     }
   }'
 ```
@@ -98,7 +98,7 @@ curl -X POST https://facilitator.b402.ai/settle \
 ### TypeScript
 
 ```typescript
-const response = await fetch("https://facilitator.b402.ai/settle", {
+const response = await fetch("https://facilitatorv3.b402.ai/settle", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
@@ -117,8 +117,8 @@ const response = await fetch("https://facilitator.b402.ai/settle", {
       },
     },
     paymentRequirements: {
-      network: "bsc",
-      relayerContract: "0x590162bf4b50F6576a459B75309eE21D92178A10",
+      network: "bsc", // or "base"
+      relayerContract: "0xE91b564EB8DFF305Ff8efA332f84c487b9da5171",
     },
   }),
 });
@@ -130,6 +130,7 @@ if (result.success) {
   console.log("TX:", result.transaction);
   console.log("Block:", result.blockNumber);
   console.log(`View on BscScan: https://bscscan.com/tx/${result.transaction}`);
+  // For Base: https://basescan.org/tx/
 } else {
   console.error("Settlement failed:", result.errorReason);
 }
@@ -143,7 +144,7 @@ async function verifyAndSettle(paymentPayload: object, paymentRequirements: obje
   const headers = { "Content-Type": "application/json" };
 
   // Step 1: Verify
-  const verifyRes = await fetch("https://facilitator.b402.ai/verify", {
+  const verifyRes = await fetch("https://facilitatorv3.b402.ai/verify", {
     method: "POST",
     headers,
     body,
@@ -155,7 +156,7 @@ async function verifyAndSettle(paymentPayload: object, paymentRequirements: obje
   }
 
   // Step 2: Settle
-  const settleRes = await fetch("https://facilitator.b402.ai/settle", {
+  const settleRes = await fetch("https://facilitatorv3.b402.ai/settle", {
     method: "POST",
     headers,
     body,
@@ -179,11 +180,11 @@ async function verifyAndSettle(paymentPayload: object, paymentRequirements: obje
 | `signature_error` | 400 | EIP-712 signature is malformed or recovery failed during re-verification |
 
 <Info>
-If you receive a `blockchain_error`, wait a few seconds and retry. Transient RPC issues on BNB Chain typically resolve quickly.
+If you receive a `blockchain_error`, wait a few seconds and retry. Transient RPC issues typically resolve quickly.
 </Info>
 
 ## Related
 
 - [Verify Payment (EOA)](/developers/facilitator/api-reference/eoa-payments/verify) - Verify before settling
 - [Facilitator Overview](/concepts/facilitator) - How verification and settlement fit together
-- [Buyer Guide (EOA)](/get-started/buyer) - Full end-to-end payment walkthrough
+- [Quickstart](/get-started/quickstart) - Get started with b402

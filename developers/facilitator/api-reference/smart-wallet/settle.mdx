@@ -8,13 +8,13 @@ description: 'Submit a signed UserOp to the ERC-4337 bundler for on-chain settle
 ## Base URL
 
 ```
-https://facilitator.b402.ai
+https://facilitatorv3.b402.ai
 ```
 
 ## Request
 
 ```bash
-curl -X POST https://facilitator.b402.ai/wallet/settle \
+curl -X POST https://facilitatorv3.b402.ai/wallet/settle \
   -H "Content-Type: application/json" \
   -d '{
     "userOp": {
@@ -40,7 +40,7 @@ curl -X POST https://facilitator.b402.ai/wallet/settle \
 import { Wallet } from 'ethers';
 
 // 1. Get unsigned UserOp from /wallet/verify
-const verifyRes = await fetch('https://facilitator.b402.ai/wallet/verify', {
+const verifyRes = await fetch('https://facilitatorv3.b402.ai/wallet/verify', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
@@ -52,7 +52,7 @@ const verifyRes = await fetch('https://facilitator.b402.ai/wallet/verify', {
         token: '0x55d398326f99059fF775485246999027B3197955',
       },
     ],
-    paymentRequirements: { network: 'bsc' },
+    paymentRequirements: { network: 'bsc' }, // or 'base'
   }),
 });
 const { userOp, userOpHash } = await verifyRes.json();
@@ -64,7 +64,7 @@ const signature = await ownerWallet.signMessage(
 );
 
 // 3. Submit signed UserOp to /wallet/settle
-const settleRes = await fetch('https://facilitator.b402.ai/wallet/settle', {
+const settleRes = await fetch('https://facilitatorv3.b402.ai/wallet/settle', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({

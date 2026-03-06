@@ -3,14 +3,14 @@ title: 'Settle Incognito Operation'
 description: 'Submit a signed incognito UserOp to the ERC-4337 bundler'
 ---
 
-`POST /wallet/incognito/settle` takes the signed UserOperation from [`/wallet/incognito/verify`](/developers/facilitator/api-reference/incognito/verify) and submits it to the ERC-4337 bundler for on-chain execution. The flow is identical to standard wallet settlement but executes a RAILGUN shield or unshield operation.
+`POST /wallet/incognito/settle` takes the signed UserOperation from [`/wallet/incognito/verify`](/developers/facilitator/api-reference/incognito/verify) and submits it to the ERC-4337 bundler for on-chain execution. The flow is identical to standard wallet settlement but executes a privacy pool shield or unshield operation.
 
 ```
 POST /wallet/incognito/settle
 ```
 
 <Note>
-Settlement typically completes in ~3 seconds on BNB Chain. The facilitator covers all gas costs.
+Settlement typically completes in ~3 seconds on supported chains. The facilitator covers all gas costs.
 </Note>
 
 ## Request Body
@@ -53,13 +53,13 @@ The `userOp` object must contain all fields exactly as returned by `/wallet/inco
 ### cURL
 
 ```bash
-curl -X POST https://facilitator.b402.ai/wallet/incognito/settle \
+curl -X POST https://facilitatorv3.b402.ai/wallet/incognito/settle \
   -H "Content-Type: application/json" \
   -d '{
     "userOp": {
       "sender": "0x...wallet_address",
       "nonce": "0x...",
-      "callData": "0x...encoded_railgun_call",
+      "callData": "0x...encoded_privacy_pool_call",
       "callGasLimit": "0x...",
       "verificationGasLimit": "0x...",
       "preVerificationGas": "0x...",
@@ -81,7 +81,7 @@ curl -X POST https://facilitator.b402.ai/wallet/incognito/settle \
 import { Wallet } from 'ethers';
 
 // 1. Get unsigned UserOp from /wallet/incognito/verify
-const verifyRes = await fetch('https://facilitator.b402.ai/wallet/incognito/verify', {
+const verifyRes = await fetch('https://facilitatorv3.b402.ai/wallet/incognito/verify', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
@@ -91,7 +91,7 @@ const verifyRes = await fetch('https://facilitator.b402.ai/wallet/incognito/veri
       token: '0x55d398326f99059fF775485246999027B3197955',
       amount: '10000000000000000',
     },
-    paymentRequirements: { network: 'bsc' },
+    paymentRequirements: { network: 'bsc' }, // or 'base'
   }),
 });
 const { userOp, userOpHash } = await verifyRes.json();
@@ -103,7 +103,7 @@ const signature = await ownerWallet.signMessage(
 );
 
 // 3. Submit signed UserOp
-const settleRes = await fetch('https://facilitator.b402.ai/wallet/incognito/settle', {
+const settleRes = await fetch('https://facilitatorv3.b402.ai/wallet/incognito/settle', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
@@ -118,6 +118,7 @@ if (result.success) {
   console.log('Incognito operation settled');
   console.log('TX:', result.txHash);
   console.log(`View on BscScan: https://bscscan.com/tx/${result.txHash}`);
+  // For Base: https://basescan.org/tx/
 } else {
   console.error('Settlement failed');
 }

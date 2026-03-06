@@ -46,14 +46,14 @@ GET /wallet/:owner
 ### cURL
 
 ```bash
-curl https://facilitator.b402.ai/wallet/0xAbC1234567890aBcDeF1234567890AbCdEf123456
+curl https://facilitatorv3.b402.ai/wallet/0xAbC1234567890aBcDeF1234567890AbCdEf123456
 ```
 
 ### TypeScript
 
 ```typescript
 const owner = "0xAbC1234567890aBcDeF1234567890AbCdEf123456";
-const response = await fetch(`https://facilitator.b402.ai/wallet/${owner}`);
+const response = await fetch(`https://facilitatorv3.b402.ai/wallet/${owner}`);
 const data = await response.json();
 
 console.log("Master wallets:", data.master.length);

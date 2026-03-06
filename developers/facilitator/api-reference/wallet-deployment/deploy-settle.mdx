@@ -21,7 +21,7 @@ Submits signed EIP-712 payment payloads and triggers on-chain deployment.
 |-------|------|----------|-------------|
 | `paymentPayload` | `PaymentPayload[]` | Yes | Same signed payments from the verify step |
 | `paymentRequirements` | `object` | Yes | Same configuration from the verify step |
-| `paymentRequirements.network` | `string` | Yes | Target network (`bsc`) |
+| `paymentRequirements.network` | `string` | Yes | Target network (`"bsc"` or `"base"`) |
 | `paymentRequirements.relayerContract` | `string` | Yes | b402 Relayer contract address |
 | `paymentRequirements.deployment` | `object` | Yes | Deployment parameters |
 | `paymentRequirements.deployment.ownerAddress` | `string` | Yes | Owner of the wallets |
@@ -54,7 +54,7 @@ Submits signed EIP-712 payment payloads and triggers on-chain deployment.
 ### cURL
 
 ```bash
-curl -X POST https://facilitator.b402.ai/deploy/settle \
+curl -X POST https://facilitatorv3.b402.ai/deploy/settle \
   -H "Content-Type: application/json" \
   -d '{
     "paymentPayload": [
@@ -63,7 +63,7 @@ curl -X POST https://facilitator.b402.ai/deploy/settle \
         "payload": {
           "authorization": {
             "from": "0xAbC1234567890aBcDeF1234567890AbCdEf123456",
-            "to": "0x590162bf4b50F6576a459B75309eE21D92178A10",
+            "to": "0xE91b564EB8DFF305Ff8efA332f84c487b9da5171",
             "value": "500000000000000000",
             "validAfter": 1709251200,
             "validBefore": 1709254800,
@@ -75,7 +75,7 @@ curl -X POST https://facilitator.b402.ai/deploy/settle \
     ],
     "paymentRequirements": {
       "network": "bsc",
-      "relayerContract": "0x590162bf4b50F6576a459B75309eE21D92178A10",
+      "relayerContract": "0xE91b564EB8DFF305Ff8efA332f84c487b9da5171",
       "deployment": {
         "ownerAddress": "0xAbC1234567890aBcDeF1234567890AbCdEf123456",
         "salts": ["0x1234...master_salt"],
@@ -100,14 +100,14 @@ curl -X POST https://facilitator.b402.ai/deploy/settle \
 // After calling /deploy/verify
 const verifyResult = await verifyResponse.json();
 
-const settleResponse = await fetch("https://facilitator.b402.ai/deploy/settle", {
+const settleResponse = await fetch("https://facilitatorv3.b402.ai/deploy/settle", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
     paymentPayload: [feePayload, ...fundingPayloads],
     paymentRequirements: {
-      network: "bsc",
-      relayerContract: "0x590162bf4b50F6576a459B75309eE21D92178A10",
+      network: "bsc", // or "base"
+      relayerContract: "0xE91b564EB8DFF305Ff8efA332f84c487b9da5171",
       deployment: {
         ownerAddress: wallet.address,
         salts: [masterSalt],
@@ -150,7 +150,7 @@ For smart wallet payers, submit the signed UserOp from the verify step instead o
 | `userOp` | `object` | Yes | UserOp from `/deploy/wallet/verify` |
 | `signature` | `string` | Yes | Client signature of `userOpHash` |
 | `paymentRequirements` | `object` | Yes | Same configuration from the verify step |
-| `paymentRequirements.network` | `string` | Yes | Target network (`bsc`) |
+| `paymentRequirements.network` | `string` | Yes | Target network (`"bsc"` or `"base"`) |
 | `paymentRequirements.deployment` | `object` | Yes | Deployment parameters |
 | `paymentRequirements.deployment.ownerAddress` | `string` | Yes | Owner of the wallets |
 | `paymentRequirements.deployment.salts` | `string[]` | Yes | Salts matching the verify request |
@@ -165,7 +165,7 @@ The response schema is identical to the EOA deploy settle response above.
 ### cURL
 
 ```bash
-curl -X POST https://facilitator.b402.ai/deploy/wallet/settle \
+curl -X POST https://facilitatorv3.b402.ai/deploy/wallet/settle \
   -H "Content-Type: application/json" \
   -d '{
     "userOp": { "sender": "0x...", "nonce": "0x...", "callData": "0x...", "..." : "..." },
@@ -201,14 +201,14 @@ const signature = await walletOwner.signMessage(
   ethers.getBytes(verifyResult.userOpHash)
 );
 
-const settleResponse = await fetch("https://facilitator.b402.ai/deploy/wallet/settle", {
+const settleResponse = await fetch("https://facilitatorv3.b402.ai/deploy/wallet/settle", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
     userOp: verifyResult.userOp,
     signature,
     paymentRequirements: {
-      network: "bsc",
+      network: "bsc", // or "base"
       deployment: {
         ownerAddress: ownerAddress,
         salts: [masterSalt],

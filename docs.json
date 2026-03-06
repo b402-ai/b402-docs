@@ -14,7 +14,7 @@
     },
     "api": {
         "mdx": {
-            "server": "https://facilitator.b402.ai"
+            "server": "https://facilitatorv3.b402.ai"
         }
     },
     "background": {
@@ -34,7 +34,7 @@
     "footer": {
         "socials": {
             "twitter": "https://twitter.com/b402ai",
-            "discord": "https://discord.com/invite/3ZVJKjcjgQ",
+            "discord": "https://discord.com/invite/b402",
             "github": "https://github.com/b402-ai"
         }
     },
@@ -54,32 +54,27 @@
                     {
                         "group": "Concepts",
                         "pages": [
-                            "concepts/http-402",
                             "concepts/client-server",
                             "concepts/facilitator",
                             "concepts/relayer",
                             "concepts/wallet",
                             "concepts/privacy-incognito",
                             "concepts/agent-identity",
-                            "concepts/network-token-support"
+                            "concepts/network-token-support",
+                            "concepts/fees"
                         ]
                     },
                     {
                         "group": "Get Started",
                         "pages": [
-                            "get-started/quickstart",
-                            "get-started/buyer",
-                            "get-started/buyer-smart-wallet",
-                            "get-started/seller",
-                            "get-started/agent-cookbook"
+                            "get-started/quickstart"
                         ]
                     },
                     {
                         "group": "Guides",
                         "pages": [
                             "guides/smart-wallet-deep-dive",
-                            "guides/privacy-incognito-deep-dive",
-                            "guides/self-hosting"
+                            "guides/privacy-incognito-deep-dive"
                         ]
                     },
                     {
@@ -95,8 +90,7 @@
                         "pages": [
                             "resources/faq",
                             "resources/glossary",
-                            "resources/contract-addresses",
-                            "resources/changelog"
+                            "resources/contract-addresses"
                         ]
                     }
                 ]
@@ -144,57 +138,9 @@
                         ]
                     },
                     {
-                        "group": "Swap",
-                        "pages": [
-                            "developers/facilitator/api-reference/swap/quote",
-                            "developers/facilitator/api-reference/swap/health",
-                            "developers/facilitator/api-reference/swap/execute",
-                            "developers/facilitator/api-reference/swap/payment-intent",
-                            "developers/facilitator/api-reference/swap/gasless-approve",
-                            "developers/facilitator/api-reference/swap/wallet-verify",
-                            "developers/facilitator/api-reference/swap/wallet-settle"
-                        ]
-                    },
-                    {
                         "group": "Reference",
                         "pages": [
-                            "developers/errors",
-                            "developers/rate-limit"
-                        ]
-                    }
-                ]
-            },
-            {
-                "tab": "Backend API",
-                "groups": [
-                    {
-                        "group": "Overview",
-                        "pages": [
-                            "developers/backend/overview"
-                        ]
-                    },
-                    {
-                        "group": "Privacy",
-                        "pages": [
-                            "developers/backend/privacy/commitments",
-                            "developers/backend/privacy/nullifiers",
-                            "developers/backend/privacy/merkle-proof",
-                            "developers/backend/privacy/unshield",
-                            "developers/backend/privacy/unshield-status"
-                        ]
-                    },
-                    {
-                        "group": "Metrics",
-                        "pages": [
-                            "developers/backend/metrics/global",
-                            "developers/backend/metrics/buyers",
-                            "developers/backend/metrics/sellers"
-                        ]
-                    },
-                    {
-                        "group": "Transactions",
-                        "pages": [
-                            "developers/backend/transactions"
+                            "developers/errors"
                         ]
                     }
                 ]
@@ -205,6 +151,7 @@
                     {
                         "group": "SDK Reference",
                         "pages": [
+                            "sdks/b402-sdk",
                             "sdks/eip712-signature-guide"
                         ]
                     }

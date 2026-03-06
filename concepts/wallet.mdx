@@ -23,12 +23,6 @@ An Externally Owned Account (EOA) is a standard Ethereum wallet controlled by a 
 - **Tokens must be in the EOA.** The wallet needs a balance of the payment token.
 - **No gas needed for payment.** The facilitator pays gas. But the initial approval transaction costs gas.
 
-### Best For
-
-- Simple integrations where the user already has a funded wallet
-- Quick testing and development
-- Users who prefer direct wallet control
-
 ## Smart Wallets (ERC-7579 Nexus)
 
 b402 smart wallets are ERC-7579 modular smart accounts deployed via the [Nexus](https://docs.biconomy.io/nexus) factory. They are deterministic: the wallet address can be computed before deployment.
@@ -63,12 +57,6 @@ masterSalt = keccak256("b402-" + reversed(normalizedOwnerAddress))
 | Master wallet | `keccak256("b402-" + reversedOwner)` | Primary wallet, one per owner |
 | Sub-wallet | Custom salt | Additional wallets for specific purposes |
 
-### Best For
-
-- AI agents that need fully autonomous, gasless payments
-- New users who don't have BNB for gas
-- Applications requiring batched or complex transactions
-
 ## Comparison
 
 | Feature | EOA | Smart Wallet |
@@ -79,7 +67,6 @@ masterSalt = keccak256("b402-" + reversed(normalizedOwnerAddress))
 | Deploy cost | None (already exists) | Paid on first use |
 | Address type | Standard ETH address | Deterministic contract address |
 | Batch operations | No | Yes (via ERC-7579 execute) |
-| Best for | Simple integrations | Agent-native workflows |
 
 ## Identity Layer (ERC-8004)
 
