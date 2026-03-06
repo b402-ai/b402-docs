@@ -44,7 +44,7 @@ icon: 'messages'
         See [Network & Token Support](/concepts/network-token-support) for contract addresses.
     </Accordion>
 
-    <Accordion title='Why does b402 work with any token, while x402 only supports USDC?'>
+    <Accordion title='Why does b402 work with multiple tokens, while x402 only supports USDC?'>
         x402 relies on EIP-3009 (`transferWithAuthorization`), which is built into USDC but not implemented by most tokens (USDT, USD1, etc.). b402 introduces its own Relayer contract that accepts EIP-712 signed messages and executes standard `transfer()` calls on behalf of the user. This means any whitelisted ERC-20 token works, on any deployed chain.
     </Accordion>
 
