@@ -148,11 +148,12 @@
                 "tab": "SDKs",
                 "groups": [
                     {
-                        "group": "SDK Reference",
-                        "pages": [
-                            "sdks/b402-sdk",
-                            "sdks/eip712-signature-guide"
-                        ]
+                    "group": "SDK Reference",
+                    "pages": [
+                        "sdks/b402-sdk",
+                        "sdks/agent-skill",
+                        "sdks/eip712-signature-guide"
+                    ]
                     }
                 ]
             }

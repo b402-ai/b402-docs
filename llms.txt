@@ -36,7 +36,8 @@
 - [Error Reference](https://docs.b402.ai/developers/errors): All error codes
 
 ## SDK Reference
-- [b402 SDK](https://docs.b402.ai/sdks/b402-sdk): Private DeFi execution — shield, unshield, swap, lend, transact
+- [@b402ai/sdk](https://docs.b402.ai/sdks/b402-sdk): Private DeFi execution — shield, unshield, swap, lend, transact
+- [Agent Skill Reference](https://docs.b402.ai/sdks/agent-skill): Machine-readable reference for AI agents
 - [EIP-712 Signature Guide](https://docs.b402.ai/sdks/eip712-signature-guide): Manual signature construction
 
 ## Guides

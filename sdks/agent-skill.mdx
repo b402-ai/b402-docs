@@ -1,0 +1,208 @@
+---
+title: 'Agent Skill Reference'
+description: 'Machine-readable reference for AI agents using @b402ai/sdk — private DeFi execution on Base.'
+icon: 'robot'
+---
+
+This page is optimized for AI agents and LLMs. It provides a concise, structured reference for every SDK method with exact parameters, return types, and example calls.
+
+## Setup
+
+```bash
+npm install @b402ai/sdk
+```
+
+```typescript
+import { B402 } from '@b402ai/sdk'
+
+const b402 = new B402({
+  privateKey: process.env.PRIVATE_KEY,       // required
+  zeroXApiKey: process.env.ZERO_X_API_KEY,   // optional, for swaps
+})
+```
+
+Only `privateKey` is required. The b402 facilitator handles gas, wallet deployment, and transaction submission.
+
+---
+
+## Commands
+
+### Shield (Enter Privacy Pool)
+
+Move tokens from EOA into the Railgun privacy pool. Breaks the on-chain link between your real wallet and smart wallet.
+
+```typescript
+const result = await b402.shield({ token: 'USDC', amount: '100' })
+// { txHash: '0x...', indexed: true }
+```
+
+| Param | Required | Type | Values |
+|-------|----------|------|--------|
+| `token` | Yes | `string` | `USDC`, `WETH`, `DAI` |
+| `amount` | Yes | `string` | Human-readable (e.g. `'100'`) |
+
+Shield sends from master EOA — requires tokens + ETH for gas. Indexing takes 1-3 min (SDK polls automatically).
+
+### Unshield (Exit Privacy Pool)
+
+Withdraw tokens from the privacy pool to your anonymous smart wallet. Generates a ZK proof (Groth16) client-side.
+
+```typescript
+const result = await b402.unshield({ token: 'USDC', amount: '50' })
+// { txHash: '0x...', proofTimeSeconds: 0.7 }
+```
+
+| Param | Required | Type | Values |
+|-------|----------|------|--------|
+| `token` | Yes | `string` | `USDC`, `WETH`, `DAI` |
+| `amount` | Yes | `string` | Human-readable |
+
+b402 uses a Railgun fork with 0% protocol fees — no fee is deducted on unshield.
+
+### Swap (Private Token Swap)
+
+Swap tokens via 0x aggregator. Requires `zeroXApiKey` in config.
+
+```typescript
+const result = await b402.swap({
+  from: 'USDC',
+  to: 'WETH',
+  amount: '10',
+  slippageBps: 100,
+})
+// { txHash: '0x...', amountIn: '10', amountOut: '0.004', tokenIn: 'USDC', tokenOut: 'WETH' }
+```
+
+| Param | Required | Type | Values |
+|-------|----------|------|--------|
+| `from` | Yes | `string` | Token symbol or `0x` address |
+| `to` | Yes | `string` | Token symbol or `0x` address |
+| `amount` | Yes | `string` | Human-readable sell amount |
+| `slippageBps` | No | `number` | Basis points (default: `100` = 1%) |
+
+### Lend (Deposit into Morpho Vault)
+
+```typescript
+const result = await b402.lend({ token: 'USDC', amount: '100', vault: 'steakhouse' })
+// { txHash: '0x...', amount: '100', vault: 'steakhouse' }
+```
+
+| Param | Required | Type | Values |
+|-------|----------|------|--------|
+| `token` | Yes | `string` | `USDC` |
+| `amount` | Yes | `string` | Human-readable |
+| `vault` | No | `string` | `steakhouse` (default), `moonwell`, `gauntlet`, `steakhouse-hy` |
+
+### Redeem (Withdraw from Vault)
+
+```typescript
+const result = await b402.redeem({ vault: 'steakhouse' })
+// { txHash: '0x...', assetsReceived: '100.23', vault: 'steakhouse' }
+```
+
+| Param | Required | Type | Values |
+|-------|----------|------|--------|
+| `vault` | No | `string` | Default: `steakhouse` |
+| `shares` | No | `string` | Shares to redeem. Default: all |
+
+### Rebalance (Auto-Optimize Yield)
+
+```typescript
+const result = await b402.rebalance(0.5) // min 0.5% APY difference to trigger
+// { action: 'rebalanced', currentVault: 'steakhouse', bestVault: 'steakhouse-hy', txHash: '0x...' }
+```
+
+### Transact (Arbitrary Calls)
+
+Execute any batch of EVM calls through your smart wallet. Gasless.
+
+```typescript
+const result = await b402.transact([
+  { to: '0xTokenAddr', value: '0', data: '0xapproveCalldata' },
+  { to: '0xProtocol',  value: '0', data: '0xactionCalldata' },
+])
+// { txHash: '0x...' }
+```
+
+### Status (Check Wallet)
+
+```typescript
+const status = await b402.status()
+// {
+//   ownerEOA: '0x...',
+//   smartWallet: '0x...',
+//   deployed: true,
+//   chain: 'base',
+//   balances: [{ token: 'USDC', balance: '50.0' }],
+//   positions: [{ vault: 'steakhouse', shares: '49.5', assets: '100.5 USDC', apyEstimate: '4-6%' }]
+// }
+```
+
+---
+
+## Natural Language → SDK Call
+
+| User says | SDK call |
+|-----------|---------|
+| "Shield 100 USDC into privacy pool" | `b402.shield({ token: 'USDC', amount: '100' })` |
+| "Unshield 50 USDC to my wallet" | `b402.unshield({ token: 'USDC', amount: '50' })` |
+| "Swap 10 USDC to WETH privately" | `b402.swap({ from: 'USDC', to: 'WETH', amount: '10' })` |
+| "Lend 100 USDC in steakhouse" | `b402.lend({ token: 'USDC', amount: '100', vault: 'steakhouse' })` |
+| "Withdraw from steakhouse vault" | `b402.redeem({ vault: 'steakhouse' })` |
+| "Check my private wallet" | `b402.status()` |
+| "Rebalance to best yield" | `b402.rebalance()` |
+| "Send 10 USDC to 0x..." | `b402.transact([{ to, value, data }])` |
+| "What vaults are available?" | `B402.vaults` |
+| "What tokens are supported?" | `B402.tokens` |
+
+---
+
+## Available Vaults
+
+| Vault | Full Name | APY | Address |
+|-------|-----------|-----|---------|
+| `steakhouse` | Steakhouse USDC | 4-6% | `0xbeeF010f9cb27031ad51e3333f9aF9C6B1228183` |
+| `moonwell` | Moonwell Flagship USDC | 3-5% | `0xc1256Ae5FF1cf2719D4937adb3bbCCab2E00A2Ca` |
+| `gauntlet` | Gauntlet USDC Prime | 4-6% | `0xeE8F4eC5672F09119b96Ab6fB59C27E1b7e44b61` |
+| `steakhouse-hy` | Steakhouse High Yield USDC | 6-8% | `0xCBeeF01994E24a60f7DCB8De98e75AD8BD4Ad60d` |
+
+## Supported Tokens
+
+| Token | Address | Decimals |
+|-------|---------|----------|
+| USDC | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` | 6 |
+| WETH | `0x4200000000000000000000000000000000000006` | 18 |
+| DAI | `0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb` | 18 |
+
+## Fees
+
+| Fee | Amount |
+|-----|--------|
+| Gas | $0.00 (facilitator-sponsored) |
+| Swap | DEX fee (varies) |
+| Lend / Redeem | $0.00 |
+| Unshield | $0.00 (b402 Railgun fork — 0% protocol fee) |
+
+## Error Reference
+
+| Error | Cause | Fix |
+|-------|-------|-----|
+| `privateKey is required` | Missing private key | Pass `privateKey` in constructor |
+| `zeroXApiKey required for swaps` | No 0x key | Pass `zeroXApiKey` in constructor |
+| `Unknown token: X` | Invalid token symbol | Use `USDC`, `WETH`, or `DAI` |
+| `Unknown vault: X` | Invalid vault name | Use `steakhouse`, `moonwell`, `gauntlet`, `steakhouse-hy` |
+| `No shares in X` | No position in vault | Deposit first with `b402.lend()` |
+| `No shielded balance for X` | No UTXOs | Shield tokens first with `b402.shield()` |
+| `Insufficient shielded balance` | UTXO too small | Shield more tokens |
+| `Facilitator verify failed` | UserOp rejected | Check wallet has tokens, retry |
+
+## Network
+
+Base Mainnet (chain ID 8453). All operations use real tokens.
+
+| Contract | Address |
+|----------|---------|
+| Railgun Relay | `0x26111e2379E5fC0A7Cd8728fe52c7b84CA4fbE85` |
+| EntryPoint v0.7 | `0x0000000071727De22E5E9d8BAf0edAc6f37da032` |
+| Nexus Factory | `0x0000006648ED9B2B842552BE63Af870bC74af837` |
+| Paymaster | `0x9C2D794Cc5ac6C33CDFCb9Ea225766c5CB681650` |

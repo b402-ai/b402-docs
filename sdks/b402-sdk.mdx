@@ -1,19 +1,23 @@
 ---
-title: '@b402/sdk'
-description: 'Private DeFi execution for AI agents. Shield, unshield, swap, lend, yield — gasless and untraceable on Base.'
+title: '@b402ai/sdk'
+description: 'Private DeFi execution for AI agents — shield, unshield, swap, lend, yield — gasless and untraceable on Base.'
 icon: 'code'
 ---
 
 ## Install
 
 ```bash
-npm install @b402/sdk
+npm install @b402ai/sdk
 ```
+
+<Info>
+  Requires Node.js 18+. The SDK uses snarkjs for client-side ZK proof generation.
+</Info>
 
 ## Quick Start
 
 ```typescript
-import { B402 } from '@b402/sdk'
+import { B402 } from '@b402ai/sdk'
 
 const b402 = new B402({
   privateKey: process.env.PRIVATE_KEY,
@@ -23,7 +27,7 @@ const b402 = new B402({
 One key. The b402 facilitator handles gas, wallet deployment, and UserOp submission.
 
 <Note>
-  Your `privateKey` derives a deterministic **incognito wallet** — cryptographically unlinkable to any other address. The facilitator sponsors gas via paymaster. You pay $0.
+  Your `privateKey` derives a deterministic **incognito wallet** — cryptographically unlinkable to any other address. The facilitator sponsors gas via paymaster. You pay $0 for gas.
 </Note>
 
 ---
@@ -41,7 +45,7 @@ EOA → [shield] → Privacy Pool → [unshield] → Smart Wallet → [DeFi]
 
 ### Step 1: Shield — Enter the Privacy Pool
 
-Move tokens from your EOA into the privacy pool. After this, nobody can trace where the tokens came from.
+Move tokens from your EOA into the Railgun privacy pool. After this, nobody can trace where the tokens came from.
 
 ```typescript
 const shield = await b402.shield({ token: 'USDC', amount: '100' })
@@ -51,11 +55,12 @@ console.log(shield.txHash) // 0x...
 
 ### Step 2: Unshield — Exit to Smart Wallet
 
-Pull tokens from the privacy pool to your anonymous smart wallet. A ZK proof is generated client-side — proving you own the tokens without revealing the deposit.
+Pull tokens from the privacy pool to your anonymous smart wallet. A ZK proof is generated client-side (Groth16) — proving you own the tokens without revealing the deposit.
 
 ```typescript
 const unshield = await b402.unshield({ token: 'USDC', amount: '50' })
-console.log(unshield.txHash)  // 0x...
+console.log(unshield.txHash)           // 0x...
+console.log(unshield.proofTimeSeconds) // 0.7
 // USDC is now on your smart wallet, funding source hidden
 ```
 
@@ -92,7 +97,7 @@ console.log(result.txHash)
 
 ### `shield(params)` — Enter Privacy Pool
 
-Deposit tokens from your EOA into the privacy pool. This is the onboarding step — it breaks the on-chain link between your real wallet and smart wallet.
+Deposit tokens from your EOA into the Railgun privacy pool. This is the onboarding step — it breaks the on-chain link between your real wallet and smart wallet.
 
 ```typescript
 const result = await b402.shield({ token: 'USDC', amount: '100' })
@@ -100,13 +105,13 @@ const result = await b402.shield({ token: 'USDC', amount: '100' })
 
 | Param | Type | Required | Description |
 |-------|------|----------|-------------|
-| `token` | `string` | Yes | Token symbol (`USDC` on Base) |
-| `amount` | `string` | Yes | Amount to shield |
+| `token` | `string` | Yes | Token symbol (`USDC`, `WETH`, or `DAI` on Base) |
+| `amount` | `string` | Yes | Human-readable amount to shield |
 
 **Returns:** `{ txHash: string, indexed: boolean }`
 
 <Info>
-  Shield sends a transaction from your master EOA — requires the EOA to hold tokens + ETH for gas. Indexing takes 1-3 minutes. The SDK polls automatically and returns once indexed.
+  Shield sends a transaction from your master EOA — requires the EOA to hold tokens + ETH for gas. The SDK waits for the backend to index the shielded UTXO (polls every 5s, up to 3 minutes) before returning.
 </Info>
 
 ---
@@ -115,19 +120,21 @@ const result = await b402.shield({ token: 'USDC', amount: '100' })
 
 Withdraw tokens from the privacy pool to your anonymous smart wallet. Generates a ZK proof client-side (Groth16) proving ownership without revealing the deposit.
 
+The SDK automatically handles partial unshields — if the UTXO value exceeds the requested amount, it creates a change note back to your Railgun address.
+
 ```typescript
 const result = await b402.unshield({ token: 'USDC', amount: '50' })
 ```
 
 | Param | Type | Required | Description |
 |-------|------|----------|-------------|
-| `token` | `string` | Yes | Token to unshield |
-| `amount` | `string` | Yes | Amount to unshield |
+| `token` | `string` | Yes | Token to unshield (`USDC`, `WETH`, `DAI`) |
+| `amount` | `string` | Yes | Human-readable amount to unshield |
 
 **Returns:** `{ txHash: string, proofTimeSeconds: number }`
 
 <Info>
-  ZK proof generation takes 5-15 seconds depending on hardware. The proof is generated entirely client-side — your private key never leaves your machine.
+  ZK proof generation happens entirely client-side — your private key never leaves your machine. Proof time depends on hardware.
 </Info>
 
 ---
@@ -153,7 +160,7 @@ console.log(result.txHash)
 
 | Param | Type | Required | Description |
 |-------|------|----------|-------------|
-| `calls` | `Call[]` | Yes | Array of `{ to, value, data }` |
+| `calls` | `Call[]` | Yes | Array of `{ to: string, value: string, data: string }` |
 
 **Returns:** `{ txHash: string }`
 
@@ -163,7 +170,7 @@ This is the low-level primitive. `swap()`, `lend()`, and `redeem()` are built on
 
 ### `swap(params)` — Private Token Swap
 
-Swap tokens via 0x aggregator. Requires `zeroXApiKey`.
+Swap tokens via 0x aggregator. Requires `zeroXApiKey` in the constructor.
 
 ```typescript
 const b402 = new B402({
@@ -181,12 +188,14 @@ const result = await b402.swap({
 
 | Param | Type | Required | Description |
 |-------|------|----------|-------------|
-| `from` | `string` | Yes | Sell token symbol |
-| `to` | `string` | Yes | Buy token symbol |
-| `amount` | `string` | Yes | Human-readable amount |
+| `from` | `string` | Yes | Sell token symbol or address |
+| `to` | `string` | Yes | Buy token symbol or address |
+| `amount` | `string` | Yes | Human-readable sell amount |
 | `slippageBps` | `number` | No | Slippage in bps (default: 100 = 1%) |
 
-**Returns:** `{ txHash, amountIn, amountOut, tokenIn, tokenOut }`
+**Returns:** `{ txHash: string, amountIn: string, amountOut: string, tokenIn: string, tokenOut: string }`
+
+The SDK builds an `approve` + `swap` call pair and executes both atomically via the facilitator.
 
 ---
 
@@ -200,20 +209,20 @@ await b402.lend({ token: 'USDC', amount: '100', vault: 'steakhouse' })
 
 | Param | Type | Required | Description |
 |-------|------|----------|-------------|
-| `token` | `string` | Yes | Token to deposit |
+| `token` | `string` | Yes | Token to deposit (currently USDC) |
 | `amount` | `string` | Yes | Human-readable amount |
 | `vault` | `string` | No | Vault name (default: `steakhouse`) |
 
-**Returns:** `{ txHash, amount, vault }`
+**Returns:** `{ txHash: string, amount: string, vault: string }`
 
 #### Available Vaults
 
-| Vault | Name | APY |
-|-------|------|-----|
-| `steakhouse` | Steakhouse USDC | 4-6% |
-| `moonwell` | Moonwell Flagship USDC | 3-5% |
-| `gauntlet` | Gauntlet USDC Prime | 4-6% |
-| `steakhouse-hy` | Steakhouse High Yield USDC | 6-8% |
+| Vault | Full Name | Curator | APY | Address |
+|-------|-----------|---------|-----|---------|
+| `steakhouse` | Steakhouse USDC | Steakhouse Financial | 4-6% | `0xbeeF010f9cb27031ad51e3333f9aF9C6B1228183` |
+| `moonwell` | Moonwell Flagship USDC | Moonwell | 3-5% | `0xc1256Ae5FF1cf2719D4937adb3bbCCab2E00A2Ca` |
+| `gauntlet` | Gauntlet USDC Prime | Gauntlet | 4-6% | `0xeE8F4eC5672F09119b96Ab6fB59C27E1b7e44b61` |
+| `steakhouse-hy` | Steakhouse High Yield USDC | Steakhouse Financial | 6-8% | `0xCBeeF01994E24a60f7DCB8De98e75AD8BD4Ad60d` |
 
 ---
 
@@ -229,19 +238,19 @@ console.log(result.assetsReceived) // '100.23' USDC
 | `vault` | `string` | No | Vault name (default: `steakhouse`) |
 | `shares` | `string` | No | Shares to redeem (default: all) |
 
-**Returns:** `{ txHash, assetsReceived, vault }`
+**Returns:** `{ txHash: string, assetsReceived: string, vault: string }`
 
 ---
 
 ### `rebalance(minApyDiff?)` — Auto-Rebalance
 
-Move capital to the highest-yield vault.
+Move capital to the highest-yield vault. Compares your current vault position APY against all available vaults, and rebalances if the difference exceeds the threshold.
 
 ```typescript
-const result = await b402.rebalance(0.5) // min 0.5% APY diff
+const result = await b402.rebalance(0.5) // min 0.5% APY diff to trigger
 ```
 
-**Returns:** `{ action: 'rebalanced' | 'no-change', currentVault, bestVault, txHash }`
+**Returns:** `{ action: 'rebalanced' | 'no-change', currentVault?: string, bestVault?: string, txHash?: string }`
 
 ---
 
@@ -257,12 +266,23 @@ const status = await b402.status()
 {
   ownerEOA: '0x0001Dc...',       // Incognito EOA (derived, unlinkable)
   smartWallet: '0x6CdF29...',    // Smart wallet address
-  deployed: true,
+  deployed: true,                 // Whether smart wallet is deployed on-chain
   chain: 'base',
-  balances: [{ token: 'USDC', balance: '50.0' }],
-  positions: [{ vault: 'steakhouse', assets: '100.5 USDC', apyEstimate: '4-6%' }],
+  balances: [
+    { token: 'USDC', balance: '50.0' }
+  ],
+  positions: [
+    {
+      vault: 'steakhouse',
+      shares: '49.5',             // Vault shares held
+      assets: '100.5 USDC',      // Underlying asset value
+      apyEstimate: '4-6%'
+    }
+  ],
 }
 ```
+
+Reads balances for all supported tokens (USDC, WETH, DAI) and positions across all Morpho vaults in parallel.
 
 ---
 
@@ -287,9 +307,11 @@ incognitoEOA
 ### Execution Flow (Facilitator)
 
 ```
-SDK builds calls[] → POST /verify → facilitator builds UserOp + paymaster sig
+SDK builds calls[] → POST /api/v1/wallet/incognito/verify
+  → facilitator builds UserOp + paymaster sig
   → SDK signs userOpHash with incognito wallet
-  → POST /settle → facilitator submits to bundler → relayer pays gas
+  → POST /api/v1/wallet/incognito/settle
+  → facilitator submits to bundler → relayer pays gas
 ```
 
 ### ZK Proof Flow (Shield / Unshield)
@@ -339,6 +361,36 @@ const b402 = new B402({
 })
 ```
 
+Progress events:
+
+| Type | Fields | When |
+|------|--------|------|
+| `step` | `step`, `totalSteps`, `title`, `message` | Each execution step (build UserOp, sign, submit) |
+| `done` | `title`, `message` | Transaction confirmed |
+| `info` | `title`, `message` | Informational updates (proof time, wallet deployment) |
+
+## Exported Types
+
+```typescript
+import type {
+  B402Config,
+  Call,
+  SwapParams,
+  SwapResult,
+  LendParams,
+  LendResult,
+  RedeemParams,
+  RedeemResult,
+  ShieldParams,
+  ShieldResult,
+  UnshieldParams,
+  UnshieldResult,
+  RebalanceResult,
+  StatusResult,
+  ProgressEvent,
+} from '@b402ai/sdk'
+```
+
 ## Static Helpers
 
 ```typescript
@@ -349,11 +401,21 @@ B402.tokens  // [{ symbol, address, decimals }]
 ## Constants
 
 ```typescript
-import { BASE_TOKENS, BASE_CONTRACTS } from '@b402/sdk'
+import { BASE_TOKENS, BASE_CONTRACTS, MORPHO_VAULTS } from '@b402ai/sdk'
 
 BASE_TOKENS.USDC.address       // '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
+BASE_TOKENS.USDC.decimals      // 6
 BASE_CONTRACTS.RAILGUN_RELAY   // '0x26111e2379E5fC0A7Cd8728fe52c7b84CA4fbE85'
+BASE_CONTRACTS.ENTRY_POINT     // '0x0000000071727De22E5E9d8BAf0edAc6f37da032'
 ```
+
+### Supported Tokens
+
+| Token | Address | Decimals |
+|-------|---------|----------|
+| USDC | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` | 6 |
+| WETH | `0x4200000000000000000000000000000000000006` | 18 |
+| DAI | `0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb` | 18 |
 
 ## Network
 
@@ -364,7 +426,9 @@ Base Mainnet (chain ID 8453). All operations use real tokens.
 | Railgun Relay | `0x26111e2379E5fC0A7Cd8728fe52c7b84CA4fbE85` |
 | EntryPoint v0.7 | `0x0000000071727De22E5E9d8BAf0edAc6f37da032` |
 | Nexus Factory | `0x0000006648ED9B2B842552BE63Af870bC74af837` |
-| Facilitator | `https://facilitatorv3.b402.ai` |
+| Nexus Bootstrap | `0x0000003eDf18913c01cBc482C978bBD3D6E8ffA3` |
+| K1 Validator | `0x0000000031ef4155C978d48a8A7d4EDba03b04fE` |
+| Paymaster | `0x9C2D794Cc5ac6C33CDFCb9Ea225766c5CB681650` |
 
 ## Fees
 
@@ -375,8 +439,8 @@ Gas for all DeFi operations is sponsored by the facilitator. The standard b402 p
 | Gas (DeFi ops) | $0.00 (facilitator-sponsored) |
 | Shield | ETH gas on EOA (one-time onboarding) |
 | Swap | DEX fee (varies by pair) |
-| Lend / Redeem | 0% |
-| Privacy pool unshield | $0.00 (included in protocol fee) |
+| Lend / Redeem | $0.00 |
+| Unshield | $0.00 (b402 Railgun fork — 0% protocol fee) |
 
 ## Error Handling
 
@@ -390,9 +454,61 @@ try {
 
 | Error | Fix |
 |-------|-----|
+| `privateKey is required` | Pass `privateKey` in constructor |
 | `zeroXApiKey required for swaps` | Pass `zeroXApiKey` in constructor |
-| `Unknown token: X` | Shield: `USDC`. Swaps: any token supported by the DEX (e.g. `USDC`, `WETH`, `DAI`) |
+| `Unknown token: X` | Use supported tokens: `USDC`, `WETH`, `DAI` — or pass a valid `0x` address |
 | `Unknown vault: X` | Use: `steakhouse`, `moonwell`, `gauntlet`, `steakhouse-hy` |
 | `No shares in X` | No position — deposit first with `lend()` |
-| `Insufficient balance` | Shield more tokens or check EOA balance |
+| `calls array is required and must not be empty` | Pass at least one call to `transact()` |
+| `No shielded balance for X. Shield tokens first` | No UTXOs found — run `shield()` first |
+| `Insufficient shielded balance` | Shield more tokens |
 | `Facilitator verify failed` | Check facilitator health, try again |
+| `UserOp rejected` | Invalid calls or insufficient wallet balance |
+
+## For Agents
+
+Every method takes plain strings and returns plain objects. No ABI encoding, no gas estimation, no nonce management.
+
+```typescript
+// 3 lines — fund privacy pool and earn yield
+const b402 = new B402({ privateKey: agentKey })
+await b402.shield({ token: 'USDC', amount: '1000' })
+await b402.lend({ token: 'USDC', amount: '1000', vault: 'steakhouse' })
+```
+
+### Natural Language Mapping
+
+| User says | SDK call |
+|-----------|---------|
+| "Shield 100 USDC into privacy pool" | `b402.shield({ token: 'USDC', amount: '100' })` |
+| "Unshield 50 USDC to my wallet" | `b402.unshield({ token: 'USDC', amount: '50' })` |
+| "Swap 10 USDC to WETH privately" | `b402.swap({ from: 'USDC', to: 'WETH', amount: '10' })` |
+| "Lend 100 USDC in steakhouse" | `b402.lend({ token: 'USDC', amount: '100', vault: 'steakhouse' })` |
+| "Withdraw from steakhouse vault" | `b402.redeem({ vault: 'steakhouse' })` |
+| "Check my private wallet" | `b402.status()` |
+| "Rebalance to best yield" | `b402.rebalance()` |
+| "Send 10 USDC to 0x..." | `b402.transact([{ to, value, data }])` |
+| "What vaults are available?" | `B402.vaults` |
+| "What tokens are supported?" | `B402.tokens` |
+
+### Tool-Calling Schema
+
+For agents with tool use, each SDK method maps directly to a tool:
+
+```json
+{
+  "name": "b402_shield",
+  "description": "Move tokens into Railgun privacy pool",
+  "parameters": {
+    "token": { "type": "string", "enum": ["USDC", "WETH", "DAI"] },
+    "amount": { "type": "string" }
+  }
+}
+```
+
+### Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `PRIVATE_KEY` | Yes | Operator private key (derives incognito wallet) |
+| `ZERO_X_API_KEY` | For swaps | 0x API key for swap quotes |

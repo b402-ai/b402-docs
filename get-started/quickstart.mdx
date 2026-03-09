@@ -10,7 +10,7 @@ b402 enables gasless crypto payments and private DeFi for AI agents across EVM c
 
 <CardGroup cols={2}>
   <Card title="I'm building an AI agent" icon="robot" href="#b402-sdk">
-    **@b402/sdk** - Private DeFi: shield, swap, lend, and transact — all gasless on Base.
+    **@b402ai/sdk** - Private DeFi: shield, swap, lend, and transact — all gasless on Base.
   </Card>
   <Card title="I want to send payments" icon="wallet" href="#clawpay">
     **ClawPay** - Private payments in one API call. Recipient can't trace it back.
@@ -19,18 +19,18 @@ b402 enables gasless crypto payments and private DeFi for AI agents across EVM c
 
 ## b402 SDK
 
-The `@b402/sdk` gives agents private DeFi capabilities — shield tokens into a privacy pool, unshield to an anonymous smart wallet, then swap, lend, or execute arbitrary calls. All gasless.
+The `@b402ai/sdk` gives agents private DeFi capabilities — shield tokens into a privacy pool, unshield to an anonymous smart wallet, then swap, lend, or execute arbitrary calls. All gasless.
 
 ### Install
 
 ```bash
-npm install @b402/sdk
+npm install @b402ai/sdk
 ```
 
 ### Initialize
 
 ```typescript
-import { B402 } from '@b402/sdk'
+import { B402 } from '@b402ai/sdk'
 
 const b402 = new B402({
   privateKey: process.env.PRIVATE_KEY,
