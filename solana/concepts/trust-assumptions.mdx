@@ -68,8 +68,14 @@ We do not roll our own Groth16 verifier. The `b402_verifier_transact`
 and `b402_verifier_adapt` programs wrap
 [`Lightprotocol/groth16-solana`](https://github.com/Lightprotocol/groth16-solana),
 an audited and widely-deployed verifier crate. The verifier programs
-are immutable at deploy: no upgrade authority. Mainnet reuses the same
-crate after pinning a specific audited release.
+are deployed under the mainnet upgrade authority
+`4ym542u1DuC2i9hVxnr2EAdss8fHp4Rf4RFnyfqfy82t` today — they are
+upgrade-able under the standard Solana BPF authority, and authority
+revocation is on the hardening roadmap. Until then, treat the
+verifier (and pool) as multisig-controlled; verify on chain with
+`solana program show <PROGRAM_ID> -u mainnet-beta`. Mainnet reuses
+the `Lightprotocol/groth16-solana` crate after pinning a specific
+audited release.
 
 ## Solana runtime assumptions
 
