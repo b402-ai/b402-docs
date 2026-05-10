@@ -4,48 +4,54 @@ description: "Confidential DeFi and gasless agent payments on Solana, Base, and 
 icon: shield
 ---
 
-b402 is open-source infrastructure for **agent payments** and **confidential DeFi**.
+Open-source infrastructure for **agent payments** and **confidential DeFi**.
 Live on Solana, Base, and BNB mainnet. Apache 2.0.
 
-## Install for your agent runtime
+## Install for your agent
 
 ```bash
 npx -y @b402ai/solana-mcp --install
 ```
 
-One command writes the b402 entry into Claude Code, Cursor, or Claude Desktop.
-Eleven tools register: `shield`, `unshield`, `private_swap`, `private_lend`,
-`private_redeem`, `quote_swap`, `status`, `balance`, `holdings`, `watch_incoming`,
-`wallet_balance`. Mainnet defaults — no RPC config required.
+One command writes b402 into Claude Code, Cursor, or Claude Desktop. Eleven
+tools — `shield`, `unshield`, `private_swap`, `private_lend`, `private_redeem`,
+`quote_swap`, `status`, `balance`, `holdings`, `watch_incoming`, `wallet_balance`.
+Mainnet defaults. No RPC config required.
 
 [MCP overview →](/solana/mcp/overview)
 
-## Or install from your code
+## Or use it from code
 
-<CardGroup cols={3}>
-  <Card title="Solana" icon="bolt" href="/solana/introduction">
-    Composable confidential DeFi. Shielded pool with per-protocol adapters:
-    Jupiter swap, Kamino lend, percolator perps. Atomic in one tx — the
-    downstream protocol records a PDA, not your wallet.
+<CodeGroup>
 
-    ```bash
-    npm install @b402ai/solana
-    ```
-  </Card>
-  <Card title="EVM" icon="ethereum" href="/evm/introduction">
-    HTTP-402 / x402-style agent payments. Gasless. Multi-token. Smart wallets
-    on ERC-7579. Privacy pool on Base. Live on Base and BNB Chain.
+```ts Solana
+import { B402Solana } from '@b402ai/solana';
+import { PublicKey, Keypair } from '@solana/web3.js';
 
-    ```bash
-    npm install @b402ai/sdk
-    ```
-  </Card>
-  <Card title="Build an adapter" icon="hammer" href="/solana/adapters/building-an-adapter">
-    Plug any Solana protocol into b402's shielded pool. Open adapter ABI,
-    `cpi-only` security gate, per-user PDA pattern. Percolator and Kamino
-    are reference implementations.
-  </Card>
-</CardGroup>
+const USDC = new PublicKey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
+const SOL  = new PublicKey('So11111111111111111111111111111111111111112');
+
+const b402 = new B402Solana({ cluster: 'mainnet', keypair });
+await b402.ready();
+await b402.shield({ mint: USDC, amount: 1_000_000n });
+await b402.swap({ inMint: USDC, outMint: SOL, amount: 1_000_000n });
+```
+
+```ts EVM
+import { B402 } from '@b402ai/sdk';
+
+const b402 = new B402({ privateKey: process.env.PRIVATE_KEY });
+
+// Gasless. Facilitator settles on chain.
+await b402.shield({ token: 'USDC', amount: '100' });
+await b402.swap({ from: 'USDC', to: 'WETH', amount: '10' });
+```
+
+</CodeGroup>
+
+`npm install @b402ai/solana` · `npm install @b402ai/sdk`
+
+[Solana quickstart →](/solana/quickstart) · [EVM quickstart →](/evm/quickstart)
 
 ## What's live
 
@@ -59,44 +65,25 @@ Eleven tools register: `shield`, `unshield`, `private_swap`, `private_lend`,
 | EVM Facilitator V3 (HTTP-402 / x402) | Base + BNB mainnet |
 | EVM smart wallets (ERC-7579 Nexus) | Base + BNB mainnet |
 | EVM privacy pool (Railgun fork) | Base mainnet |
-| Solana Drift adapter, Adrena, Orca | scaffolded — not shipped |
 
-Same b402 program IDs on Solana devnet and mainnet — verifiable from any RPC.
-EVM contract addresses are on each chain tab's reference page.
-
-## Three things b402 does that other stacks don't
-
-1. **Per-protocol PDAs derived from a private spending key** on Solana — the
-   downstream protocol (Kamino, percolator, future Drift) sees a PDA owner
-   per shielded user, not a wallet. Cross-protocol correlation by the same
-   user is impossible from the PDA alone.
-2. **HTTP-402-native payments** for agents on EVM — the Facilitator settles
-   on chain on behalf of a signed EIP-712 authorization, so the agent never
-   touches native gas.
-3. **MCP-first agent integration** — eleven tools register in one command,
-   defaults work for mainnet. Confidential DeFi without a custom integration.
-
-## Trust posture
-
-Pool, verifiers, adapters, and SDKs are open source under Apache 2.0. The
-Solana shielded pool ships with a single-contributor Phase-2 trusted setup
-today; a multi-party ceremony and external audit are the next hardening
-steps. Risk framing in [Trust assumptions](/solana/concepts/trust-assumptions)
-on Solana and [Privacy concepts](/evm/concepts/privacy-incognito) on EVM.
+Same b402 program IDs on Solana devnet and mainnet. EVM contract addresses
+in each chain's reference.
 
 ## Where to go next
 
 <CardGroup cols={2}>
-  <Card title="Solana quickstart" icon="rocket" href="/solana/quickstart">
-    Install the SDK or the MCP server and move USDC privately on mainnet.
+  <Card title="Solana" icon="bolt" href="/solana/introduction">
+    Composable confidential DeFi. Shield USDC, then swap, lend, or perp through
+    registered adapters — atomic, in one transaction.
   </Card>
-  <Card title="EVM quickstart" icon="rocket" href="/evm/quickstart">
-    Pay HTTP-402 endpoints from an agent in five minutes.
-  </Card>
-  <Card title="Adapters" icon="plug" href="/solana/adapters/overview">
-    Working adapters today + the spec for adding yours.
-  </Card>
-  <Card title="Facilitator API" icon="server" href="/developers/facilitator/overview">
-    HTTP API reference for verify / settle / smart-wallet ops.
+  <Card title="EVM" icon="ethereum" href="/evm/introduction">
+    HTTP-402 / x402 agent payments. Gasless. Multi-token. Smart wallets on
+    Base and BNB.
   </Card>
 </CardGroup>
+
+## Build with us
+
+- [Build an adapter](/solana/adapters/building-an-adapter) — plug any Solana protocol into b402's shielded pool. Open ABI, `cpi-only` security gate, per-user PDA pattern.
+- [Facilitator API](/developers/facilitator/overview) — HTTP API for verify, settle, smart-wallet ops, incognito payments.
+- [Trust assumptions](/solana/concepts/trust-assumptions) — what we ship today, what's pending, why it matters.
