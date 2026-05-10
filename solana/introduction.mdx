@@ -1,0 +1,91 @@
+---
+title: Composable Confidential DeFi on Solana
+description: "Shield USDC, then swap, lend, or open perps privately on Solana mainnet — without your wallet on the transaction. SDK + MCP server, both live."
+---
+
+`b402-solana` is a confidential DeFi layer for Solana. Shield USDC
+into a ZK pool, then swap, lend, or open a perp through any
+registered adapter — atomically, in one transaction — without your
+wallet appearing on the post-shield tx. Each downstream protocol
+records you as a PDA derived from a private spending key, not as a
+wallet. That last sentence is the design choice that lets this work
+on SVM. The trust posture is in
+[Trust assumptions](/solana/concepts/trust-assumptions); the cryptography is
+standard Groth16-over-BN254 with a single-contributor Phase-2 today.
+
+## What it looks like on chain
+
+A `privateSwap` (Jupiter route + Kamino lend, **one transaction**) on
+mainnet:
+
+```
+5aVtM9Vc3eSgakTwv8vNG2snokQCWZhc8D6vfLTYigJRTkW2eZ8Ymv5gYawD81qCfAyj3KzhvHJqvGA1znpLKUhB
+```
+
+[solscan](https://solscan.io/tx/5aVtM9Vc3eSgakTwv8vNG2snokQCWZhc8D6vfLTYigJRTkW2eZ8Ymv5gYawD81qCfAyj3KzhvHJqvGA1znpLKUhB)
+· `solana confirm 5aVtM9Vc… -u mainnet-beta -v`
+
+Trace it: a relayer pubkey paid the fee, routed through Jupiter, then
+landed in Kamino. The user who triggered the swap doesn't appear in
+any account slot. **That's the property the proof binds.** Most
+privacy projects can't show this on chain because they're testnet —
+this composes Jupiter and Kamino in one shielded transaction, today,
+on Solana mainnet.
+
+## Two ways to call it
+
+<CardGroup cols={2}>
+  <Card title="From your code" icon="code" href="/solana/sdk/installation">
+    ```bash
+    npm install @b402ai/solana
+    ```
+    `b402.shield(...)`, `b402.swap(...)`, `b402.lend(...)`,
+    `b402.redeem(...)`, `b402.unshield(...)` — five high-level methods.
+    Hosted relayer + circuit auto-load are pre-wired for mainnet.
+  </Card>
+  <Card title="From an AI agent" icon="robot" href="/solana/mcp/overview">
+    ```bash
+    npx -y @b402ai/solana-mcp --install
+    ```
+    Registers the b402 MCP server with Claude Code, Cursor, or any
+    MCP client. Eleven tools, mainnet defaults. Built agent-first.
+  </Card>
+</CardGroup>
+
+## What's shipped
+
+| Surface | Where |
+|---|---|
+| Shield / unshield | mainnet |
+| Private swap (Jupiter V6) | mainnet |
+| Private lend / redeem (Kamino, per-user Obligation) | mainnet |
+| Private perp open / close (percolator) | devnet |
+
+Multi-output adapters (whirlpool LP, two-asset unwinds), async
+adapters (Jupiter Perps), and NFT-position adapters need the next ABI
+revision — designed in PRDs, not yet in code.
+
+<Note>
+  **Mainnet beta.** Pool, verifiers, and adapters are deployed under
+  Apache 2.0. Trusted setup is single-contributor today; multi-party
+  ceremony and external audit are the next hardening steps. Full risk
+  framing in [Trust assumptions](/solana/concepts/trust-assumptions).
+</Note>
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/solana/quickstart">
+    Install the SDK or the MCP server and move USDC privately.
+  </Card>
+  <Card title="Privacy model" icon="user-secret" href="/solana/concepts/privacy-model">
+    What's hidden, what isn't, with the on-chain artifacts that prove it.
+  </Card>
+  <Card title="Composability" icon="diagram-project" href="/solana/concepts/composability">
+    The adapter ABI: 24 public inputs, the wire format, and the
+    `cpi-only` security gate.
+  </Card>
+  <Card title="Build an adapter" icon="hammer" href="/solana/adapters/building-an-adapter">
+    Add your protocol behind the shielded pool.
+  </Card>
+</CardGroup>

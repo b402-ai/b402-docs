@@ -1,162 +1,216 @@
 {
-    "$schema": "https://mintlify.com/docs.json",
-    "theme": "mint",
-    "name": "b402 Docs",
-    "colors": {
-        "primary": "#F4B526",
-        "light": "#F4B526",
-        "dark": "#F4B526"
-    },
-    "favicon": "/public/fav-icon.png",
-    "logo": {
-        "light": "/public/logo/b402-full-logo.png",
-        "dark": "/public/logo/b402-full-logo.png"
-    },
-    "api": {
-        "mdx": {
-            "server": "https://facilitatorv3.b402.ai"
-        }
-    },
-    "background": {
-        "decoration": "grid",
-        "color": {
-            "light": "#ffffff",
-            "dark": "#0D0D0D"
-        }
-    },
-    "navbar": {
-        "primary": {
-            "type": "button",
-            "label": "Website",
-            "href": "https://b402.ai"
-        }
-    },
-    "footer": {
-        "socials": {
-            "twitter": "https://x.com/b402ai",
-            "discord": "https://discord.com/invite/b402",
-            "github": "https://github.com/b402-ai"
-        }
-    },
-    "navigation": {
-        "tabs": [
-            {
-                "tab": "Documentation",
-                "groups": [
-                    {
-                        "group": "Overview",
-                        "pages": [
-                            "introduction",
-                            "architecture",
-                            "community"
-                        ]
-                    },
-                    {
-                        "group": "Concepts",
-                        "pages": [
-                            "concepts/client-server",
-                            "concepts/facilitator",
-                            "concepts/relayer",
-                            "concepts/wallet",
-                            "concepts/privacy-incognito",
-                            "concepts/agent-identity",
-                            "concepts/network-token-support",
-                            "concepts/fees"
-                        ]
-                    },
-                    {
-                        "group": "Get Started",
-                        "pages": [
-                            "get-started/quickstart"
-                        ]
-                    },
-                    {
-                        "group": "Guides",
-                        "pages": [
-                            "guides/smart-wallet-deep-dive",
-                            "guides/privacy-incognito-deep-dive"
-                        ]
-                    },
-                    {
-                        "group": "b402 Services",
-                        "pages": [
-                            "b402-services/b402-facilitator",
-                            "b402-services/b402scan"
-                        ]
-                    },
-                    {
-                        "group": "Resources",
-                        "pages": [
-                            "resources/faq",
-                            "resources/glossary",
-                            "resources/contract-addresses"
-                        ]
-                    }
-                ]
-            },
-            {
-                "tab": "Facilitator API",
-                "groups": [
-                    {
-                        "group": "Overview",
-                        "pages": [
-                            "developers/facilitator/overview",
-                            "developers/facilitator/authentication",
-                            "developers/facilitator/api-reference/facilitator/health-check"
-                        ]
-                    },
-                    {
-                        "group": "EOA Payments",
-                        "pages": [
-                            "developers/facilitator/api-reference/eoa-payments/verify",
-                            "developers/facilitator/api-reference/eoa-payments/settle"
-                        ]
-                    },
-                    {
-                        "group": "Smart Wallet Payments",
-                        "pages": [
-                            "developers/facilitator/api-reference/smart-wallet/verify",
-                            "developers/facilitator/api-reference/smart-wallet/settle"
-                        ]
-                    },
-                    {
-                        "group": "Wallet Deployment",
-                        "pages": [
-                            "developers/facilitator/api-reference/wallet-deployment/deploy-verify",
-                            "developers/facilitator/api-reference/wallet-deployment/deploy-settle",
-                            "developers/facilitator/api-reference/wallet-deployment/list-wallets",
-                            "developers/facilitator/api-reference/wallet-deployment/get-master-wallet",
-                            "developers/facilitator/api-reference/wallet-deployment/claim"
-                        ]
-                    },
-                    {
-                        "group": "Incognito Operations",
-                        "pages": [
-                            "developers/facilitator/api-reference/incognito/verify",
-                            "developers/facilitator/api-reference/incognito/settle"
-                        ]
-                    },
-                    {
-                        "group": "Reference",
-                        "pages": [
-                            "developers/errors"
-                        ]
-                    }
-                ]
-            },
-            {
-                "tab": "SDKs",
-                "groups": [
-                    {
-                    "group": "SDK Reference",
-                    "pages": [
-                        "sdks/b402-sdk",
-                        "sdks/agent-skill",
-                        "sdks/eip712-signature-guide"
-                    ]
-                    }
-                ]
-            }
-        ]
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "b402 Docs",
+  "colors": {
+    "primary": "#F4B526",
+    "light": "#F4B526",
+    "dark": "#F4B526"
+  },
+  "favicon": "/public/fav-icon.png",
+  "logo": {
+    "light": "/public/logo/b402-full-logo.png",
+    "dark": "/public/logo/b402-full-logo.png"
+  },
+  "api": {
+    "mdx": {
+      "server": "https://facilitatorv3.b402.ai"
     }
+  },
+  "background": {
+    "decoration": "grid",
+    "color": {
+      "light": "#ffffff",
+      "dark": "#0D0D0D"
+    }
+  },
+  "navbar": {
+    "primary": {
+      "type": "button",
+      "label": "Website",
+      "href": "https://b402.ai"
+    }
+  },
+  "footer": {
+    "socials": {
+      "twitter": "https://x.com/b402ai",
+      "discord": "https://discord.com/invite/b402",
+      "github": "https://github.com/b402-ai"
+    }
+  },
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/introduction"
+    }
+  ],
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Solana",
+        "groups": [
+          {
+            "group": "Get started",
+            "pages": [
+              "solana/introduction",
+              "solana/quickstart"
+            ]
+          },
+          {
+            "group": "Use it from an agent",
+            "pages": [
+              "solana/mcp/overview",
+              "solana/mcp/tools",
+              "solana/mcp/claude-code-setup",
+              "solana/mcp/cursor-setup",
+              "solana/mcp/prompt-patterns"
+            ]
+          },
+          {
+            "group": "Use it from your code",
+            "pages": [
+              "solana/sdk/installation",
+              "solana/sdk/shield-unshield",
+              "solana/sdk/private-actions",
+              "solana/sdk/scanner"
+            ]
+          },
+          {
+            "group": "Adapters",
+            "pages": [
+              "solana/adapters/overview",
+              "solana/adapters/jupiter",
+              "solana/adapters/kamino",
+              "solana/adapters/percolator",
+              "solana/adapters/building-an-adapter"
+            ]
+          },
+          {
+            "group": "How it works",
+            "pages": [
+              "solana/concepts/composability",
+              "solana/concepts/privacy-model",
+              "solana/concepts/shielded-pool",
+              "solana/concepts/trust-assumptions",
+              "solana/protocol/architecture",
+              "solana/protocol/pool-program",
+              "solana/protocol/circuits",
+              "solana/protocol/verifier",
+              "solana/protocol/nullifier-tree",
+              "solana/protocol/nullifier-program"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "solana/reference/program-ids",
+              "solana/reference/instruction-reference",
+              "solana/reference/error-codes",
+              "solana/reference/metrics",
+              "solana/reference/faq"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "EVM",
+        "groups": [
+          {
+            "group": "Get started",
+            "pages": [
+              "evm/introduction",
+              "evm/architecture",
+              "evm/quickstart"
+            ]
+          },
+          {
+            "group": "Use it as an agent skill",
+            "pages": [
+              "evm/sdks/agent-skill"
+            ]
+          },
+          {
+            "group": "Use it from your code",
+            "pages": [
+              "evm/sdks/b402-sdk",
+              "evm/sdks/eip712-signature-guide"
+            ]
+          },
+          {
+            "group": "How it works",
+            "pages": [
+              "evm/concepts/wallet",
+              "evm/concepts/relayer",
+              "evm/concepts/privacy-incognito",
+              "evm/concepts/network-token-support",
+              "evm/concepts/client-server",
+              "evm/concepts/facilitator",
+              "evm/concepts/agent-identity",
+              "evm/concepts/fees",
+              "evm/guides/smart-wallet-deep-dive",
+              "evm/guides/privacy-incognito-deep-dive"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "evm/reference/contract-addresses",
+              "evm/reference/faq",
+              "evm/reference/glossary"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Facilitator API",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "developers/facilitator/overview",
+              "developers/facilitator/authentication",
+              "developers/facilitator/api-reference/facilitator/health-check"
+            ]
+          },
+          {
+            "group": "EOA payments",
+            "pages": [
+              "developers/facilitator/api-reference/eoa-payments/verify",
+              "developers/facilitator/api-reference/eoa-payments/settle"
+            ]
+          },
+          {
+            "group": "Smart wallet payments",
+            "pages": [
+              "developers/facilitator/api-reference/smart-wallet/verify",
+              "developers/facilitator/api-reference/smart-wallet/settle"
+            ]
+          },
+          {
+            "group": "Wallet deployment",
+            "pages": [
+              "developers/facilitator/api-reference/wallet-deployment/deploy-verify",
+              "developers/facilitator/api-reference/wallet-deployment/deploy-settle",
+              "developers/facilitator/api-reference/wallet-deployment/list-wallets",
+              "developers/facilitator/api-reference/wallet-deployment/get-master-wallet",
+              "developers/facilitator/api-reference/wallet-deployment/claim"
+            ]
+          },
+          {
+            "group": "Incognito operations",
+            "pages": [
+              "developers/facilitator/api-reference/incognito/verify",
+              "developers/facilitator/api-reference/incognito/settle"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "developers/errors"
+            ]
+          }
+        ]
+      }
+    ]
+  }
 }

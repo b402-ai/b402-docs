@@ -1,98 +1,60 @@
 ---
-title: Architecture Overview
-description: 'How the b402 protocol layers work together'
+title: Protocol Architecture
+description: 'The shared model behind the Solana and EVM stacks'
 icon: layer-group
 ---
 
-b402 is built in three layers. Each layer can be used independently, but they work best together.
+b402 is one protocol family with two production implementations. The Solana stack and the EVM stack diverge in how they realize the underlying primitives, but the mental model is the same: a **Protocol Layer** that holds the cryptographic guarantees, a **Service Layer** that bridges HTTP and the chain, and a **Developer Layer** that agents and apps integrate against.
 
 ## Protocol Layer
 
-The foundation is the **b402 Relayer** smart contract, deployed on each supported EVM chain. It handles:
+The on-chain primitive on each side.
 
-- **EIP-712 signature verification** for gasless payment authorization
-- **On-chain token transfers** via `transferWithAuthorization()`
-- **Replay protection** using random nonces and time windows (`validAfter` / `validBefore`)
-- **Token whitelisting** for supported assets (USDT, USDC, USD1)
+| Concept             | Solana                                                       | EVM                                                                                  |
+|---------------------|--------------------------------------------------------------|---------------------------------------------------------------------------------------|
+| Settlement primitive| **Shielded pool program** (`b402-pool`) + Groth16 verifier   | **b402 Relayer contract** (EIP-712 `transferWithAuthorization`)                       |
+| Privacy primitive   | Railgun-style UTXO notes, Poseidon hashing on BN254          | Railgun-fork privacy pool (Base) — same UTXO model adapted to Solidity                |
+| Auth                | Ed25519 + Groth16 proof of spend authority                   | EIP-712 typed-data signatures                                                         |
+| Composability       | Registered adapters (Jupiter, Kamino, Percolator, …)         | Whitelisted ERC-20s + integrated DEX swaps                                            |
+| Replay protection   | Nullifier tree                                               | Random nonces + `validAfter` / `validBefore` windows                                  |
 
-The Relayer enables meta-transactions: users sign off-chain, the facilitator pays gas and executes on-chain.
+Deep dives:
 
-**Contracts:**
-
-| Contract | Address | Network |
-|----------|---------|---------|
-| B402 RelayerV3 | `0xE91b564EB8DFF305Ff8efA332f84c487b9da5171` | BNB Chain + Base Mainnet |
-| Nexus Account Factory | `0x0000006648ED9B2B842552BE63Af870bC74af837` | BNB Chain Mainnet |
+- **Solana** → [Pool program](/solana/protocol/pool-program), [Circuits](/solana/protocol/circuits), [Verifier](/solana/protocol/verifier), [Nullifier tree](/solana/protocol/nullifier-tree).
+- **EVM** → [Architecture (full EVM)](/evm/architecture), [Relayer](/evm/concepts/relayer), [Privacy pool](/evm/concepts/privacy-incognito).
 
 ## Service Layer
 
-### Facilitator
+The off-chain services that turn the protocol into a usable API.
 
-The Facilitator is the API service that bridges HTTP requests and blockchain settlement. It provides:
+**Facilitator** (EVM today) — verifies payment payloads, settles via the Relayer, handles smart-wallet UserOps, runs privacy-pool shield/transact/unshield. Live at `https://facilitatorv3.b402.ai`. See [Facilitator API](/developers/facilitator/overview).
 
-**EOA Payments** - Verify and settle EIP-712 signed payments for standard wallets.
+**Hosted relayer** (Solana) — pays SOL for users, submits unshield / private-action transactions. See the [Solana SDK relayer page](/solana/sdk/scanner) and [Get-started flow](/solana/quickstart).
 
-**Smart Wallet Payments** - Build and submit ERC-4337 UserOperations for Nexus smart wallets. The facilitator injects fees, signs paymaster data, and submits to bundlers.
+**b402scan** — agent reputation and seller discovery, multichain. See [b402scan](/b402-services/b402scan).
 
-**Wallet Deployment** - Deterministic smart wallet creation via ERC-7579 Nexus factory. Wallets are computed off-chain and deployed on first use.
-
-**Incognito Operations** - Privacy-preserving payments through the b402 privacy pool. Shield tokens, transact privately, and unshield to recipients.
-
-**Base URL:** `https://facilitatorv3.b402.ai`
-
-### b402scan
-
-Agent reputation and seller discovery platform. Browse verified sellers, check agent payment history, and discover APIs accepting b402 payments. Currently in development.
+The Solana stack does not yet ship an HTTP-402 facilitator; that's on the roadmap.
 
 ## Developer Layer
 
-### Direct API Integration
+Where you actually hook in.
 
-The Facilitator API is the primary integration point. Any HTTP client can interact with b402:
+- **SDK, Solana** → `@b402ai/solana` — see [installation](/solana/sdk/installation), [shield/unshield](/solana/sdk/shield-unshield), [private actions](/solana/sdk/private-actions).
+- **SDK, EVM** → `@b402ai/sdk` — see [b402-sdk](/evm/sdks/b402-sdk), [agent-skill](/evm/sdks/agent-skill), [EIP-712 signature guide](/evm/sdks/eip712-signature-guide).
+- **MCP server** — both stacks ship MCP tools so Claude/Cursor/agents can call payments and private actions directly. Solana side is documented in [Use it from an agent](/solana/mcp/overview).
+- **Direct HTTP** — the Facilitator API is a plain JSON HTTP service; any client works.
 
-```typescript
-// Verify and settle a payment
-const verify = await fetch('https://facilitatorv3.b402.ai/verify', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ paymentPayload }),
-});
-const settle = await fetch('https://facilitatorv3.b402.ai/settle', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ paymentPayload }),
-});
-```
+## Privacy model in one paragraph
 
-### Agent Framework Integration
+Both stacks implement the same idea: deposit a token into a shielded pool that records you as a commitment (a hash of your spending key, value, and salt), not as an address. When you spend, you publish a nullifier (derived from the commitment) and a zero-knowledge proof that some unspent commitment in the tree is yours, without revealing which. Adapters / DEX hooks let you bind that proof to a downstream action (swap, lend) inside the same transaction, so observers see a relayer doing a Jupiter swap, not you.
 
-b402 works with popular AI agent frameworks:
+For the Solana threat model and what is *not* hidden, read [privacy model](/solana/concepts/privacy-model). For EVM, see [privacy-incognito](/evm/concepts/privacy-incognito).
 
-- **MCP Tools** — Expose b402 payment capabilities as Model Context Protocol tools for Claude, GPT, and other LLM agents
-- **LangChain / CrewAI** — Custom tools that wrap the Facilitator API for autonomous agent payments
-- **Vercel AI SDK** — Server-side payment verification in AI-powered API routes
+## Where to go next
 
-### EIP-712 Signatures
-
-For buyers, the core integration is signing EIP-712 typed data. See the [EIP-712 Signature Guide](/sdks/eip712-signature-guide) for manual construction.
-
-## Payment Flow
-
-The full payment lifecycle:
-
-<Frame>
-  <img src="/public/images/diagrams/payment-flow.svg" alt="b402 payment flow: Client, Server, Facilitator, and Blockchain interaction sequence" />
-</Frame>
-
-## Smart Wallet Flow
-
-For ERC-7579 Nexus smart wallets, the flow uses UserOperations instead of direct signatures:
-
-1. Client requests payment with wallet address
-2. Facilitator builds unsigned UserOp with fee injection
-3. Client signs the UserOp hash
-4. Facilitator submits to ERC-4337 bundler with paymaster sponsorship
-5. Bundler executes on-chain (batch call: approve + transfer)
-6. Facilitator returns transaction receipt
-
-This enables gasless, batched operations for AI agents without requiring native gas tokens.
+<CardGroup cols={2}>
+  <Card title="Solana Quickstart" icon="bolt" href="/solana/quickstart">Shield + private swap, working code.</Card>
+  <Card title="EVM Quickstart" icon="rocket" href="/evm/quickstart">First gasless payment, end to end.</Card>
+  <Card title="Facilitator API" icon="webhook" href="/developers/facilitator/overview">Full HTTP reference (EVM).</Card>
+  <Card title="b402scan" icon="magnifying-glass" href="/b402-services/b402scan">Multichain agent reputation.</Card>
+</CardGroup>

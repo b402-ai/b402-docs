@@ -1,0 +1,187 @@
+---
+title: Shield & Unshield
+description: "Move SPL tokens between public ATAs and the shielded pool via the B402Solana class."
+---
+
+`shield` deposits a public SPL amount into the pool, mints a fresh
+shielded note for the caller, and inserts it into the local note
+store. `unshield` spends one of the caller's shielded notes and
+transfers the underlying tokens to a public ATA — the recipient can
+be anyone, not just the depositor.
+
+These are the only two operations that cross the public/private
+boundary. Everything else (`swap`, `lend`, `redeem`) keeps state
+shielded.
+
+## `b402.shield`
+
+```ts
+import { B402Solana } from '@b402ai/solana';
+import { Keypair, PublicKey } from '@solana/web3.js';
+
+const b402 = new B402Solana({ cluster: 'mainnet', rpcUrl, keypair });
+await b402.ready();
+
+const USDC = new PublicKey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
+
+const result = await b402.shield({
+  mint: USDC,
+  amount: 1_000_000n, // 1 USDC, smallest units
+});
+
+console.log(result.signature);   // string
+console.log(result.commitment);  // bigint, the new note's Poseidon commitment
+console.log(result.leafIndex);   // bigint, position in the Merkle tree
+```
+
+`ShieldRequest`
+([`b402.ts:186`](https://github.com/vistara-labs/b402-solana/blob/main/packages/sdk/src/b402.ts)):
+
+```ts
+interface ShieldRequest {
+  mint: PublicKey;
+  amount: bigint;
+  /** Skip on-chain encrypted-note publication (~120 B). Default false —
+   *  the ciphertext is published so notes are recoverable from chain alone. */
+  omitEncryptedNotes?: boolean;
+}
+```
+
+`ShieldResult`
+([`actions/shield.ts:87`](https://github.com/vistara-labs/b402-solana/blob/main/packages/sdk/src/actions/shield.ts)):
+
+```ts
+interface ShieldResult {
+  signature: string;
+  commitment: bigint;
+  leafIndex: bigint;
+  note: SpendableNote; // inserted into b402.notes for you
+}
+```
+
+Shield is **user-signed**: the SPL transfer out of the depositor's
+ATA requires the depositor's signature, so this op cannot route
+through the hosted relayer in the same way as the post-shield flows.
+The user pays SOL fees for the shield transaction.
+
+After the call returns, the SDK has already inserted the new
+`SpendableNote` into the in-memory `NoteStore`, so subsequent
+`balance` / `holdings` / `unshield` calls see it without an indexer
+round-trip.
+
+## `b402.unshield`
+
+```ts
+const recipient = new PublicKey('...'); // any public Solana address
+
+const result = await b402.unshield({
+  mint: USDC,
+  to: recipient,
+});
+
+console.log(result.signature);
+console.log(result.amountTransferred); // bigint
+console.log(result.nullifier);         // bigint
+```
+
+`UnshieldRequest`
+([`b402.ts:340`](https://github.com/vistara-labs/b402-solana/blob/main/packages/sdk/src/b402.ts)):
+
+```ts
+interface UnshieldRequest {
+  /** Owner of the destination token account. Recipient can be anyone. */
+  to: PublicKey;
+  /** Override the destination ATA. Defaults to the canonical ATA of `to` for `mint`. */
+  recipientAta?: PublicKey;
+  /** Note to spend. Default: highest-leafIndex spendable note in `mint`. */
+  note?: SpendableNote;
+  /** Mint of the note. Required when passing `note` explicitly. */
+  mint?: PublicKey;
+  // ... advanced fields (photonRpc, alt, inlineCpiNullifier) — see source.
+}
+```
+
+`UnshieldResult`
+([`actions/unshield.ts:118`](https://github.com/vistara-labs/b402-solana/blob/main/packages/sdk/src/actions/unshield.ts)):
+
+```ts
+interface UnshieldResult {
+  signature: string;
+  nullifier: bigint;
+  amountTransferred: bigint;
+}
+```
+
+Unshield is **relayer-signed by default**. With a configured
+`relayerHttpUrl` (the cluster default points at the hosted relayer
+on Cloud Run), the on-chain fee payer is the relayer's wallet — the
+user's keypair is never present in the resulting transaction. To
+self-submit instead, construct the SDK with
+`relayerHttpUrl: ''` and a local `relayer` keypair.
+
+### Recipient can be anyone
+
+The `to` field decouples the depositor from the recipient. A note
+shielded from wallet A can be unshielded directly to wallet B with no
+on-chain edge connecting them — the only link is the
+`recipient_bind` public input the proof commits to, which is opaque
+to chain observers.
+
+```ts
+// Shield from this wallet, withdraw to a different one.
+await b402.shield({ mint: USDC, amount: 1_000_000n });
+await b402.unshield({ mint: USDC, to: someOtherWallet });
+```
+
+### Picking which note to spend
+
+Without `note`, the SDK picks the highest-leafIndex spendable note
+for `mint` from the local `NoteStore`
+([`b402.ts:761-783`](https://github.com/vistara-labs/b402-solana/blob/main/packages/sdk/src/b402.ts)).
+For multi-note flows where you want explicit control, pass `note`
+plus `mint`:
+
+```ts
+const { holdings } = await b402.holdings({ mint: USDC });
+// pick a specific deposit by id, then spend it
+const target = b402.notes.getAllSpendable().find((n) => /* ... */);
+await b402.unshield({ mint: USDC, to, note: target });
+```
+
+## Where notes live
+
+The `B402Solana` instance owns a `NoteStore` that holds every note
+the wallet can spend. Two write paths feed it:
+
+1. **Direct insertion.** `shield` inserts the note it just created
+   (its plaintext is known locally — no chain round-trip needed).
+2. **Backfill from chain.** The SDK subscribes to `CommitmentAppended`
+   logs and runs the viewing-tag pre-filter; matches decrypt and
+   land in the store. See [Scanner](/solana/sdk/scanner).
+
+Persistence: by default the store mirrors to
+`~/.b402ai/notes/<cluster>/<viewingPubHex>.json` so deposits survive
+process restart
+([`b402.ts:447-459`](https://github.com/vistara-labs/b402-solana/blob/main/packages/sdk/src/b402.ts)).
+Pass `notesPersistDir: ''` to disable, or override with a custom
+directory. The plaintext threat model matches the keypair file the
+wallet was derived from.
+
+For cross-device recovery, the SDK can sync from the
+[`B402Indexer`](https://github.com/vistara-labs/b402-solana/blob/main/packages/sdk/src/indexer.ts)
+— a typed client for the hosted indexer service. The wallet
+cryptographically verifies every indexer-supplied root against the
+on-chain `TreeState` PDA, so a tampered indexer can DoS but cannot
+forge a spend
+([`indexer.ts:1-22`](https://github.com/vistara-labs/b402-solana/blob/main/packages/sdk/src/indexer.ts)).
+
+## Continue reading
+
+<CardGroup cols={2}>
+  <Card title="Private Actions" icon="bolt" href="/solana/sdk/private-actions">
+    `swap`, `lend`, `redeem` against Jupiter and Kamino.
+  </Card>
+  <Card title="Scanner" icon="radar" href="/solana/sdk/scanner">
+    Watch for incoming private deposits.
+  </Card>
+</CardGroup>

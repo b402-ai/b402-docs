@@ -1,0 +1,99 @@
+---
+title: Quickstart
+description: "Install the SDK or the MCP server and move USDC privately in under a minute."
+---
+
+Two paths. Pick one.
+
+## From your code
+
+```bash
+npm install @b402ai/solana
+```
+
+```ts
+import { B402Solana } from '@b402ai/solana';
+import { Keypair, PublicKey } from '@solana/web3.js';
+import fs from 'node:fs';
+import os from 'node:os';
+
+const USDC = new PublicKey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
+const SOL  = new PublicKey('So11111111111111111111111111111111111111112');
+
+const keypair = Keypair.fromSecretKey(new Uint8Array(JSON.parse(
+  fs.readFileSync(`${os.homedir()}/.config/solana/id.json`, 'utf8'))));
+
+const b402 = new B402Solana({ cluster: 'mainnet', keypair });
+await b402.ready();
+
+await b402.shield({ mint: USDC, amount: 1_000_000n });   // shield 1 USDC
+await b402.swap({ inMint: USDC, outMint: SOL, amount: 1_000_000n });
+```
+
+Three real network calls — shield, swap, done. The hosted relayer
+pays SOL for the swap; you pay only for the shield deposit.
+
+For lend / redeem / unshield see [`b402.lend` /
+`b402.redeem`](/solana/sdk/private-actions) and
+[`b402.unshield`](/solana/sdk/shield-unshield).
+
+## From an AI agent
+
+```bash
+npx -y @b402ai/solana-mcp --install
+```
+
+That command writes the b402 MCP entry into your Claude Code, Cursor,
+or Claude Desktop config and exits. Restart the runtime, then ask:
+
+> Shield 1 USDC and swap to SOL privately.
+
+Eleven tools are exposed — `status`, `balance`, `shield`, `unshield`,
+`private_swap`, `private_lend`, `private_redeem`, `quote_swap`,
+`watch_incoming`, `holdings`, `wallet_balance`. Mainnet defaults; no
+RPC config required for first run.
+
+See [MCP overview](/solana/mcp/overview) for the full tool list and
+[Prompt patterns](/solana/mcp/prompt-patterns) for compose-able multi-step
+prompts (shield → swap → lend → redeem → unshield in one
+conversation).
+
+## Verify a real one
+
+A mainnet `privateSwap` you can fetch right now:
+
+```bash
+solana confirm 5aVtM9Vc3eSgakTwv8vNG2snokQCWZhc8D6vfLTYigJRTkW2eZ8Ymv5gYawD81qCfAyj3KzhvHJqvGA1znpLKUhB \
+  -u mainnet-beta -v
+```
+
+The signer is the b402 hosted relayer
+(`7f6gRiX56dMQGrPERNBKuzFsvagFTM1U4LMAAN9rsiNM`); the user who
+triggered the swap is not present in the account list. That's the
+on-chain shape of the property.
+
+## What you'll need
+
+- A Solana keypair at `~/.config/solana/id.json` (the SDK reads it
+  by default; override with `keypair` constructor arg).
+- For mainnet flows: a small SOL balance to pay the shield deposit.
+  Post-shield ops are relayer-paid.
+- Node 20+ for the SDK; an MCP-compatible runtime for the agent
+  path.
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="SDK actions" icon="code" href="/solana/sdk/private-actions">
+    Every method on `B402Solana`: shield, swap, lend, redeem, unshield.
+  </Card>
+  <Card title="MCP tools" icon="robot" href="/solana/mcp/tools">
+    All 11 agent tools, with input / output schemas.
+  </Card>
+  <Card title="Privacy model" icon="user-secret" href="/solana/concepts/privacy-model">
+    What's hidden, what isn't, and the on-chain artifacts that prove it.
+  </Card>
+  <Card title="Build an adapter" icon="hammer" href="/solana/adapters/building-an-adapter">
+    Add your protocol behind the shielded pool.
+  </Card>
+</CardGroup>

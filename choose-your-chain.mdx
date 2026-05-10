@@ -1,0 +1,55 @@
+---
+title: Choose Your Chain
+description: 'Which b402 stack to use for which job'
+icon: split
+---
+
+b402 ships on Solana and on two EVM chains (Base, BNB). The two stacks solve overlapping but distinct problems. Use this page to pick.
+
+## Quick decision
+
+| If your goal is…                                         | Use     | Start at                                            |
+|----------------------------------------------------------|---------|------------------------------------------------------|
+| AI agent pays HTTP APIs (x402-style)                     | EVM     | [EVM Quickstart](/evm/quickstart)                    |
+| Gasless payments with multiple tokens (USDT/USDC/USD1)   | EVM     | [EVM SDK](/evm/sdks/b402-sdk)                        |
+| Smart wallets for agents (ERC-7579 Nexus)                | EVM     | [Smart Wallet deep dive](/evm/guides/smart-wallet-deep-dive) |
+| Private payments / shielded transfers                    | Either  | EVM: [privacy pool](/evm/concepts/privacy-incognito) · Solana: [shielded pool](/solana/concepts/shielded-pool) |
+| Private DEX swap (shielded → swap → shielded, atomic)    | Solana  | [Jupiter adapter](/solana/adapters/jupiter)          |
+| Private lending (shielded supply / withdraw)             | Solana  | [Kamino adapter](/solana/adapters/kamino)            |
+| Build a new privacy-composable adapter                   | Solana  | [Building an adapter](/solana/adapters/building-an-adapter) |
+| Agent identity / reputation                              | EVM     | [Agent identity (ERC-8004)](/evm/concepts/agent-identity) |
+
+## What each stack actually ships
+
+### Solana
+
+- Shielded pool program with Groth16 verifier on mainnet (`b402-pool`).
+- Adapters live: Jupiter (swap), Kamino (lend / redeem). Scaffolded: Adrena, Orca, Percolator.
+- SDK: `@b402ai/solana` — `shield`, `unshield`, `swap`, `lend`, `redeem`, `privateSwap`, `privateLend`, `privateRedeem`.
+- MCP server for agents (Claude Code, Cursor) — see [Use it from an agent](/solana/mcp/overview).
+- Hosted relayer pays SOL for unshield / private actions.
+- **Not yet:** HTTP-402 facilitator endpoints.
+
+### EVM (Base & BNB)
+
+- b402 RelayerV3 contract on Base + BNB Mainnet — gasless EIP-712 payments for whitelisted ERC-20s.
+- Facilitator API at `https://facilitatorv3.b402.ai` — verify, settle, smart-wallet UserOps, privacy-pool ops.
+- Smart wallets (ERC-7579 Nexus) with deterministic deployment.
+- Privacy pool on Base (Railgun fork) — shield, transact, unshield.
+- Agent identity via ERC-8004.
+- SDK: `@b402ai/sdk`. MCP and agent-skill packages for AI frameworks.
+- **Not yet:** Solana parity for HTTP-402 endpoints; Arbitrum (planned).
+
+## Token coverage
+
+| Chain     | Live tokens                     |
+|-----------|----------------------------------|
+| Solana    | USDC, WSOL                       |
+| Base      | USDC                             |
+| BNB Chain | USDT, USDC, USD1                 |
+
+For exact addresses see [EVM contract addresses](/evm/reference/contract-addresses) and [Solana program IDs](/solana/reference/program-ids).
+
+## You can use both
+
+Nothing forces a single choice. An agent can settle a paid HTTP request via the EVM Facilitator and execute private DeFi on Solana using the same operator key (or different ones). The two stacks share a brand and a privacy posture, not a runtime.

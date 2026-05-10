@@ -1,0 +1,190 @@
+---
+title: Scanner
+description: "Discover incoming shielded notes via watchIncoming, the Scanner primitive, and B402Indexer."
+---
+
+The recommended consumer surface for "watch for new private
+deposits" is `b402.watchIncoming`. It's a cursor-based poll over the
+in-memory `NoteStore` that the SDK keeps populated automatically via
+log subscription + decryption. The lower-level `Scanner` class and
+`B402Indexer` client are exported for advanced flows
+(custom indexers, cross-device recovery, multi-process apps).
+
+## `b402.watchIncoming` — the agent loop
+
+```ts
+import { B402Solana } from '@b402ai/solana';
+import { Keypair } from '@solana/web3.js';
+
+const b402 = new B402Solana({ cluster: 'mainnet', rpcUrl, keypair });
+await b402.ready();
+
+let cursor: string | undefined;
+while (running) {
+  const r = await b402.watchIncoming({ cursor });
+  cursor = r.cursor;
+  for (const d of r.incoming) {
+    console.log('new deposit:', d.id, d.mint, d.amount);
+  }
+  await new Promise((res) => setTimeout(res, 2_000));
+}
+```
+
+Signature
+([`b402.ts:2068-2093`](https://github.com/vistara-labs/b402-solana/blob/main/packages/sdk/src/b402.ts)):
+
+```ts
+b402.watchIncoming(opts?: {
+  cursor?: string;
+  mint?: PublicKey;
+  refresh?: boolean;
+}): Promise<{
+  incoming: Array<{
+    id: string;        // 16-hex stable note id
+    mint: string;      // base58 if known, otherwise `unknown:<12hex>`
+    amount: string;    // bigint as decimal string
+    receivedAt: number; // unix ms
+  }>;
+  cursor: string;       // opaque base64url, pass back on next call
+}>;
+```
+
+The cursor is opaque (base64url-encoded JSON over a leaf-index
+versioned envelope — see `encodeCursor` /  `decodeCursor` at
+[`b402.ts:2192-2208`](https://github.com/vistara-labs/b402-solana/blob/main/packages/sdk/src/b402.ts)).
+Treat it as a string; do not parse it.
+
+`refresh: true` triggers an explicit chain backfill before computing
+`incoming`. Use it once at startup if the local store may be stale
+(fresh machine, multi-process). Steady-state polling does not need
+it because the SDK holds a live log subscription.
+
+## `Scanner` — the lower-level primitive
+
+`Scanner` is the long-running subscription that keeps the in-memory
+tree and `NoteStore` populated. `B402Solana.ready()` constructs one
+internally; you only construct it yourself in advanced setups
+(custom NoteStore, custom merkle tree, off-process scanning).
+
+`ScannerOptions`
+([`notes/scanner.ts:71-78`](https://github.com/vistara-labs/b402-solana/blob/main/packages/sdk/src/notes/scanner.ts)):
+
+```ts
+interface ScannerOptions {
+  connection: Connection;
+  poolProgramId: PublicKey;
+  wallet: Wallet;          // from buildWallet(seed)
+  noteStore: NoteStore;
+  tree: ClientMerkleTree;
+}
+```
+
+```ts
+import {
+  Scanner,
+  NoteStore,
+  ClientMerkleTree,
+  buildWallet,
+  buildZeroCache,
+} from '@b402ai/solana';
+
+const wallet = await buildWallet(seed);
+const tree = new ClientMerkleTree(buildZeroCache());
+const noteStore = new NoteStore({ connection, poolProgramId, wallet });
+await noteStore.start();
+
+const scanner = new Scanner({
+  connection,
+  poolProgramId,
+  wallet,
+  noteStore,
+  tree,
+});
+
+await scanner.start();
+// ... later
+await scanner.stop();
+```
+
+For each `Program data: <base64>` log line emitted by the pool, the
+scanner:
+
+1. Decodes the `CommitmentAppended` event (211-byte payload —
+   leaf index, commitment, ciphertext, ephemeral pub, viewing tag,
+   tree root, slot).
+2. Appends the new commitment to the local `ClientMerkleTree` so
+   merkle paths stay derivable.
+3. Hands the encrypted-note bundle to `noteStore.ingestCommitment`,
+   which runs the viewing-tag pre-filter and only attempts the full
+   ChaCha20-Poly1305 decrypt on a tag match.
+
+The viewing-tag is a 2-byte Poseidon hash of the ECDH shared secret.
+On a tag miss, the scanner skips the decrypt entirely; on a tag hit
+the decrypt either succeeds (note is ours) or fails the AEAD tag
+(false positive — discarded).
+
+Source:
+[`packages/sdk/src/notes/scanner.ts`](https://github.com/vistara-labs/b402-solana/blob/main/packages/sdk/src/notes/scanner.ts),
+[`packages/sdk/src/note-encryption.ts`](https://github.com/vistara-labs/b402-solana/blob/main/packages/sdk/src/note-encryption.ts).
+
+## `B402Indexer` — cross-device recovery
+
+The hosted indexer mirrors the on-chain pool state (commitments,
+tree roots, nullifier set) so a wallet on a fresh device can recover
+its notes without replaying every block. The client is at
+[`packages/sdk/src/indexer.ts`](https://github.com/vistara-labs/b402-solana/blob/main/packages/sdk/src/indexer.ts).
+
+```ts
+import { B402Indexer } from '@b402ai/solana';
+import { Connection, PublicKey } from '@solana/web3.js';
+
+const indexer = new B402Indexer({
+  url: 'https://b402-solana-indexer-api-62092339396.us-central1.run.app',
+  connection,
+  poolProgramId,
+});
+
+const state = await indexer.state();        // leaf count, current root, freshness
+const proof = await indexer.proof(42n);     // Merkle inclusion proof for leaf 42
+const spent = await indexer.spent(nullHex); // double-spend pre-check
+```
+
+Endpoints (PRD-31 §4.3,
+[`indexer.ts:17-22`](https://github.com/vistara-labs/b402-solana/blob/main/packages/sdk/src/indexer.ts)):
+
+```
+GET /v1/proof?leafIndex=N
+GET /v1/spent?nullifier=hex
+GET /v1/state
+GET /v1/commitments?since=N    (paginated)
+```
+
+**Trust model.** The indexer is a convenience oracle, not a trust
+root. The SDK verifies every indexer-claimed root against the
+on-chain `TreeState` before using its proofs, so a tampered indexer
+can DoS but cannot forge a spend
+([`indexer.ts:1-22`](https://github.com/vistara-labs/b402-solana/blob/main/packages/sdk/src/indexer.ts)).
+A `B402Solana` instance with a configured `indexerUrl` falls back to
+`proveMostRecentLeaf` (rightmost-only) automatically on indexer
+outage.
+
+## Persistence
+
+`NoteStore` mirrors to disk by default at
+`~/.b402ai/notes/<cluster>/<viewingPubHex>.json` so the cursor and
+known notes survive process restart
+([`b402.ts:447-459`](https://github.com/vistara-labs/b402-solana/blob/main/packages/sdk/src/b402.ts)).
+Plaintext on disk; threat model matches the keypair file the wallet
+was derived from. Pass `notesPersistDir: ''` to the `B402Solana`
+constructor to disable.
+
+## Continue reading
+
+<CardGroup cols={2}>
+  <Card title="Shield / Unshield" icon="vault" href="/solana/sdk/shield-unshield">
+    Move tokens in and out of the shielded pool.
+  </Card>
+  <Card title="Private actions" icon="code" href="/solana/sdk/private-actions">
+    Swap, lend, redeem — what the scanner shows up after.
+  </Card>
+</CardGroup>

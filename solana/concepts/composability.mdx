@@ -1,0 +1,290 @@
+---
+title: Composability
+description: "adapt_execute_v2, the adapter ABI, the 24-input wire format, and the two-tx commit-then-verify flow."
+---
+
+The b402-solana pool routes a shielded balance into any whitelisted
+Solana protocol program in one atomic transaction. The pool program
+mediates: the user's input note is burned, the IN-mint vault transfers
+to the adapter, the adapter CPIs the downstream protocol, and (for
+stateless adapters) the pool checks an OUT-vault delta against the
+proof-bound minimum. For stateful adapters the post-CPI delta on the
+pool's vault is zero by design — the user's claim lives as per-user
+state inside the protocol — and the pool emits a synthetic voucher note
+instead.
+
+## The adapter ABI
+
+Every adapter is a thin Anchor program implementing one entrypoint:
+
+```rust
+pub fn execute(
+    ctx: Context<Execute>,
+    in_amount: u64,
+    min_out_amount: u64,
+    action_payload: Vec<u8>,
+) -> Result<()>
+```
+
+Three properties make this composable across protocols:
+
+### 1. Per-protocol PDAs derived from the user's spending key
+
+For stateful adapters, each shielded user gets a stable per-protocol
+identity without revealing their wallet. The Kamino adapter shows the
+pattern:
+
+```rust
+// programs/b402-kamino-adapter/src/lib.rs:1899-1908
+pub fn derive_owner_pda(
+    adapter_program_id: &Pubkey,
+    viewing_pub_hash: &[u8; 32],
+    mint: &Pubkey,
+) -> (Pubkey, u8) {
+    Pubkey::find_program_address(
+        &[VERSION_PREFIX, SEED_ADAPTER_OWNER, viewing_pub_hash.as_ref(), mint.as_ref()],
+        adapter_program_id,
+    )
+}
+```
+
+The Kamino `Obligation` is owned by `owner_pda`. Drift's eventual `User`
+account, percolator's slab position, etc., follow the same PDA-as-owner
+pattern. Cross-protocol correlation by `owner_pda` alone is impossible
+because the seeds include `adapter_program_id` — same `viewing_pub_hash`
+on a different adapter resolves to a different PDA.
+
+### 2. `cpi-only` security gate
+
+Stateful adapters refuse direct invocation. The Kamino adapter's gate is
+representative:
+
+```rust
+// programs/b402-kamino-adapter/src/lib.rs:353-371
+#[cfg(feature = "cpi-only")]
+{
+    require!(
+        get_stack_height() > 1,
+        KaminoAdapterError::DirectCallRejected
+    );
+    let outer_ix = load_instruction_at_checked(current_idx, ix_sysvar)?;
+    require!(
+        outer_ix.program_id == crate::B402_POOL_PROGRAM_ID,
+        KaminoAdapterError::CallerNotB402Pool
+    );
+}
+```
+
+Reason: a user's `viewing_pub_hash` is observable in the on-chain action
+payload of a privateLend tx. Without this gate, anyone could call
+`execute(Withdraw)` with that same hash and have the adapter sign the
+Kamino withdraw on the user's behalf. The pool's privateRedeem flow
+proves spending-key ownership via the Groth16 proof before the CPI; that
+proof is what grants the right to call the adapter, and the gate enforces
+that the proof was actually checked.
+
+### 3. Stateful-adapter slippage skip
+
+The pool's `is_stateful_adapter` allowlist
+([`programs/b402-pool/src/instructions/adapt_execute.rs:1034-1040`](https://github.com/vistara-labs/b402-solana/blob/main/programs/b402-pool/src/instructions/adapt_execute.rs#L1034-L1040))
+recognizes adapters whose "output" is per-user state mutation, not a
+token transfer back into the pool's OUT vault:
+
+```rust
+fn is_stateful_adapter(program_id: &Pubkey) -> bool {
+    const KAMINO_ADAPTER: Pubkey =
+        anchor_lang::pubkey!("2enwFgcGKJDqruHpCtvmhtxe3DYcV3k72VTvoGcdt2rX");
+    program_id == &KAMINO_ADAPTER
+}
+```
+
+For these adapters the post-CPI delta check is conditionally skipped
+([`adapt_execute.rs:842-853`](https://github.com/vistara-labs/b402-solana/blob/main/programs/b402-pool/src/instructions/adapt_execute.rs#L842-L853)) —
+when `delta < expected_out_value`, the pool interprets the gap as
+"credited to the per-user obligation, not the vault" and continues. The
+proof's `commitment_out[0]` still gets appended to the tree as the user's
+voucher note. The privateRedeem path is unchanged: USDC arriving in
+`out_vault` from the adapter's owner-USDC-ATA sweep produces a real
+delta, and the standard `delta >= expected_out_value` gate runs.
+
+Stateless adapters (Jupiter, mock) take the standard path: every
+`adapt_execute` MUST land at least `expected_out_value` in `out_vault`.
+
+## The wire format: 24 public inputs
+
+The adapt verifier consumes 24 public inputs. Source:
+[`programs/b402-verifier-adapt/src/lib.rs:18-30`](https://github.com/vistara-labs/b402-solana/blob/main/programs/b402-verifier-adapt/src/lib.rs#L18-L30):
+
+```rust
+#[cfg(not(feature = "phase_9_dual_note"))]
+pub const PUBLIC_INPUT_COUNT: usize = 23;
+#[cfg(feature = "phase_9_dual_note")]
+pub const PUBLIC_INPUT_COUNT: usize = 24;
+```
+
+The vector is built in
+[`programs/b402-pool/src/instructions/adapt_execute.rs:1116-1163`](https://github.com/vistara-labs/b402-solana/blob/main/programs/b402-pool/src/instructions/adapt_execute.rs#L1116-L1163):
+
+| Idx | Field | Source | Binds |
+|---|---|---|---|
+| 0 | `merkle_root` | wire | tree state at proof time |
+| 1 | `nullifier[0]` | wire | input note 0 |
+| 2 | `nullifier[1]` | wire | input note 1 |
+| 3 | `commitment_out[0]` | wire | output note 0 |
+| 4 | `commitment_out[1]` | wire | output note 1 |
+| 5 | `public_amount_in` | wire | IN-vault transfer cap |
+| 6 | `public_amount_out` | wire | required = 0 for adapt |
+| 7 | `public_token_mint` | reconstructed | `token_config_in.mint` |
+| 8 | `relayer_fee` | wire | IN-mint fee from in_vault |
+| 9 | `relayer_fee_bind` | wire | `Poseidon(TAG_FEE_BIND, fee, recipient)` |
+| 10 | `root_bind` | wire | tree-root domain tag |
+| 11 | `recipient_bind` | wire | `Poseidon_3(TAG_RECIPIENT_BIND, owner_lo, owner_hi)` |
+| 12 | `TAG_COMMIT` | const | domain separation |
+| 13 | `TAG_NULLIFIER` | const | domain separation |
+| 14 | `TAG_MK_NODE` | const | domain separation |
+| 15 | `TAG_SPEND_KEY_PUB` | const | domain separation |
+| 16 | `TAG_FEE_BIND` | const | domain separation |
+| 17 | `TAG_RECIPIENT_BIND` | const | domain separation |
+| 18 | `adapter_id` | reconstructed | `keccak(adapter_program_id) mod p` |
+| 19 | `action_hash` | reconstructed | `Poseidon_3(TAG_ADAPT_BIND, keccak(action_payload) mod p, expected_out_mint Fr)` |
+| 20 | `expected_out_value` | wire | floor on OUT delta (or voucher value) |
+| 21 | `expected_out_mint` | reconstructed | `token_config_out.mint` |
+| 22 | `TAG_ADAPT_BIND` | const | domain separation |
+| 23 | `out_spending_pub` | wire | `outSpendingPub[0]` — dual-note key |
+
+### What the wire-level `AdaptPublicInputs` actually carries
+
+The shape passed in transaction args is trimmed. From
+[`adapt_execute.rs:59-95`](https://github.com/vistara-labs/b402-solana/blob/main/programs/b402-pool/src/instructions/adapt_execute.rs#L59-L95):
+
+- `public_token_mint` and `expected_out_mint` were dropped from the
+  wire. The pool injects them from `token_config_in.mint` /
+  `token_config_out.mint` (PDA-validated, so trusted).
+- `adapter_id` was dropped. The pool reconstructs it as
+  `keccak(adapter_program.key) mod p`.
+- `action_hash` was dropped. The pool reconstructs it as
+  `Poseidon_3(TAG_ADAPT_BIND, keccak(action_payload) mod p,
+  expected_out_mint Fr)`.
+- `out_spending_pub` (32 B) was added — the 24th input — so the pool
+  can recompute the excess-output commitment in Rust at
+  [`adapt_execute.rs:931-956`](https://github.com/vistara-labs/b402-solana/blob/main/programs/b402-pool/src/instructions/adapt_execute.rs#L931-L956).
+
+Net: the wire shape shrinks by 64 B (4 dropped Pubkeys × 32 minus 32 +
+32) which lets v0+ALT swap/lend/redeem/perpOpen txs fit under the 1232 B
+cap. The circuit + VK are unchanged — the wire is trimmed; the proof
+binding isn't.
+
+## Two-tx commit-then-verify flow
+
+Even with the wire trim, per-user adapters (Kamino, Drift, percolator)
+brushed up against the 1232 B v0-tx ceiling once you add the Light V2
+nullifier accounts and the protocol's own remaining_accounts list. The
+commit-then-verify flow splits the public-input vector into a separate transaction:
+
+```
+tx 1: pool::commit_inputs(spending_pub_le, public_inputs)
+        → writes 24 × 32 B + 1 B version into the per-user
+          PendingInputs PDA at
+          PDA(["b402/v1", "pending-inputs", spending_pub_le], pool_id)
+
+tx 2: pool::adapt_execute_v2(args_v2)   // no public_inputs in args
+        → validates PendingInputs PDA derivation against pi.out_spending_pub
+        → recomputes the 24-input vector and asserts byte-equality with
+          the on-chain bytes (defense-in-depth: PDA pins who-owns-the-inputs,
+          byte-equality pins what-they-are)
+        → CPIs verifier-adapt::verify_with_account_inputs
+        → zeroes the 1-B version field on success (replay protection)
+
+tx 3 (optional, admin): pool::gc_pending_inputs
+        → closes a stale PDA, refunds rent to treasury
+```
+
+Citations:
+
+- `commit_inputs` handler:
+  [`programs/b402-pool/src/instructions/commit_inputs.rs:82-98`](https://github.com/vistara-labs/b402-solana/blob/main/programs/b402-pool/src/instructions/commit_inputs.rs#L82-L98)
+- `PendingInputs` PDA + size accounting:
+  [`commit_inputs.rs:36-57`](https://github.com/vistara-labs/b402-solana/blob/main/programs/b402-pool/src/instructions/commit_inputs.rs#L36-L57)
+  (777 B total = 8 disc + 1 version + 24 × 32 B inputs)
+- `adapt_execute_v2` entry:
+  [`adapt_execute.rs:335-358`](https://github.com/vistara-labs/b402-solana/blob/main/programs/b402-pool/src/instructions/adapt_execute.rs#L335-L358)
+- PDA validation, byte-equality check, replay zeroing:
+  [`adapt_execute.rs:495-549`](https://github.com/vistara-labs/b402-solana/blob/main/programs/b402-pool/src/instructions/adapt_execute.rs#L495-L549)
+- Verifier's account-inputs read path:
+  [`b402-verifier-adapt/src/lib.rs:116-145`](https://github.com/vistara-labs/b402-solana/blob/main/programs/b402-verifier-adapt/src/lib.rs#L116-L145)
+- `gc_pending_inputs`:
+  [`commit_inputs.rs:113-140`](https://github.com/vistara-labs/b402-solana/blob/main/programs/b402-pool/src/instructions/commit_inputs.rs#L113-L140)
+
+This is the mainnet path for stateful adapters today.
+
+## Concrete CPI ladder: percolator perp open (devnet)
+
+The single-tx ladder that lands a shielded perp position on percolator:
+
+```
+pool::adapt_execute_v2
+  → b402_verifier_adapt::verify_with_account_inputs   (~213k CU Groth16)
+  → b402_nullifier::create_nullifier
+        → light_system_program::insert_into_queues    (Light V2 IMT)
+  → spl_token::transfer (in_vault → adapter_in_ta)
+  → b402_percolator_adapter::execute
+        → percolator::init_user
+        → percolator::deposit_collateral
+        → percolator::trade_cpi
+              → percolator_match::vamm
+```
+
+Total compute: 700,865 CU. Devnet keystone tx:
+[`2NwVGzPufiL7W4gneKgSjJNh9fKMnqwKYoL4heNawdWFHmdme6HjhCFzqdYf7i4NUmpCf6v3gUxBsHb4x6Wnb6ZR`](https://solscan.io/tx/2NwVGzPufiL7W4gneKgSjJNh9fKMnqwKYoL4heNawdWFHmdme6HjhCFzqdYf7i4NUmpCf6v3gUxBsHb4x6Wnb6ZR?cluster=devnet).
+
+## Mainnet examples
+
+All three live on Solana mainnet today through the same `adapt_execute_v2`
+code path, signed by the hosted relayer
+`7f6gRiX56dMQGrPERNBKuzFsvagFTM1U4LMAAN9rsiNM`:
+
+- **Jupiter V6 swap** — stateless adapter; standard post-CPI delta check.
+- **Kamino lend** — stateful adapter; per-user `Obligation` PDA;
+  voucher-mint output (kUSDC); cited tx
+  [`5aVtM9Vc…sLKUhB`](https://solscan.io/tx/5aVtM9Vc3eSgakTwv8vNG2snokQCWZhc8D6vfLTYigJRTkW2eZ8Ymv5gYawD81qCfAyj3KzhvHJqvGA1znpLKUhB).
+- **Kamino redeem** — stateful adapter; voucher burn + USDC sweep into
+  `out_vault`; standard delta check on the redeem leg.
+
+The kUSDC voucher-mint pattern (synthetic OUT mint) is enforced by
+[`adapt_execute.rs:1056-1063`](https://github.com/vistara-labs/b402-solana/blob/main/programs/b402-pool/src/instructions/adapt_execute.rs#L1056-L1063).
+The pool skips the `in_vault → adapter_in_ta` transfer when redeeming a
+voucher mint — the in_vault never had a liquid kUSDC balance to send in
+the first place; the user's claim lives in the per-user Kamino
+Obligation owned by `owner_pda`. See
+[`adapt_execute.rs:680-705`](https://github.com/vistara-labs/b402-solana/blob/main/programs/b402-pool/src/instructions/adapt_execute.rs#L680-L705).
+
+## What this is NOT
+
+- **Not a generic universal call dispatcher.** Every protocol needs its
+  own adapter program. The adapter encapsulates per-protocol PDA
+  derivation, action_payload decoding, and the downstream CPI account
+  layout. New protocol = new adapter.
+- **Not a sidechain.** All state is native Solana state: SPL token
+  vaults, Anchor PDAs, the pool's incremental Merkle tree, Light
+  Protocol's IMT.
+- **Not zk-EVM.** Solana-native primitives end-to-end — Circom 2 for
+  the circuits, Light Protocol's `groth16-solana` for the on-chain
+  verifier, Anchor 0.30+ for the pool/adapter programs, Address Lookup
+  Tables for the account budget.
+
+## Continue reading
+
+<CardGroup cols={2}>
+  <Card title="Privacy Model" icon="user-secret" href="/solana/concepts/privacy-model">
+    What's hidden, what isn't — with the same two artifacts as ground truth.
+  </Card>
+  <Card title="Adapter Overview" icon="plug" href="/solana/adapters/overview">
+    Per-adapter reference: Kamino, Jupiter, percolator, scaffolded.
+  </Card>
+  <Card title="Building an Adapter" icon="hammer" href="/solana/adapters/building-an-adapter">
+    Walkthrough for adding a new protocol.
+  </Card>
+  <Card title="Trust Assumptions" icon="shield" href="/solana/concepts/trust-assumptions">
+    Adapter blast radius, registry semantics, post-CPI delta invariant.
+  </Card>
+</CardGroup>

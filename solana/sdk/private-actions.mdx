@@ -1,0 +1,185 @@
+---
+title: Private Actions
+description: "Run a swap, lend, or redeem from a shielded note via the B402Solana class."
+---
+
+The high-level API exposes three private actions on `B402Solana`:
+
+- `swap` — wraps Jupiter routing.
+- `lend` — wraps Kamino V2 deposits.
+- `redeem` — burns a Kamino voucher note and reshields the underlying.
+
+All three start from a shielded note, run the action atomically, and
+mint a fresh shielded note for the output. They route through the
+hosted relayer by default (the user wallet does not appear on-chain
+as the fee payer), and pull circuit artifacts on demand via
+[`circuit-loader`](https://github.com/vistara-labs/b402-solana/blob/main/packages/sdk/src/circuit-loader.ts)
+with pinned SHA256 verification — no manual wasm/zkey paths.
+
+Dual-note minting and the two-tx commit-then-verify flow
+(`commit_inputs` → `adapt_execute_v2`) are wired underneath these
+methods on mainnet by default
+([`b402.ts:1655-1656`, `1741`, `1880`](https://github.com/vistara-labs/b402-solana/blob/main/packages/sdk/src/b402.ts)).
+Consumers do not configure them.
+
+## `b402.swap`
+
+Use the same constructor pattern as [Installation](/solana/sdk/installation)
+(`mainnet` + private RPC + signer keypair). Full runnable examples also
+live in [Quickstart](/solana/quickstart).
+
+```ts
+import { B402Solana, type PrivateSwapResult } from '@b402ai/solana';
+import { Keypair, PublicKey } from '@solana/web3.js';
+import fs from 'node:fs';
+import os from 'node:os';
+
+const rpcUrl = process.env.HELIUS_RPC_URL ?? 'https://api.mainnet-beta.solana.com';
+const keypair = Keypair.fromSecretKey(new Uint8Array(JSON.parse(
+  fs.readFileSync(`${os.homedir()}/.config/solana/id.json`, 'utf8'))));
+
+const b402 = new B402Solana({ cluster: 'mainnet', rpcUrl, keypair });
+await b402.ready();
+
+const USDC = new PublicKey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
+const SOL  = new PublicKey('So11111111111111111111111111111111111111112');
+
+// Shield input first.
+await b402.shield({ mint: USDC, amount: 1_000_000n });
+
+// Private swap. Hosted relayer signs + pays gas.
+const r: PrivateSwapResult = await b402.swap({
+  inMint: USDC,
+  outMint: SOL,
+  amount: 1_000_000n,
+  slippageBps: 30,
+});
+
+console.log(r.signature);
+console.log(r.outAmount);  // bigint, observed out-vault delta
+console.log(r.outNote);    // SpendableNote in outMint, automatically inserted
+```
+
+Method shape on `B402Solana` (see
+[`b402.ts` `swap`](https://github.com/vistara-labs/b402-solana/blob/main/packages/sdk/src/b402.ts)):
+`inMint`, `outMint`, `amount`, optional `slippageBps`, `expectedOut`,
+`dexes` → **`Promise<PrivateSwapResult>`**.
+
+The **`PrivateSwapResult`** interface is exported from `@b402ai/solana`
+([`b402.ts`](https://github.com/vistara-labs/b402-solana/blob/main/packages/sdk/src/b402.ts)):
+`signature`, `outNote`, `outAmount`, optional dual-note `excessNote`.
+
+### `excessNote` (dual-note minting)
+
+The proof binds a floor on the OUT amount (`expected_out`). When
+the adapter delivers more than the floor — typical for Jupiter
+routes that fill better than the quoted `otherAmountThreshold` — the
+pool mints a **second** commitment for the difference and emits its
+leaf. The SDK mirrors that derivation locally and inserts the extra
+`SpendableNote` so the user can spend it without an indexer
+round-trip
+([`b402.ts:282-291`](https://github.com/vistara-labs/b402-solana/blob/main/packages/sdk/src/b402.ts)).
+
+`outNote.value + excessNote.value === outAmount` exactly. No
+slippage dust leaks into the vault.
+
+## `b402.lend`
+
+Kamino V2 atomic deposit, with reserve auto-discovery across all
+mainnet `LendingMarket` accounts. Re-use `b402`, `USDC`, and imports from
+the **`b402.swap`** example at the top of this page.
+
+```ts
+const lendResult = await b402.lend({
+  mint: USDC,
+  amount: 1_000_000n,
+});
+
+console.log(lendResult.signature);
+console.log(lendResult.outNote); // voucher note in the reserve's collateral mint (kUSDC)
+```
+
+Arguments on `b402.lend`: **`mint`**, **`amount`**, optional **`market`**
+(`PublicKey`) → **`Promise<PrivateSwapResult>`**. Source:
+[`b402.ts` `lend`](https://github.com/vistara-labs/b402-solana/blob/main/packages/sdk/src/b402.ts).
+
+A few things to know:
+
+- **Per-user Kamino obligation.** The Kamino `Obligation` and
+  `UserMetadata` accounts are derived from the wallet's spending
+  pubkey, not from the user's Solana keypair. Same wallet hits the
+  same obligation deterministically across sessions
+  ([`b402.ts:1707`](https://github.com/vistara-labs/b402-solana/blob/main/packages/sdk/src/b402.ts),
+  `kamino-mainnet.ts:deriveAllPerUser`).
+- **One-time setup cost.** First lend per `(viewing key, mint)`
+  tuple incurs ~0.04 SOL of Kamino `UserMetadata` + `Obligation`
+  rent (refundable on close). Subsequent lends in the same reserve
+  are tx-fee only
+  ([`b402.ts:1672-1675`](https://github.com/vistara-labs/b402-solana/blob/main/packages/sdk/src/b402.ts)).
+- **Mainnet only.** Kamino reserves do not exist on devnet or
+  localnet
+  ([`b402.ts:1685-1688`](https://github.com/vistara-labs/b402-solana/blob/main/packages/sdk/src/b402.ts)).
+
+## `b402.redeem`
+
+Burn a Kamino voucher note created by `lend` and reshield the
+underlying. Re-use `b402`, `USDC`, and imports from the examples above.
+
+```ts
+const redeemResult = await b402.redeem({ mint: USDC });
+console.log(redeemResult.signature);
+console.log(redeemResult.outNote); // new shielded note in USDC
+```
+
+Arguments on `b402.redeem`: **`mint`**, optional **`market`**, optional
+**`leafIndex`** → **`Promise<PrivateSwapResult>`**. Source:
+[`b402.ts` `redeem`](https://github.com/vistara-labs/b402-solana/blob/main/packages/sdk/src/b402.ts).
+
+Mainnet only, same reasoning as `lend`.
+
+Reference signature for proof-of-life on mainnet:
+[`5aVtM9Vc3eSgakTwv8vNG2snokQCWZhc8D6vfLTYigJRTkW2eZ8Ymv5gYawD81qCfAyj3KzhvHJqvGA1znpLKUhB`](https://solscan.io/tx/5aVtM9Vc3eSgakTwv8vNG2snokQCWZhc8D6vfLTYigJRTkW2eZ8Ymv5gYawD81qCfAyj3KzhvHJqvGA1znpLKUhB).
+
+## Quoting before you swap
+
+For UI flows that need to show an estimate before committing:
+
+```ts
+const q = await b402.quoteSwap({
+  inMint: USDC,
+  outMint: SOL,
+  amount: 1_000_000n,
+  slippageBps: 50,
+});
+console.log(q.outAmount, q.otherAmountThreshold, q.priceImpactPct);
+```
+
+The quote is an off-chain Jupiter Lite estimate
+([`b402.ts:2104-2162`](https://github.com/vistara-labs/b402-solana/blob/main/packages/sdk/src/b402.ts)).
+Actual on-chain execution may differ by up to `slippageBps`; the
+proof's `expected_out` floor is the binding constraint.
+
+## Mainnet-fork local development
+
+For end-to-end work without burning real SOL, run a Solana
+mainnet-fork validator (e.g. `surfpool`) loaded with the deployed
+pool, adapter, Light system, and Photon programs. The SDK paths are
+the same — `cluster: 'mainnet'`, `rpcUrl: 'http://127.0.0.1:8899'`,
+and you fund a fresh keypair from the fork's airdrop. The `lend` /
+`redeem` round-trip is covered by fork tests such as
+[`tests/v2/e2e/v2_fork_lend_per_user.test.ts`](https://github.com/vistara-labs/b402-solana/blob/main/tests/v2/e2e/v2_fork_lend_per_user.test.ts)
+and the Kamino deposit driver
+[`examples/kamino-adapter-fork-deposit.ts`](https://github.com/vistara-labs/b402-solana/blob/main/examples/kamino-adapter-fork-deposit.ts).
+The consumer surface remains plain
+`b402.swap(...)` / `b402.lend(...)`.
+
+## Continue reading
+
+<CardGroup cols={2}>
+  <Card title="Scanner" icon="radar" href="/solana/sdk/scanner">
+    Watch for new private deposits.
+  </Card>
+  <Card title="Adapters" icon="plug" href="/solana/adapters/overview">
+    Which protocols are wired through the pool today.
+  </Card>
+</CardGroup>
