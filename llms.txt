@@ -1,17 +1,9 @@
 # b402 Developer Documentation
 
-> b402 is a multichain payment and confidential-DeFi protocol stack. The EVM stack (Base, BNB) ships gasless HTTP-402 agent payments via the Facilitator and Relayer. The Solana stack ships a shielded pool with composable adapters (Jupiter, Kamino) for confidential DeFi. Both share Railgun-style privacy primitives.
+> b402 puts the position on chain — not the wallet. Open-source infrastructure for agent payments and confidential DeFi. Live on Solana, Base, and BNB mainnet. Apache 2.0. Three stacks under one roof: Solana shielded pool with composable adapters (Jupiter, Kamino, Percolator), EVM HTTP-402 / x402 agent payments via the Facilitator, and ERC-7579 Nexus smart wallets with a Railgun-fork privacy pool on Base.
 
-## Overview
-- [Introduction](https://docs.b402.ai/introduction): What b402 is, chain chooser, capability matrix
-- [Protocol Architecture](https://docs.b402.ai/architecture): Shared three-layer model across Solana and EVM
-- [Choose Your Chain](https://docs.b402.ai/choose-your-chain): Decision guide — Solana vs EVM by use case
-
-## Shared Concepts
-- [Client-Server Model](https://docs.b402.ai/concepts/client-server): Buyer/seller interaction patterns
-- [Facilitator](https://docs.b402.ai/concepts/facilitator): Off-chain service for verify/settle
-- [Fee Structure](https://docs.b402.ai/concepts/fees): Protocol transaction fees
-- [Agent Identity](https://docs.b402.ai/concepts/agent-identity): ERC-8004 (EVM) and Solana PDA-based identity
+## Home
+- [Introduction](https://docs.b402.ai/introduction): The pitch, install command, code examples for both stacks, what's live where
 
 ## Solana
 - [Introduction](https://docs.b402.ai/solana/introduction): Composable confidential DeFi on Solana
@@ -34,7 +26,7 @@
 - [Adapter Overview](https://docs.b402.ai/solana/adapters/overview)
 - [Jupiter (swap)](https://docs.b402.ai/solana/adapters/jupiter)
 - [Kamino (lend)](https://docs.b402.ai/solana/adapters/kamino)
-- [Percolator](https://docs.b402.ai/solana/adapters/percolator)
+- [Percolator (perp)](https://docs.b402.ai/solana/adapters/percolator)
 - [Building an adapter](https://docs.b402.ai/solana/adapters/building-an-adapter)
 
 ### How it works
@@ -42,7 +34,7 @@
 - [Privacy Model](https://docs.b402.ai/solana/concepts/privacy-model)
 - [Shielded Pool](https://docs.b402.ai/solana/concepts/shielded-pool)
 - [Trust Assumptions](https://docs.b402.ai/solana/concepts/trust-assumptions)
-- [Protocol Architecture (Solana)](https://docs.b402.ai/solana/protocol/architecture)
+- [Protocol Architecture](https://docs.b402.ai/solana/protocol/architecture)
 - [Pool Program](https://docs.b402.ai/solana/protocol/pool-program)
 - [Circuits](https://docs.b402.ai/solana/protocol/circuits)
 - [Verifier](https://docs.b402.ai/solana/protocol/verifier)
@@ -61,26 +53,31 @@
 - [Architecture](https://docs.b402.ai/evm/architecture)
 - [Quickstart](https://docs.b402.ai/evm/quickstart)
 
-### Concepts
+### Use it from your code
+- [@b402ai/sdk](https://docs.b402.ai/evm/sdks/b402-sdk)
+- [EIP-712 Signature Guide](https://docs.b402.ai/evm/sdks/eip712-signature-guide)
+- [Agent Skill Reference](https://docs.b402.ai/evm/sdks/agent-skill)
+
+### How it works
 - [Wallet (EOA + Smart Wallet)](https://docs.b402.ai/evm/concepts/wallet)
 - [Relayer](https://docs.b402.ai/evm/concepts/relayer)
 - [Privacy (Incognito)](https://docs.b402.ai/evm/concepts/privacy-incognito)
 - [Network & Token Support](https://docs.b402.ai/evm/concepts/network-token-support)
-
-### SDKs
-- [@b402ai/sdk](https://docs.b402.ai/evm/sdks/b402-sdk)
-- [Agent Skill Reference](https://docs.b402.ai/evm/sdks/agent-skill)
-- [EIP-712 Signature Guide](https://docs.b402.ai/evm/sdks/eip712-signature-guide)
-
-### Guides
+- [Client-Server Model](https://docs.b402.ai/evm/concepts/client-server)
+- [Facilitator](https://docs.b402.ai/evm/concepts/facilitator)
+- [Agent Identity (ERC-8004)](https://docs.b402.ai/evm/concepts/agent-identity)
+- [Fee Structure](https://docs.b402.ai/evm/concepts/fees)
 - [Smart Wallet Deep Dive](https://docs.b402.ai/evm/guides/smart-wallet-deep-dive)
 - [Privacy Deep Dive](https://docs.b402.ai/evm/guides/privacy-incognito-deep-dive)
 
 ### Reference
 - [Contract Addresses](https://docs.b402.ai/evm/reference/contract-addresses)
+- [FAQ](https://docs.b402.ai/evm/reference/faq)
+- [Glossary](https://docs.b402.ai/evm/reference/glossary)
 
 ## Facilitator API (EVM)
 - [Overview](https://docs.b402.ai/developers/facilitator/overview)
+- [Authentication](https://docs.b402.ai/developers/facilitator/authentication)
 - [Health Check](https://docs.b402.ai/developers/facilitator/api-reference/facilitator/health-check)
 - [EOA Verify](https://docs.b402.ai/developers/facilitator/api-reference/eoa-payments/verify)
 - [EOA Settle](https://docs.b402.ai/developers/facilitator/api-reference/eoa-payments/settle)
@@ -94,12 +91,3 @@
 - [Incognito Verify](https://docs.b402.ai/developers/facilitator/api-reference/incognito/verify)
 - [Incognito Settle](https://docs.b402.ai/developers/facilitator/api-reference/incognito/settle)
 - [Error Reference](https://docs.b402.ai/developers/errors)
-
-## b402 Services
-- [Facilitator](https://docs.b402.ai/b402-services/b402-facilitator): Hosted facilitator service
-- [b402scan](https://docs.b402.ai/b402-services/b402scan): Multichain agent reputation and seller discovery
-
-## Resources
-- [FAQ](https://docs.b402.ai/resources/faq)
-- [Glossary](https://docs.b402.ai/resources/glossary)
-- [Community](https://docs.b402.ai/community)
