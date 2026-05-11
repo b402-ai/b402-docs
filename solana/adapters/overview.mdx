@@ -1,0 +1,209 @@
+---
+title: Adapter Overview
+description: "ABI, registry, and lifecycle of b402 adapters."
+---
+
+An **adapter** is a separate Anchor program that the pool CPIs into via
+`adapt_execute`. Each adapter integrates one external DeFi protocol;
+keeping them isolated from the pool bounds the blast radius of any
+adapter bug.
+
+This page covers the shipped ABI. Vector token bindings, content-
+addressed action hashing, and two-phase claim notes for async
+adapters are designed in PRDs but not yet in code; they're linked at
+the end for protocols that need them.
+
+## The ABI contract
+
+Every b402 adapter program implements a single `execute` Anchor
+entrypoint:
+
+```rust
+#[derive(Accounts)]
+pub struct AdapterExecute<'info> {
+    /// Adapter's PDA signer.
+    /// Seeds = [b"b402/v1", b"adapter"].
+    pub adapter_authority: SystemAccount<'info>,
+
+    /// Pool's vault for the IN mint.
+    /// Pool has already moved `in_amount` into adapter_in_ta before CPI.
+    pub in_vault: Account<'info, TokenAccount>,
+
+    /// Pool's vault for the OUT mint.
+    /// The post-CPI delta target.
+    pub out_vault: Account<'info, TokenAccount>,
+
+    /// Adapter scratch token accounts (owned by adapter_authority).
+    pub adapter_in_ta: Account<'info, TokenAccount>,
+    pub adapter_out_ta: Account<'info, TokenAccount>,
+
+    pub token_program: Program<'info, Token>,
+    // remaining_accounts = downstream-protocol accounts
+}
+
+pub fn execute(
+    ctx: Context<AdapterExecute>,
+    in_amount: u64,
+    min_out_amount: u64,
+    action_payload: Vec<u8>,
+) -> Result<()>;
+```
+
+The first 6 accounts are **pool-managed**. Whatever follows in
+`remaining_accounts` is whatever the downstream protocol needs. The
+pool does not interpret these — it forwards them verbatim to the
+adapter. The adapter is responsible for validating their order and
+shape.
+
+`action_payload` is opaque bytes from the pool's perspective.
+Cryptographically bound by the pool via:
+
+```
+action_hash = Poseidon_3(
+    "b402/v1/adapt-bind",
+    keccak256(action_payload) reduced mod p,
+    expected_out_mint reduced mod p
+)
+```
+
+Recomputed on chain in `adapt_execute` before the adapter is invoked. A
+relayer that tampers with `action_payload` between proof gen and
+submission will fail this check; the entire tx reverts.
+
+## The five trust boundaries
+
+For every CPI:
+
+1. **Adapter is registered + enabled.** Pool checks
+   `AdapterRegistry.adapters[i].program_id == adapter_program.key()` and
+   `enabled == true`.
+2. **Instruction discriminator is allowlisted.** The first 8 bytes of
+   `raw_adapter_ix_data` must appear in
+   `AdapterRegistry.adapters[i].allowed_instructions`. Second line of
+   defense if an adapter program upgrades and adds an unsafe entrypoint.
+3. **Adapter ID matches the proof.** `pi.adapter_id ==
+   keccak256(adapter_program.key) reduced mod p`. Prevents replaying a
+   proof generated for adapter X against adapter Y.
+4. **Action hash matches.** Recomputed on chain from `action_payload`
+   bytes; rejects tampering.
+5. **Post-CPI balance delta.** `out_vault.amount` post-CPI minus pre-CPI
+   must be ≥ `expected_out_value`. Adapter cannot underdeliver without
+   the entire tx reverting.
+
+The adapter has access only to the accounts the pool passes. It cannot
+read/write `TreeState`, `NullifierShard`, or `PoolConfig` because those
+accounts are not in its `AccountInfo` slice.
+
+## Registry semantics
+
+The `AdapterRegistry` PDA stores:
+
+```rust
+pub struct AdapterRegistry {
+    pub count: u16,
+    pub adapters: Vec<AdapterInfo>,
+}
+
+pub struct AdapterInfo {
+    pub adapter_id: [u8; 32],              // keccak(program_id) mod p
+    pub program_id: Pubkey,
+    pub allowed_instructions: [[u8; 8]; N],
+    pub allowed_instruction_count: u8,
+    pub enabled: bool,
+}
+```
+
+Today only `discriminator` and `enabled` are enforced; future ABI
+revisions may add per-instruction `allows_delta_zero` and
+`circuit_binding_flags` fields, currently zero-valued.
+
+Lifecycle:
+
+- `register_adapter(info)` — admin signer; append-only.
+- Removing or disabling an adapter is **not** an on-chain instruction
+  in the shipped program. The registry is strictly append-only. An
+  adapter compromise is mitigated by `pause(adapt)` on the pool, which
+  halts all adapter dispatch.
+
+### Source-level allowlists
+
+Two pieces of the contract are not in the registry but in pool source.
+Adding an adapter that needs either is a pool source diff + program
+upgrade, not a `register_adapter` call:
+
+- **`is_stateful_adapter`**
+  ([`adapt_execute.rs:1035-1040`](https://github.com/vistara-labs/b402-solana/blob/main/programs/b402-pool/src/instructions/adapt_execute.rs#L1035-L1040))
+  — adapters on this list opt out of the post-CPI mint-out delta check
+  because their "output" is per-user state mutation rather than a
+  fungible token transfer. Kamino is on the list today; percolator
+  ships on devnet pending mainnet market deploy.
+- **`is_synthetic_voucher_mint`**
+  ([`adapt_execute.rs:1057-1063`](https://github.com/vistara-labs/b402-solana/blob/main/programs/b402-pool/src/instructions/adapt_execute.rs#L1057-L1063))
+  — mints on this list represent positions (kUSDC for Kamino lend);
+  the pool skips the input-vault transfer for them.
+
+Both are deliberate: the lists are small (one entry today),
+auditable inline, and pinned to specific program IDs at upgrade time
+rather than at runtime.
+
+## Adapters shipped
+
+| Adapter | Program ID | Status |
+|---|---|---|
+| `b402_jupiter_adapter` | `3RHRcbinCmcj8JPBfVxb9FW76oh4r8y21aSx4JFy3yx7` | Live on mainnet (private swap via Jupiter V6) |
+| `b402_kamino_adapter` | `2enwFgcGKJDqruHpCtvmhtxe3DYcV3k72VTvoGcdt2rX` | Live on mainnet (private lend / redeem via Kamino V2; per-user Obligation) |
+| `b402_percolator_adapter` | `65NRt6GpeakqXhqvKcN3knohzKEZT37arUyQi3SZwfxv` | Live on devnet (private perp open / close via percolator-prog); mainnet pending an upstream market deploy |
+| `b402_mock_adapter` | `89kw33YDcbXfiayVNauz599LaDm51EuU8amWydpjYKgp` | Test-only (delta-invariant tests) |
+
+## Coming next
+
+These protocol shapes need the next ABI revision. Open an issue on
+GitHub if your protocol fits one of these and you want it
+prioritized:
+
+- **Multi-output AMMs** (Orca whirlpool, two-asset LP unwind) — needs
+  vector token binding in the adapt circuit.
+- **Async / oracle-pending settlement** (Jupiter Perps' request queue,
+  any system that settles in a later block) — needs two-phase claim
+  notes.
+- **NFT-position protocols** (any system where the user's identity in
+  the protocol is itself an NFT mint) — needs design work; not in
+  any current PRD.
+
+## Next-revision design (in PRDs, not code)
+
+Live PRDs covering the next ABI revision:
+
+- [Vector token bindings](https://github.com/vistara-labs/b402-solana/blob/main/docs/prds/PRD-11-vector-bindings.md)
+  — generalize scalar mint binding to up to 4 inputs × 4 outputs.
+- [Content-addressed `action_hash`](https://github.com/vistara-labs/b402-solana/blob/main/docs/prds/PRD-12-action-hash.md)
+  — bind canonicalized accounts and an adapter scope tag into the
+  proof, simplifying adapter-side validation.
+- [Shadow PDAs](https://github.com/vistara-labs/b402-solana/blob/main/docs/prds/PRD-13-shadow-pda.md)
+  — formalize the per-user-PDA convention (used today by Kamino and
+  percolator) as a circuit-bound primitive.
+- [Two-phase claim notes](https://github.com/vistara-labs/b402-solana/blob/main/docs/prds/PRD-14-two-phase-claim.md)
+  — for adapters that don't settle synchronously.
+- [Delta-zero + deadline](https://github.com/vistara-labs/b402-solana/blob/main/docs/prds/PRD-15-delta-zero-deadline.md)
+  — for state-only ops (`cancel_order`, claim flows).
+
+The next-revision circuit (`circuits/build/adapt_v2.r1cs.info.txt`)
+has been compiled and benchmarked but is not connected to a deployed
+verifier program.
+
+## Continue reading
+
+<CardGroup cols={2}>
+  <Card title="Jupiter" icon="arrow-right-arrow-left" href="/solana/adapters/jupiter">
+    Private swap on Jupiter V6 (mainnet).
+  </Card>
+  <Card title="Kamino" icon="building-columns" href="/solana/adapters/kamino">
+    Private lend / redeem via Kamino V2 (mainnet).
+  </Card>
+  <Card title="Percolator" icon="chart-line" href="/solana/adapters/percolator">
+    Private perp open / close on percolator (devnet).
+  </Card>
+  <Card title="Build an adapter" icon="hammer" href="/solana/adapters/building-an-adapter">
+    Step-by-step for a new protocol.
+  </Card>
+</CardGroup>

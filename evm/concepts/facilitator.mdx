@@ -1,0 +1,67 @@
+---
+title: Facilitator
+description: 'Verification and settlement service for b402 payments'
+icon: circle-check
+---
+
+The facilitator is the off-chain service that bridges HTTP requests and blockchain settlement. It verifies payment payloads, executes on-chain transactions, and returns settlement proofs.
+
+The facilitator never holds user funds or keys. It validates signatures, pays gas, and relays transactions.
+
+## What It Does
+
+| Capability | Description |
+|------------|-------------|
+| **Verify payments** | Validate EIP-712 signatures against on-chain state |
+| **Settle transactions** | Execute token transfers via the Relayer contract |
+| **Smart wallet ops** | Build and submit ERC-4337 UserOperations |
+| **Deploy wallets** | Create deterministic Nexus smart wallets |
+| **Incognito payments** | Process privacy pool shield/unshield operations |
+| **Swap execution** | Private token swaps with payment |
+
+## Two Payment Models
+
+### EOA Payments
+
+For standard wallets (MetaMask, private key wallets):
+
+1. Server sends payment requirements to client
+2. Client signs EIP-712 `TransferWithAuthorization` payload
+3. Server forwards to facilitator `/verify`
+4. Facilitator checks signature, nonce, time window, and balances
+5. Server calls `/settle`
+6. Facilitator calls `transferWithAuthorization()` on the Relayer contract and pays gas
+
+### Smart Wallet Payments
+
+For ERC-7579 Nexus smart wallets:
+
+1. Server sends payment requirements to client
+2. Client calls facilitator `/wallet/verify` with wallet address and payment details
+3. Facilitator builds unsigned UserOp with fee injection and paymaster signature
+4. Client signs the UserOp hash
+5. Client sends signed UserOp to `/wallet/settle`
+6. Facilitator submits to ERC-4337 bundler
+7. Bundler executes on-chain (batch: approve + transfer)
+
+Smart wallet payments are fully gasless for the user. The paymaster covers gas costs, and the fee is deducted from the payment amount.
+
+## Official Facilitator
+
+The hosted b402 facilitator is live at:
+
+**Base URL:** `https://facilitatorv3.b402.ai`
+
+**Supported networks:** BNB Chain mainnet, Base mainnet
+
+**Supported tokens:** USDT, USDC, USD1
+
+**Rate limit:** 30 requests per minute per IP
+
+See the [Facilitator API Reference](/developers/facilitator/overview) for full endpoint documentation and [Fee Structure](/evm/concepts/fees) for pricing details.
+
+## Interaction Flow
+
+<Frame>
+  <img src="/public/images/diagrams/payment-flow.svg" alt="Facilitator interaction flow: verify, settle, and on-chain settlement" />
+</Frame>

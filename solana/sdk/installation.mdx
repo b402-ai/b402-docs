@@ -1,0 +1,89 @@
+---
+title: SDK Installation
+description: "Install @b402ai/solana and instantiate the B402Solana class."
+---
+
+```bash
+npm install @b402ai/solana
+```
+
+`B402Solana` is the consumer surface. It wraps wallet derivation, the
+prover, the note store, the indexer client, and the hosted-relayer
+client behind a small set of methods (`shield`, `unshield`, `swap`,
+`lend`, `redeem`, `status`, `balance`, `holdings`, `watchIncoming`).
+There are no separate prover or relayer packages to install — the
+prover ships in-package and circuit artifacts auto-fetch on first use
+with pinned-SHA256 verification.
+
+Node 20+. ESM. TypeScript types ship in the package.
+
+## Instantiate
+
+```ts
+import { B402Solana } from '@b402ai/solana';
+import { Keypair, PublicKey } from '@solana/web3.js';
+import fs from 'node:fs';
+import os from 'node:os';
+
+const keypair = Keypair.fromSecretKey(new Uint8Array(JSON.parse(
+  fs.readFileSync(`${os.homedir()}/.config/solana/id.json`, 'utf8'))));
+
+const b402 = new B402Solana({
+  cluster: 'mainnet',
+  rpcUrl: process.env.HELIUS_RPC_URL,  // Helius / Triton — public RPCs are unreliable
+  keypair,
+});
+
+await b402.ready();
+```
+
+That's the whole setup. Mainnet defaults wire the hosted relayer, the
+indexer, and dual-note minting; consumers don't configure them. For
+custom relayers, indexers, or self-submission, override
+`relayerHttpUrl`, `relayerApiKey`, `indexerUrl`.
+
+## First call
+
+```ts
+const snap = await b402.status();
+console.log(snap.public.sol.ui);
+console.log(snap.private.balances);
+```
+
+`status`, `balance`, `holdings`, and `watchIncoming` are read-only and
+don't need a relayer or prover.
+
+## Browser
+
+Derive a signer from a wallet adapter and pass it instead of `keypair`:
+
+```ts
+import { WalletAdapterSigner } from '@b402ai/solana';
+const signer = WalletAdapterSigner.fromAdapter(walletAdapter);
+const b402 = new B402Solana({ cluster: 'mainnet', signer });
+```
+
+## Cluster defaults
+
+The constructor wires per-cluster defaults so a fresh install works
+with no extra config
+([`b402.ts:464-498`](https://github.com/vistara-labs/b402-solana/blob/main/packages/sdk/src/b402.ts)).
+On mainnet and devnet, the hosted relayer is pre-configured. On
+localnet you supply your own.
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="Shield / Unshield" icon="vault" href="/solana/sdk/shield-unshield">
+    Move tokens in and out of the shielded pool.
+  </Card>
+  <Card title="Private Actions" icon="bolt" href="/solana/sdk/private-actions">
+    `swap`, `lend`, `redeem` against Jupiter and Kamino.
+  </Card>
+  <Card title="Scanner" icon="radar" href="/solana/sdk/scanner">
+    Watch for incoming private deposits.
+  </Card>
+  <Card title="Program IDs" icon="cube" href="/solana/reference/program-ids">
+    Mainnet program IDs, build features, hosted relayer pubkey.
+  </Card>
+</CardGroup>

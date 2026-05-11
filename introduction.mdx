@@ -1,69 +1,92 @@
 ---
-title: Welcome to b402
-description: 'Gasless, confidential, multi-token agent payments across EVM chains'
-icon: star
+title: b402
+description: "Confidential DeFi and gasless agent payments on Solana, Base, and BNB."
+icon: shield
 ---
 
-b402 is a multichain payment protocol for AI agents and web services. It extends the [HTTP 402](https://datatracker.ietf.org/doc/html/rfc7231#section-6.5.2) standard and [x402](https://x402.org) protocol with gasless execution, compliant confidentiality, and multi-token support across EVM-compatible chains.
+Every public DeFi action tells people what wallet to watch.
+**b402 puts the position on chain — not the wallet.**
 
-## Architecture
+Open-source infrastructure for **agent payments** and **confidential DeFi**.
+Live on Solana, Base, and BNB mainnet. Apache 2.0.
 
-<Frame>
-  <img src="/public/images/diagrams/b402-architecture-hero.svg" alt="b402 three-layer architecture: Protocol, Service, and Developer layers" />
-</Frame>
+## Install for your agent
 
-Rather than depending on token-level signature standards like EIP-3009, b402 introduces its own execution layer — the Relayer contract — that works with any whitelisted token on any deployed chain. An agent signs an EIP-712 authorization off-chain (zero cost), the Facilitator settles on-chain, and the agent never needs native tokens for gas.
+```bash
+npx -y @b402ai/solana-mcp --install
+```
 
-b402 is organized in three layers:
+One command writes b402 into Claude Code, Cursor, or Claude Desktop. Eleven
+tools — `shield`, `unshield`, `private_swap`, `private_lend`, `private_redeem`,
+`quote_swap`, `status`, `balance`, `holdings`, `watch_incoming`, `wallet_balance`.
+Mainnet defaults. No RPC config required.
 
-1. **Protocol Layer** — The b402 Relayer smart contract handles EIP-712 signature verification and on-chain token transfers. Deployed on BNB Chain and Base, with more chains to follow.
-2. **Service Layer** — The Facilitator verifies payment payloads, settles transactions, deploys smart wallets, and executes swaps. b402scan provides agent reputation and seller discovery.
-3. **Developer Layer** — Integrate via the Facilitator API, MCP tools, or agent frameworks (LangChain, CrewAI, Vercel AI SDK).
+[MCP overview →](/solana/mcp/overview)
 
-## What Makes b402 Different
+## Or use it from code
 
-Compared to standard x402 implementations:
+<CodeGroup>
 
-| Feature | x402 | b402 |
-|---------|------|------|
-| Tokens | USDC only | USDT, USDC, USD1, any whitelisted ERC-20 |
-| Privacy | None | [Privacy pool](/concepts/privacy-incognito) integration (shield, transact, unshield) |
-| Wallets | EOA only | EOA + [Smart Wallets](/concepts/wallet) (ERC-7579 Nexus) |
-| Gas | Gasless (USDC only, via EIP-3009) | Gasless (any whitelisted ERC-20, via [Relayer](/concepts/relayer)) |
-| Swaps | None | Integrated DEX swaps |
-| Identity | None | [ERC-8004 agent identity](/concepts/agent-identity) |
-| Chains | Base (USDC, USDT) | Multichain — [BNB Chain, Base](/concepts/network-token-support), more planned |
+```ts Solana
+import { B402Solana } from '@b402ai/solana';
+import { PublicKey, Keypair } from '@solana/web3.js';
 
-## What Can You Build?
+const USDC = new PublicKey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
+const SOL  = new PublicKey('So11111111111111111111111111111111111111112');
 
-- **Autonomous API trading bots** that pay per query
-- **AI agents** purchasing verified data feeds or inference time
-- **Usage-based paywalls** for analytics, content, or compute
-- **Private payments** where transaction details are shielded via the b402 privacy pool
-- **Cross-chain agent workflows** that transact wherever liquidity exists
+const b402 = new B402Solana({ cluster: 'mainnet', keypair });
+await b402.ready();
+await b402.shield({ mint: USDC, amount: 1_000_000n });
+await b402.swap({ inMint: USDC, outMint: SOL, amount: 1_000_000n });
+```
 
-## Get Started
+```ts EVM
+import { B402 } from '@b402ai/sdk';
+
+const b402 = new B402({ privateKey: process.env.PRIVATE_KEY });
+
+// Gasless. Facilitator settles on chain.
+await b402.shield({ token: 'USDC', amount: '100' });
+await b402.swap({ from: 'USDC', to: 'WETH', amount: '10' });
+```
+
+</CodeGroup>
+
+`npm install @b402ai/solana` · `npm install @b402ai/sdk`
+
+[Solana quickstart →](/solana/quickstart) · [EVM quickstart →](/evm/quickstart)
+
+## What's live
+
+| Layer | Where |
+|---|---|
+| Solana shielded pool (Phase-9 dual-note) | mainnet |
+| Solana Jupiter adapter (private swap) | mainnet |
+| Solana Kamino adapter (per-user obligation) | mainnet |
+| Solana percolator adapter (perp open / close) | devnet |
+| Solana MCP server (`@b402ai/solana-mcp@0.0.28`) | npm + mainnet defaults |
+| EVM Facilitator V3 (HTTP-402 / x402) | Base + BNB mainnet |
+| EVM smart wallets (ERC-7579 Nexus) | Base + BNB mainnet |
+| EVM privacy pool (Railgun fork) | Base mainnet |
+
+Same b402 program IDs on Solana devnet and mainnet. EVM contract addresses
+in each chain's reference.
+
+## Where to go next
 
 <CardGroup cols={2}>
-  <Card title="Quickstart" icon="rocket" href="/get-started/quickstart">
-    Send your first payment in under 5 minutes
+  <Card title="Solana" icon="bolt" href="/solana/introduction">
+    Composable confidential DeFi. Shield USDC, then swap, lend, or perp through
+    registered adapters — atomic, in one transaction.
   </Card>
-  <Card title="Architecture" icon="book-open-cover" href="/architecture">
-    Understand how the protocol works
-  </Card>
-  <Card title="Facilitator API" icon="webhook" href="/developers/facilitator/overview">
-    Full API reference for all endpoints
-  </Card>
-  <Card title="EIP-712 Signatures" icon="code" href="/sdks/eip712-signature-guide">
-    Learn how to sign payment payloads
+  <Card title="EVM" icon="ethereum" href="/evm/introduction">
+    HTTP-402 / x402 agent payments. Gasless. Multi-token. Smart wallets on
+    Base and BNB.
   </Card>
 </CardGroup>
 
-## Links
+## Build with us
 
-<CardGroup cols={2}>
-  <Card title="GitHub" icon="github" href="https://github.com/b402-ai">
-  </Card>
-  <Card title="Discord" icon="discord" href="https://discord.com/invite/b402">
-  </Card>
-</CardGroup>
+- [Build an adapter](/solana/adapters/building-an-adapter) — plug any Solana protocol into b402's shielded pool. Open ABI, `cpi-only` security gate, per-user PDA pattern.
+- [Facilitator API](/developers/facilitator/overview) — HTTP API for verify, settle, smart-wallet ops, incognito payments.
+- [Trust assumptions](/solana/concepts/trust-assumptions) — what we ship today, what's pending, why it matters.

@@ -1,0 +1,98 @@
+---
+title: Architecture Overview
+description: 'How the b402 protocol layers work together'
+icon: layer-group
+---
+
+b402 is built in three layers. Each layer can be used independently, but they work best together.
+
+## Protocol Layer
+
+The foundation is the **b402 Relayer** smart contract, deployed on each supported EVM chain. It handles:
+
+- **EIP-712 signature verification** for gasless payment authorization
+- **On-chain token transfers** via `transferWithAuthorization()`
+- **Replay protection** using random nonces and time windows (`validAfter` / `validBefore`)
+- **Token whitelisting** for supported assets (USDT, USDC, USD1)
+
+The Relayer enables meta-transactions: users sign off-chain, the facilitator pays gas and executes on-chain.
+
+**Contracts:**
+
+| Contract | Address | Network |
+|----------|---------|---------|
+| B402 RelayerV3 | `0xE91b564EB8DFF305Ff8efA332f84c487b9da5171` | BNB Chain + Base Mainnet |
+| Nexus Account Factory | `0x0000006648ED9B2B842552BE63Af870bC74af837` | BNB Chain Mainnet |
+
+## Service Layer
+
+### Facilitator
+
+The Facilitator is the API service that bridges HTTP requests and blockchain settlement. It provides:
+
+**EOA Payments** - Verify and settle EIP-712 signed payments for standard wallets.
+
+**Smart Wallet Payments** - Build and submit ERC-4337 UserOperations for Nexus smart wallets. The facilitator injects fees, signs paymaster data, and submits to bundlers.
+
+**Wallet Deployment** - Deterministic smart wallet creation via ERC-7579 Nexus factory. Wallets are computed off-chain and deployed on first use.
+
+**Incognito Operations** - Privacy-preserving payments through the b402 privacy pool. Shield tokens, transact privately, and unshield to recipients.
+
+**Base URL:** `https://facilitatorv3.b402.ai`
+
+### b402scan
+
+Agent reputation and seller discovery platform. Browse verified sellers, check agent payment history, and discover APIs accepting b402 payments. Currently in development.
+
+## Developer Layer
+
+### Direct API Integration
+
+The Facilitator API is the primary integration point. Any HTTP client can interact with b402:
+
+```typescript
+// Verify and settle a payment
+const verify = await fetch('https://facilitatorv3.b402.ai/verify', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ paymentPayload }),
+});
+const settle = await fetch('https://facilitatorv3.b402.ai/settle', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ paymentPayload }),
+});
+```
+
+### Agent Framework Integration
+
+b402 works with popular AI agent frameworks:
+
+- **MCP Tools** — Expose b402 payment capabilities as Model Context Protocol tools for Claude, GPT, and other LLM agents
+- **LangChain / CrewAI** — Custom tools that wrap the Facilitator API for autonomous agent payments
+- **Vercel AI SDK** — Server-side payment verification in AI-powered API routes
+
+### EIP-712 Signatures
+
+For buyers, the core integration is signing EIP-712 typed data. See the [EIP-712 Signature Guide](/evm/sdks/eip712-signature-guide) for manual construction.
+
+## Payment Flow
+
+The full payment lifecycle:
+
+<Frame>
+  <img src="/public/images/diagrams/payment-flow.svg" alt="b402 payment flow: Client, Server, Facilitator, and Blockchain interaction sequence" />
+</Frame>
+
+## Smart Wallet Flow
+
+For ERC-7579 Nexus smart wallets, the flow uses UserOperations instead of direct signatures:
+
+1. Client requests payment with wallet address
+2. Facilitator builds unsigned UserOp with fee injection
+3. Client signs the UserOp hash
+4. Facilitator submits to ERC-4337 bundler with paymaster sponsorship
+5. Bundler executes on-chain (batch call: approve + transfer)
+6. Facilitator returns transaction receipt
+
+This enables gasless, batched operations for AI agents without requiring native gas tokens.
